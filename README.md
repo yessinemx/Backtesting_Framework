@@ -77,6 +77,20 @@ Smoke test de la réplication papier :
 py research/main.py --index-id SPX --max-periods 1 --no-write-outputs --quiet
 ```
 
+## Tests et CI
+
+Lancement local de la suite :
+
+```bash
+py -m unittest discover -s tests
+```
+
+CI GitHub Actions :
+
+- workflow dans [.github/workflows/tests.yml](.github/workflows/tests.yml)
+- exécution sur `push` et `pull_request` vers `main`
+- vérification de la suite `unittest` et du démarrage de l'aide CLI `research/main.py --help`
+
 ## Workflow Streamlit
 
 L'application suit un workflow en 7 étapes :
@@ -104,6 +118,14 @@ Configuration locale de recherche dans [research/config.py](research/config.py) 
 - chemins `research/docs` et `research/outputs`
 - paramètres fixes de la réplication du papier
 - options de sortie tables / figures
+
+## Données et artefacts
+
+Les fichiers de [data](data) et le PDF de [research/docs](research/docs) restent versionnés pour garder un repo reproductible sans étape de bootstrap externe. En revanche, les artefacts générés pendant les runs ne doivent pas être commités :
+
+- [research/outputs](research/outputs) est réservé aux sorties générées
+- `research/outputs/tables` et `research/outputs/figures` sont ignorés par git
+- les données peuvent être régénérées via l'étape `Data Status` de l'app ou via les scripts d'extraction Bloomberg
 
 ## Stratégies disponibles
 
