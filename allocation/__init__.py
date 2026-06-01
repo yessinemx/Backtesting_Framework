@@ -15,7 +15,7 @@ class BaseAllocator(ABC):
     @abstractmethod
     def allocate(self, signals, returns, date):
         # signals : {ticker: +1 / -1 / 0}
-        # retourne {ticker: poids signé} (positif = long, négatif = short)
+        # returns {ticker: signed weight} (positive = long, negative = short)
         pass
 
     @staticmethod

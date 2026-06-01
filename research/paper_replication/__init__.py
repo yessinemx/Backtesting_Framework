@@ -1,15 +1,15 @@
 """
 Paper replication package for the wavelet pairs-trading study.
 
-API publique :
-    - run_pipeline      : exécute le pipeline complet (toutes périodes).
-    - run_period        : exécute une seule période (formation, trading).
-    - build_periods     : découpe le calendrier en périodes 252 jours.
-    - select_pairs      : sélection distance minimale / cointégration.
-    - build_spread      : spread standard ou wavelet + seuils 2σ.
-    - simulate_pair     : simulation du trading d'une paire.
-    - aggregate_metrics : métriques de portefeuille.
-    - output_writer     : écriture des tables et figures sous research/outputs/.
+Public API:
+    - run_pipeline: run the full pipeline across all periods.
+    - run_period: run a single formation/trading period.
+    - build_periods: split the calendar into 252-day periods.
+    - select_pairs: select pairs by minimum distance or cointegration.
+    - build_spread: build standard or wavelet spreads with 2σ thresholds.
+    - simulate_pair: simulate trading for a single pair.
+    - aggregate_metrics: portfolio-level metrics.
+    - output_writer: write tables and figures into research/outputs/.
 """
 from research.paper_replication.wavelet import (
     modwt_smooth,

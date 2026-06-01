@@ -1,20 +1,20 @@
 """
-Simulation du trading d'une paire
-=================================
-Réplication des Sections 4.3, 4.4 et de l'Appendix A.1 du papier.
+Trading simulation for a single pair.
 
-Règles :
-  - Ouverture quand |ε_t| franchit 2σ (sortie de la bande [-2σ, +2σ]).
-  - ε_t > +2σ : short 1$ de S_i, long |β|$ de S_j.
-    ε_t < -2σ : long 1$ de S_i, short |β|$ de S_j.
-  - Clôture au premier changement de signe du spread (retour à zéro).
-  - Toute position ouverte en fin de période est force-closed.
+Replication of Sections 4.3, 4.4, and Appendix A.1 of the paper.
 
-Rendement journalier (eq. A1, prix ORIGINAUX) :
-  R_t = signe(ε_open)·[ -(S_i,t - S_i,t-1)/S_i,to + |β|·(S_j,t - S_j,t-1)/S_j,to ]
+Rules:
+    - Open when |ε_t| crosses 2σ, leaving the [-2σ, +2σ] band.
+    - ε_t > +2σ: short $1 of S_i and long |β|$ of S_j.
+        ε_t < -2σ: long $1 of S_i and short |β|$ of S_j.
+    - Close on the first sign change of the spread, i.e. a return to zero.
+    - Any position still open at the end of the period is force-closed.
 
-Compute en numpy ; les sorties (rendements quotidiens) sont conservées avec
-leurs dates pour l'agrégation Polars du portefeuille.
+Daily return (eq. A1, using original prices):
+    R_t = sign(ε_open)·[ -(S_i,t - S_i,t-1)/S_i,to + |β|·(S_j,t - S_j,t-1)/S_j,to ]
+
+The computation runs in NumPy, while daily returns keep their dates so the
+portfolio can later be aggregated in Polars.
 """
 from dataclasses import dataclass, field
 import numpy as np
@@ -24,11 +24,11 @@ import numpy as np
 class Trade:
     open_idx: int
     close_idx: int
-    sign: int                  # +1 (spread positif à l'ouverture) / -1
-    forced: bool               # True si force-closed en fin de période
-    pnl: float                 # rendement total du trade (somme des R_t)
-    ret_i: float               # rendement du titre i sur la vie du trade
-    ret_j: float               # rendement du titre j sur la vie du trade
+    sign: int                  # +1 for a positive opening spread, else -1
+    forced: bool               # True when the trade is force-closed at period end
+    pnl: float                 # total trade return, sum of daily R_t
+    ret_i: float               # asset i return over the trade life
+    ret_j: float               # asset j return over the trade life
 
 
 @dataclass
@@ -38,7 +38,7 @@ class PairResult:
     beta: float
     trades: list = field(default_factory=list)
     daily_returns: np.ndarray = field(default_factory=lambda: np.zeros(0))
-    dates: object = None              # pl.Series alignée sur daily_returns
+    dates: object = None              # pl.Series aligned with daily_returns
     category: str = "inactive"        # full | partial | non | inactive
     total_pnl: float = 0.0
     total_cost: float = 0.0
@@ -49,15 +49,15 @@ class PairResult:
 
 
 def simulate_pair(spec, tc_per_share=0.0):
-    """Simule le trading d'une paire à partir de son SpreadSpec.
+    """Simulate pair trading from a SpreadSpec.
 
     Parameters
     ----------
     spec : SpreadSpec
-        Contient seuil, β, spread de trading et prix ORIGINAUX alignés.
+        Contains the threshold, β, the trading spread, and aligned original prices.
     tc_per_share : float
-        Coût de transaction θ (ex. 0.001 = 10 bps) par demi-tour et par
-        titre (eq. A4). 0 => sans coûts.
+        Transaction cost θ (e.g. 0.001 = 10 bps) per round trip and per
+        security (eq. A4). Use 0 for a frictionless run.
 
     Returns
     -------
@@ -108,7 +108,7 @@ def simulate_pair(spec, tc_per_share=0.0):
     if in_trade:
         close_trade(open_idx, n - 1, sign, forced=True)
 
-    # catégorie de convergence
+    # Convergence category.
     if not trades:
         category = "inactive"
     else:
@@ -121,7 +121,7 @@ def simulate_pair(spec, tc_per_share=0.0):
         else:
             category = "non"
 
-    # coûts de transaction (eq. A4)
+    # Transaction costs (eq. A4).
     total_cost = 0.0
     if tc_per_share > 0:
         for tr in trades:

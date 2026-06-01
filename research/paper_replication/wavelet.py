@@ -1,85 +1,87 @@
 """
-Maximum Overlap Discrete Wavelet Transform (MODWT)
-==================================================
-Réplication de la Section 3 du papier
+Maximum Overlap Discrete Wavelet Transform (MODWT).
 
-On utilise la MODWT (pas de down-sampling => la série filtrée garde la
-taille originale, indispensable pour un signal de trading temps réel) avec :
-  - filtres Symlet (symN),
-  - approximation de Niveau 1 (composante long-terme)
-  - extension symétrique (symmetrization) pour gérer les bords
+Replication of Section 3 of the paper.
 
-NOTE sur sym22
---------------
-Le papier emploie le filtre `sym22` (22 moments nuls, longueur 44). La
-librairie PyWavelets ne fournit les Symlets que jusqu'à `sym20`. Le papier
-montre lui-même (Table 16) que les Sharpe de sym12..sym24 sont très proches
-et se stabilisent : sym20 (~2.57) ≈ sym22 (~2.61). On retient donc `sym20`
-comme équivalent le plus proche disponible, la famille restant configurable
+This implementation uses MODWT with no down-sampling, so the filtered series
+keeps its original length, which is required for real-time trading signals.
+It uses:
+    - Symlet filters (symN)
+    - Level-1 approximation (long-term component)
+    - symmetric extension to handle edge effects
+
+Note on sym22
+-------------
+The paper uses the `sym22` filter (22 vanishing moments, length 44). PyWavelets
+only provides Symlets up to `sym20`. The paper itself shows in Table 16 that
+Sharpe ratios from sym12 to sym24 are very close and stable: sym20 (~2.57) is
+close to sym22 (~2.61). This implementation therefore defaults to `sym20` as
+the closest available equivalent, while keeping the family configurable.
 """
 import numpy as np
 import pywt
 
-# Famille par défaut : le plus proche de sym22 disponible dans PyWavelets.
+# Default family: the closest available option to sym22 in PyWavelets.
 DEFAULT_WAVELET = "sym20"
 
 
 def _modwt_filters(wavelet):
-    """Retourne les filtres MODWT (passe-bas g~, passe-haut h~).
+    """Return the MODWT filters (low-pass g~, high-pass h~).
 
-    Les filtres DWT orthonormaux sont remis à l'échelle par 1/sqrt(2)
-    pour obtenir les filtres MODWT (Percival & Walden, 2000).
+    Orthonormal DWT filters are rescaled by 1/sqrt(2) to obtain the MODWT
+    filters (Percival & Walden, 2000).
     """
-    w = pywt.Wavelet(wavelet)
-    g = np.asarray(w.dec_lo, dtype=float)   # passe-bas (scaling)
-    h = np.asarray(w.dec_hi, dtype=float)   # passe-haut (wavelet)
+    wavelet_type = getattr(pywt, "Wavelet")
+    w = wavelet_type(wavelet)
+    g = np.asarray(w.dec_lo, dtype=float)   # low-pass scaling filter
+    h = np.asarray(w.dec_hi, dtype=float)   # high-pass wavelet filter
     g_t = g / np.sqrt(2.0)
     h_t = h / np.sqrt(2.0)
     return g_t, h_t
 
 
 def _filter_level1(x, filt):
-    """Applique un filtre MODWT de Niveau 1 avec extension symétrique.
+    """Apply a level-1 MODWT filter with symmetric extension.
 
-    Sortie[t] = sum_l filt[l] * x[t-l], bord géré par réflexion symétrique.
+    Output[t] = sum_l filt[l] * x[t-l], with boundaries handled by symmetric reflection.
     """
     x = np.asarray(x, dtype=float)
     n = x.size
     L = filt.size
     if n == 0:
         return np.array([])
-    # padding symétrique en tête de série (longueur du filtre)
+    # Symmetric padding at the start of the series, using the filter length.
     xpad = np.pad(x, (L, 0), mode="symmetric")
     conv = np.convolve(xpad, filt)
     return conv[L:L + n]
 
 
 def modwt_smooth(x, wavelet=DEFAULT_WAVELET):
-    """Composante long-terme V_{1,t} (approximation Niveau 1).
+    """Long-term component V_{1,t} (level-1 approximation).
 
-    C'est la série « débruitée » utilisée pour la construction du spread.
+    This is the denoised series used to build the spread.
     """
     g_t, _ = _modwt_filters(wavelet)
     return _filter_level1(x, g_t)
 
 
 def modwt_detail(x, wavelet=DEFAULT_WAVELET):
-    """Composante court-terme W_{1,t} (détail Niveau 1) = bruit filtré."""
+    """Short-term component W_{1,t} (level-1 detail), i.e. filtered noise."""
     _, h_t = _modwt_filters(wavelet)
     return _filter_level1(x, h_t)
 
 
 def filter_prices(prices, wavelet=DEFAULT_WAVELET):
-    """Filtre (débruite) un bloc de prix colonne par colonne.
+    """Filter and denoise a price block column by column.
 
     Parameters
     ----------
     prices : pl.DataFrame | pl.Series | np.ndarray
-        Prix. Pour un DataFrame wide, la colonne "date" est préservée.
+        Price data. For a wide DataFrame, the "date" column is preserved.
 
     Returns
     -------
-    Même type que l'entrée, contenant la composante long-terme V_{1,t}.
+    Same type as the input, containing the long-term component V_{1,t}.
     """
     import polars as pl
 

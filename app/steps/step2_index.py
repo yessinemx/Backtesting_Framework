@@ -1,4 +1,4 @@
-"""Step 2 — Index Selection : choix de l'univers."""
+"""Step 2 — Index selection: choose the investment universe."""
 import streamlit as st
 
 from config import INDEX_CONFIG

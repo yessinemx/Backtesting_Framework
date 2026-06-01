@@ -1,4 +1,4 @@
-"""Indicateurs de performance : CAGR, Sharpe, Sortino, Calmar, MTD, YTD..."""
+"""Performance indicators: CAGR, Sharpe, Sortino, Calmar, MTD, YTD, and more."""
 import pandas as pd
 import numpy as np
 from dataclasses import dataclass
@@ -36,11 +36,11 @@ class PerformanceIndicators:
         self.returns = tracker.get_returns()
         self.benchmark_returns = benchmark_returns
 
-        # on préfère le taux rf journalier réel si disponible dans le résultat
+        # Prefer the actual daily risk-free series when it is available.
         if hasattr(tracker, 'riskfree_daily') and not tracker.riskfree_daily.empty:
             self.rf_daily = tracker.riskfree_daily.reindex(self.returns.index).fillna(0)
         else:
-            # sinon on convertit le taux annuel en taux journalier simple
+            # Otherwise convert the annual rate into a simple daily rate.
             self.rf_daily = pd.Series(risk_free_rate / 252,
                                       index=self.returns.index)
 

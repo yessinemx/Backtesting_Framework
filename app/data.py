@@ -1,4 +1,4 @@
-"""Loaders Polars convertis en pandas (cachés Streamlit)."""
+"""Polars loaders converted to pandas and cached for Streamlit."""
 import streamlit as st
 
 import loaders

@@ -1,8 +1,4 @@
-"""
-Writer des outputs (tables & figures)
-=====================================
-Fonctions utilitaires pour persister les résultats de la réplication.
-"""
+"""Utility helpers for persisting replication tables and figures."""
 
 import polars as pl
 
@@ -13,25 +9,25 @@ FIGURES_DIR = research_config.FIGURES_DIR
 
 
 def ensure_dirs():
-    """Crée research/outputs/tables et research/outputs/figures si nécessaire."""
+    """Create research/outputs/tables and research/outputs/figures if needed."""
     TABLES_DIR.mkdir(parents=True, exist_ok=True)
     FIGURES_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def save_table(df, name, formats=("csv", "parquet"), float_precision=6):
-    """Sauvegarde une table (Polars ou pandas) dans research/outputs/tables/.
+    """Save a table (Polars or pandas) into research/outputs/tables/.
 
     Parameters
     ----------
     df : pl.DataFrame | pandas.DataFrame
     name : str
-        Nom de fichier sans extension (ex. "table3_returns").
+        File name without an extension (e.g. "table3_returns").
     formats : tuple[str]
         Sous-ensemble de {"csv", "parquet"}.
 
     Returns
     -------
-    list[Path] : fichiers écrits.
+    list[Path] : written files.
     """
     ensure_dirs()
     if not isinstance(df, pl.DataFrame):
@@ -51,9 +47,9 @@ def save_table(df, name, formats=("csv", "parquet"), float_precision=6):
 
 def save_figure(fig, name, formats=("html", "png"), scale=2,
                 width=1100, height=650):
-    """Sauvegarde une figure Plotly dans research/outputs/figures/.
+    """Save a Plotly figure into research/outputs/figures/.
 
-    PNG nécessite le moteur kaleido ; en son absence, on n'écrit que le HTML.
+    PNG output requires Kaleido; when it is unavailable, only HTML is written.
     """
     ensure_dirs()
     written = []
@@ -67,12 +63,12 @@ def save_figure(fig, name, formats=("html", "png"), scale=2,
             fig.write_image(str(path), scale=scale, width=width, height=height)
             written.append(path)
         except Exception as e:  # noqa: BLE001  (kaleido absent)
-            print(f"  PNG non généré ({name}): {e} — installez 'kaleido'")
+                print(f"  PNG not generated ({name}): {e} — install 'kaleido'")
     return written
 
 
 def clear_outputs():
-    """Vide les dossiers research/outputs/tables et research/outputs/figures."""
+    """Clear the research/outputs/tables and research/outputs/figures directories."""
     ensure_dirs()
     for d in (TABLES_DIR, FIGURES_DIR):
         for f in d.iterdir():

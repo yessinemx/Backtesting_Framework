@@ -1,4 +1,4 @@
-"""Sidebar : logo + liste des etapes + bouton reset."""
+"""Sidebar with the logo, step list, and reset button."""
 import streamlit as st
 
 

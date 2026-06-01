@@ -1,4 +1,4 @@
-"""Step 4 — Parameters : manual ou walk-forward."""
+"""Step 4 — Parameters: manual setup or walk-forward optimization."""
 import pandas as pd
 import streamlit as st
 
@@ -61,17 +61,17 @@ def render() -> None:
             train_years = st.slider(
                 "Training window (years)", min_value=2, max_value=10, value=3,
                 key="wf_train_years",
-                help="Longueur de la fenêtre glissante utilisée pour chaque grid search.",
+                help="Length of the rolling training window used for each grid search.",
             )
         with col_wf2:
             reoptim_freq = st.slider(
                 "Re-optimize every N rebalancings", min_value=1, max_value=12, value=3,
                 key="wf_reoptim_freq",
-                help="1 = à chaque rebalancement, 3 = tous les 3 rebalancements (carry-forward entre-deux).",
+                help="1 = every rebalance, 3 = every 3 rebalances with carry-forward in between.",
             )
 
         n_searches = max(1, (n_oos_months // rebal_n + reoptim_freq - 1) // reoptim_freq)
-        st.caption(f"~{n_searches} grid searches — params portés forward entre les ré-optimisations.")
+        st.caption(f"~{n_searches} grid searches — parameters are carried forward between re-optimizations.")
 
         if st.session_state.get("wf_schedule") is None:
             if st.button("▶️ Launch Walk-Forward", type="primary", use_container_width=True):

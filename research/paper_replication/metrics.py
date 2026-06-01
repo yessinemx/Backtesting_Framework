@@ -1,14 +1,14 @@
 """
-Métriques de performance du portefeuille de paires
-==================================================
-Réplication de la Section 5 (Tables de résultats) du papier.
+Performance metrics for the pairs portfolio.
 
-Agrégation équipondérée des paires en un portefeuille. Le rendement moyen
-porte sur TOUTES les paires sélectionnées, inactives incluses (P&L = 0) :
+Replication of Section 5 (result tables) from the paper.
+
+Pairs are aggregated into an equal-weighted portfolio. Mean return covers all
+selected pairs, including inactive ones (P&L = 0):
     R̄_n = Σ_ij R_ij / N_n   (eq. A2)
 
-La série de rendements quotidiens du portefeuille est agrégée en Polars
-(group_by date -> moyenne), puis les ratios sont calculés en numpy.
+The portfolio daily return series is aggregated in Polars
+(group_by date -> mean), then the ratios are computed in NumPy.
 """
 from dataclasses import dataclass, asdict
 import numpy as np
@@ -65,7 +65,7 @@ def _max_drawdown(cum):
 
 
 def _portfolio_daily(pair_results):
-    """Série quotidienne du portefeuille (moyenne des paires par date)."""
+    """Daily portfolio series computed as the mean pair return by date."""
     frames = []
     for pr in pair_results:
         if pr.dates is None or len(pr.daily_returns) == 0:
@@ -82,7 +82,7 @@ def _portfolio_daily(pair_results):
 
 
 def aggregate_metrics(pair_results, method, variant, n_pairs=None):
-    """Agrège une liste de PairResult en un PairsReport."""
+    """Aggregate a list of PairResult objects into a PairsReport."""
     if n_pairs is None:
         n_pairs = len(pair_results)
 

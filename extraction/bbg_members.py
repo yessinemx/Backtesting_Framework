@@ -8,21 +8,22 @@ from config import INDEX_CONFIG, DATA_DIR, MEMBERSHIP_PATH, DATA_START, DATA_END
 
 
 def _month_starts(start: str, end: str):
-    """Liste des premiers jours de mois (date) entre start et end inclus."""
+    """List the first calendar day of each month between start and end."""
     dt_start = datetime.strptime(start, "%Y-%m-%d").date()
     dt_end = datetime.strptime(end, "%Y-%m-%d").date()
     return pl.date_range(dt_start, dt_end, interval="1mo", eager=True).to_list()
 
 
 def extract_membership(bbg, progress_callback=None, index_ids=None):
-    """Extrait la composition des indices.
+    """Extract index membership.
 
-    index_ids : liste d'index a extraire ; None = tous. Les lignes des indices
-    cibles sont remplacees dans le parquet existant (merge par index_id).
+    index_ids: list of index identifiers to extract; None means all indices.
+    Rows for the targeted indices replace the corresponding rows in the
+    existing parquet file (merge by index_id).
     """
     targets = {k: v for k, v in INDEX_CONFIG.items()
                if index_ids is None or k in index_ids}
-    dates = _month_starts(DATA_START, DATA_END)  # début de mois
+    dates = _month_starts(DATA_START, DATA_END)  # month starts
     rows = []
     total = len(dates) * len(targets)
     done = 0
@@ -64,7 +65,7 @@ def extract_membership(bbg, progress_callback=None, index_ids=None):
         pl.col("date").cast(pl.Datetime("ns"))
     )
 
-    # Merge avec l'existant : on remplace les indices cibles
+    # Merge with the existing file and replace the targeted indices.
     if MEMBERSHIP_PATH.exists():
         existing = pl.read_parquet(MEMBERSHIP_PATH).with_columns(
             pl.col("date").cast(pl.Datetime("ns"))

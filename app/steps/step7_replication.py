@@ -12,7 +12,7 @@ def _default_index_options():
 
 def render() -> None:
     st.markdown('<p class="section-hdr">Paper Replication</p>', unsafe_allow_html=True)
-    st.caption("Runner dédié pour la réplication du papier sans mélanger ça au backtest standard.")
+    st.caption("Dedicated runner for the paper replication workflow, separate from the standard backtest.")
 
     with st.container(border=True):
         col1, col2, col3 = st.columns(3)
@@ -66,7 +66,7 @@ def render() -> None:
 
     result = st.session_state.get("paper_replication_result")
     if not result:
-        st.info("Choisis un setup puis lance un smoke test ou une réplication complète.")
+        st.info("Choose a setup, then run a smoke test or a full replication.")
         return
 
     summary = result["summary"]

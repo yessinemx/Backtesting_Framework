@@ -1,14 +1,14 @@
 """
-Orchestrateur de la réplication du papier de pairs trading par ondelettes.
+Wavelet pairs trading paper replication orchestrator.
 
-Pour chaque période (formation, trading) :
-  1. Sélection des paires sur la formation (distance ou cointégration).
-  2. Construction des spreads standard ET wavelet.
-  3. Simulation du trading (seuils 2σ) sur la fenêtre de trading.
-  4. Agrégation des métriques par variante.
+For each period (formation, trading):
+    1. Select pairs on the formation sample (distance or cointegration).
+    2. Build both the standard and wavelet spreads.
+    3. Simulate trading on the trading window with 2σ thresholds.
+    4. Aggregate metrics by variant.
 
-Chargement via le package loaders (Polars). Les tables et figures de la
-réplication sont écrites dans research/outputs/tables et research/outputs/figures.
+Data is loaded through the loaders package in Polars. Replication tables and
+figures are written to research/outputs/tables and research/outputs/figures.
 """
 from dataclasses import dataclass
 from typing import Any
@@ -33,7 +33,7 @@ class PipelineResult:
 
 
 def _run_variant(pairs, train_prices, trade_prices, use_wavelet, params):
-    """Construit les spreads et simule le trading pour une variante."""
+    """Build spreads and simulate trading for one variant."""
     results = []
     for i, j in pairs:
         spec = build_spread(
@@ -49,7 +49,7 @@ def _run_variant(pairs, train_prices, trade_prices, use_wavelet, params):
 
 
 def run_period(period, prices, params):
-    """Exécute le pipeline sur une période (formation, trading)."""
+    """Run the pipeline on a single formation/trading period."""
     train_prices = prices.slice(*period.train_slice)
     trade_prices = prices.slice(*period.trade_slice)
 
@@ -77,16 +77,16 @@ def run_period(period, prices, params):
 
 
 def run_pipeline(params=None, source="data", verbose=True, write_outputs=True):
-    """Exécute le pipeline complet sur toutes les périodes.
+    """Run the full pipeline across all periods.
 
     Parameters
     ----------
     params : dict | None
-        Paramètres (défaut research.config.PAIRS_CONFIG).
+        Parameter dictionary. Defaults to research.config.PAIRS_CONFIG.
     source : "data" | "bloomberg"
-        Source des prix (via le package loaders).
+        Price source loaded via the loaders package.
     write_outputs : bool
-        Si True, écrit tables + figures dans research/outputs/.
+        If True, write tables and figures to research/outputs/.
 
     Returns
     -------
@@ -102,7 +102,7 @@ def run_pipeline(params=None, source="data", verbose=True, write_outputs=True):
         max_periods=params.get("max_periods"),
     )
     if verbose:
-        print(f"Univers : {prices.width - 1} titres, {len(periods)} périodes")
+        print(f"Universe: {prices.width - 1} securities, {len(periods)} periods")
 
     period_results = []
     for period in periods:
@@ -154,7 +154,7 @@ _METRIC_COLS = [
 
 
 def _build_summary(period_results) -> pl.DataFrame:
-    """Moyenne des métriques sur toutes les périodes, par variante."""
+    """Average metrics across all periods, split by variant."""
     if not period_results:
         return pl.DataFrame()
     rows = []
@@ -169,7 +169,7 @@ def _build_summary(period_results) -> pl.DataFrame:
 
 
 def _write_outputs(result):
-    """Écrit les tables et figures de la réplication dans research/outputs/."""
+    """Write replication tables and figures to research/outputs/."""
     from research.paper_replication.output_writer import save_table, save_figure
     import plotly.graph_objects as go
 
@@ -183,25 +183,25 @@ def _write_outputs(result):
 
     variants = summary.get_column("variant").to_list()
 
-    # Figure 1 : rendement moyen par variante
+    # Figure 1: mean return by variant.
     fig_ret = go.Figure(go.Bar(
         x=variants, y=summary.get_column("mean_return").to_list(),
         marker_color=["#888", "#2ca02c"],
     ))
-    fig_ret.update_layout(title="Rendement moyen par paire : standard vs wavelet",
-                          yaxis_title="Rendement moyen", template="plotly_white")
+    fig_ret.update_layout(title="Mean return per pair: standard vs wavelet",
+                          yaxis_title="Mean return", template="plotly_white")
     save_figure(fig_ret, "fig_mean_return")
 
-    # Figure 2 : Sharpe annualisé par variante
+    # Figure 2: annualized Sharpe by variant.
     fig_sr = go.Figure(go.Bar(
         x=variants, y=summary.get_column("sharpe").to_list(),
         marker_color=["#888", "#1f77b4"],
     ))
-    fig_sr.update_layout(title="Sharpe annualisé : standard vs wavelet",
+    fig_sr.update_layout(title="Annualized Sharpe: standard vs wavelet",
                          yaxis_title="Sharpe", template="plotly_white")
     save_figure(fig_sr, "fig_sharpe")
 
-    # Figure 3 : catégories de convergence (wavelet)
+    # Figure 3: convergence categories for the wavelet variant.
     wav = summary.filter(pl.col("variant") == "wavelet")
     fig_cat = go.Figure(go.Bar(
         x=["full", "partial", "non", "inactive"],
@@ -209,11 +209,11 @@ def _write_outputs(result):
            wav["n_non"][0], wav["n_inactive"][0]],
         marker_color="#9467bd",
     ))
-    fig_cat.update_layout(title="Catégories de convergence (wavelet, moy./période)",
-                          yaxis_title="Nombre de paires", template="plotly_white")
+    fig_cat.update_layout(title="Convergence categories (wavelet, average per period)",
+                          yaxis_title="Number of pairs", template="plotly_white")
     save_figure(fig_cat, "fig_convergence_categories")
 
-    # Figure 4 : rendement moyen wavelet par période
+    # Figure 4: mean return by period.
     if not by_period.is_empty():
         wbp = by_period.filter(pl.col("variant") == "wavelet").sort("period")
         sbp = by_period.filter(pl.col("variant") == "standard").sort("period")
@@ -226,13 +226,13 @@ def _write_outputs(result):
                            y=wbp.get_column("mean_return").to_list(),
                            mode="lines+markers", name="wavelet",
                            line=dict(color="#2ca02c"))
-        fig_ts.update_layout(title="Rendement moyen par période",
-                             xaxis_title="Période", yaxis_title="Rendement moyen",
+        fig_ts.update_layout(title="Mean return by period",
+                     xaxis_title="Period", yaxis_title="Mean return",
                              template="plotly_white")
         save_figure(fig_ts, "fig_mean_return_by_period")
 
 
 if __name__ == "__main__":
     result = run_pipeline()
-    print("\n=== Résumé standard vs wavelet (moyenne sur les périodes) ===")
+    print("\n=== Standard vs wavelet summary (average across periods) ===")
     print(result["summary"])

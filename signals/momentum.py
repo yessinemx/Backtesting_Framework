@@ -25,7 +25,7 @@ class MomentumStrategy(BaseStrategy):
             px = prices[ticker].loc[:date].dropna()
             if len(px) < lb:
                 continue
-            # on évite le dernier mois pour ne pas capter le retournement court terme
+            # Skip the most recent month to avoid short-term reversal effects.
             end_idx = -skip if skip > 0 else None
             start_idx = -lb
             if end_idx is not None and abs(end_idx) < len(px):

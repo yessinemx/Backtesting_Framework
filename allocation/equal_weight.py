@@ -14,7 +14,7 @@ class EqualWeightAllocator(BaseAllocator):
         longs = [t for t, s in signals.items() if s == 1]
         shorts = [t for t, s in signals.items() if s == -1]
 
-        # on a besoin des deux côtés pour avoir un portefeuille market-neutral
+        # Both sides are required to keep the portfolio market-neutral.
         if not longs or not shorts:
             return {}
 

@@ -75,7 +75,7 @@ REBALANCE_FREQS = {
     "12M": 12,
 }
 
-# Grilles de paramètres pour le grid search in-sample
+# Parameter grids for in-sample grid search
 MA_PARAM_GRID = {
     "fast_window": [10, 20, 30, 40, 50],
     "slow_window": [50, 100, 150, 200],

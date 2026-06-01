@@ -12,7 +12,7 @@ DATE_COL = "date"
 
 
 def _series_frame(ticker, date_vals):
-    """Construit un frame Polars [date, <ticker>] à partir d'un dict {date: px}."""
+    """Build a Polars frame [date, <ticker>] from a {date: price} mapping."""
     dates = list(date_vals.keys())
     values = list(date_vals.values())
     return pl.DataFrame({DATE_COL: dates, ticker: values}).with_columns([
@@ -24,11 +24,11 @@ def _series_frame(ticker, date_vals):
 def extract_prices(bbg, membership=None,
                    batch_size: int = 40, progress_callback=None,
                    tickers=None):
-    """Telecharge PX_LAST et merge avec prices/returns existants.
+    """Download PX_LAST and merge it with existing prices/returns files.
 
-    tickers : si fourni, ne telecharge que cette liste (les autres tickers
-    de la membership sont ignores). Sinon tout ce qui est dans membership.
-    Les tickers deja presents dans prices.parquet sont skip.
+    tickers: if provided, download only this list and ignore the other
+    membership tickers. Otherwise use the full membership universe. Tickers
+    already present in prices.parquet are skipped.
     """
     if membership is None:
         membership = pl.read_parquet(MEMBERSHIP_PATH)
@@ -40,11 +40,11 @@ def extract_prices(bbg, membership=None,
     else:
         candidate = sorted(set(tickers))
 
-    # Skip ceux deja dans le parquet existant
+    # Skip tickers already stored in the existing parquet file.
     existing_prices = None
     if PRICES_PATH.exists():
         existing_prices = pl.read_parquet(PRICES_PATH)
-        # Compat : anciens parquets ecrits par pandas sans nommer l'index
+        # Compatibility with older pandas-written parquet files lacking an index name.
         if DATE_COL not in existing_prices.columns:
             for legacy in ("__index_level_0__", "index", "Date"):
                 if legacy in existing_prices.columns:
@@ -62,7 +62,7 @@ def extract_prices(bbg, membership=None,
         print(f"All {len(candidate)} tickers already present, nothing to download")
         if progress_callback:
             progress_callback(1.0, "Nothing to download")
-        # Recharger returns aussi pour cohérence
+        # Reload returns as well for consistency.
         returns = pl.read_parquet(RETURNS_PATH) if RETURNS_PATH.exists() else existing_prices
         return existing_prices, returns
 
@@ -95,12 +95,12 @@ def extract_prices(bbg, membership=None,
         empty = pl.DataFrame(schema={DATE_COL: pl.Datetime})
         return existing_prices if existing_prices is not None else empty, empty
 
-    # Concatenation des nouveaux tickers
+    # Concatenate newly downloaded tickers.
     new_prices = frames[0]
     for f in frames[1:]:
         new_prices = new_prices.join(f, on=DATE_COL, how="full", coalesce=True)
 
-    # Merge avec l'existant
+    # Merge with the existing data.
     if existing_prices is not None:
         prices = existing_prices.join(new_prices, on=DATE_COL, how="full", coalesce=True)
     else:

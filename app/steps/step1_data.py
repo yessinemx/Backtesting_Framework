@@ -1,4 +1,4 @@
-"""Step 1 — Data Status : verification des fichiers + apercu marche."""
+"""Step 1 — Data status: file checks and market overview."""
 import polars as pl
 import streamlit as st
 
@@ -10,7 +10,7 @@ from app.data import load_prices, load_membership, load_riskfree
 
 
 def _missing_indices() -> list[str]:
-    """Indices declares dans INDEX_CONFIG mais absents de membership.parquet."""
+    """Indices declared in INDEX_CONFIG but missing from membership.parquet."""
     if not MEMBERSHIP_PATH.exists():
         return list(INDEX_CONFIG.keys())
     present = set(
@@ -22,13 +22,13 @@ def _missing_indices() -> list[str]:
 
 def _run_bbg_extraction(index_ids: list[str] | None = None,
                         do_riskfree: bool = True) -> None:
-    """Extrait uniquement les `index_ids` cibles (None = tous)."""
+    """Extract only the target `index_ids` (None means all indices)."""
     try:
         from extraction.bloomberg_api import BloombergConnector
         bbg = BloombergConnector()
         bbg.connect()
         if not bbg.connected:
-            st.error("Bloomberg non connecte")
+            st.error("Bloomberg is not connected")
             st.stop()
 
         from extraction.bbg_members import extract_membership
@@ -46,7 +46,7 @@ def _run_bbg_extraction(index_ids: list[str] | None = None,
             progress_callback=lambda p, m: (bar.progress(int(p * 33)), status.text(f"Members: {m}")),
         )
 
-        # Restreindre aux tickers des indices ciblés pour extract_prices
+        # Restrict extraction to tickers from the requested indices.
         target_tickers = None
         if index_ids is not None and mem.height > 0:
             target_tickers = (
@@ -68,12 +68,12 @@ def _run_bbg_extraction(index_ids: list[str] | None = None,
             )
 
         bar.progress(100)
-        status.text("Extraction terminee")
+        status.text("Extraction completed")
         st.cache_data.clear()
         st.rerun()
 
     except Exception as e:
-        st.error(f"Erreur extraction : {e}")
+        st.error(f"Extraction error: {e}")
 
 
 def render() -> None:
@@ -157,7 +157,7 @@ def render() -> None:
                     <p class="detail">{cfg['currency']} · {n} tickers · {badge}</p>
                 </div>""", unsafe_allow_html=True)
 
-        # ── Indices manquants : proposer extraction ciblee ──
+        # Offer a targeted extraction for indices that are still missing.
         missing = _missing_indices()
         if missing:
             st.markdown("<br>", unsafe_allow_html=True)
@@ -179,6 +179,6 @@ def render() -> None:
         st.subheader("🔧 Bloomberg Extraction Required")
         missing = _missing_indices()
         label = ", ".join(missing) if missing else "all indices"
-        st.markdown(f"Ind : **{label}**. Bloomberg Terminal must be connected.")
+        st.markdown(f"Universe: **{label}**. Bloomberg Terminal must be connected.")
         if st.button(f"Launch extraction ({label})", type="primary"):
             _run_bbg_extraction(index_ids=missing or None)

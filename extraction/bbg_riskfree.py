@@ -11,7 +11,7 @@ DATE_COL = "date"
 
 
 def _series_frame(ccy, date_vals):
-    """Frame Polars [date, <ccy>] à partir d'un dict {date: valeur}."""
+    """Build a Polars frame [date, <ccy>] from a {date: value} mapping."""
     return pl.DataFrame({
         DATE_COL: list(date_vals.keys()),
         ccy: list(date_vals.values()),
@@ -43,7 +43,7 @@ def extract_riskfree(bbg, progress_callback=None):
                     if combined is None:
                         combined = f
                     else:
-                        # on complète les trous avec le ticker suivant si dispo
+                        # Fill gaps with the next ticker when available.
                         combined = (
                             combined.join(f, on=DATE_COL, how="full",
                                           coalesce=True, suffix="_next")
@@ -60,7 +60,7 @@ def extract_riskfree(bbg, progress_callback=None):
             print(f"No data for {ccy}")
             continue
 
-        # taux annuel (%) -> taux journalier simple ; ffill/bfill des trous
+        # Convert annualized percentage rates into simple daily rates and fill gaps.
         combined = combined.sort(DATE_COL).with_columns(
             pl.col(ccy).forward_fill().backward_fill()
         ).with_columns(

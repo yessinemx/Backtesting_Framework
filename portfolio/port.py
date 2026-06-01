@@ -6,7 +6,7 @@ class PortfolioExporter:
 
     @staticmethod
     def to_bbu(weights_history, portfolio_name="PTF", cash_ccy="USD"):
-        # on ajoute une ligne cash à +100% pour que Bloomberg puisse calculer les rendements
+        # Add a +100% cash line so Bloomberg can compute portfolio returns.
         cash_ticker = f"{cash_ccy} Curncy"
         
         rows = []
@@ -33,7 +33,7 @@ class PortfolioExporter:
 
     @staticmethod
     def summary_table(weights_history):
-        # tableau récap par date de rebalancement
+        # Summary table by rebalance date.
         rows = []
         for dt in sorted(weights_history.keys()):
             weights = {t: w for t, w in weights_history[dt].items()

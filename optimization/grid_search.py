@@ -12,7 +12,7 @@ class GridSearch:
 
     def __init__(self, prices, returns, membership, riskfree,
                  index_id, start, end, rebalance_months=1):
-        # données complètes conservées pour le walk-forward
+        # Keep the full datasets available for walk-forward optimization.
         self._prices_all    = prices
         self._returns_all   = returns
         self._membership_all = membership
@@ -30,7 +30,7 @@ class GridSearch:
         self.tc_rate = TRANSACTION_COST_BPS / 10_000.0
         self.borrow_rate_daily = SHORT_BORROW_BPS / 10_000.0 / 252
 
-        # calendrier de rebalancement : dernier jour ouvré de chaque N mois
+        # Rebalance calendar: last business day of each N-month bucket.
         all_dates = self.prices.index
         month_ends = all_dates.to_series().groupby(
             all_dates.to_period("M")
@@ -40,15 +40,15 @@ class GridSearch:
             rebal_vals.add(all_dates[0])
         self._rebal_dates = rebal_vals
 
-        # --- caches precomputés partagés entre tous les combos ---
+        # Shared precomputed caches reused across all parameter combinations.
         self._date_pos     = {d: i for i, d in enumerate(self.returns.index)}
         self._sorted_rebals = sorted(d for d in self._rebal_dates if d in self._date_pos)
 
-        # matrice de rendements en numpy pur : (n_dates, n_tickers)
+        # Pure NumPy return matrix: (n_dates, n_tickers).
         self._ret_np  = self.returns.fillna(0).values
         self._ret_cols = {t: i for i, t in enumerate(self.returns.columns)}
 
-        # membres à chaque date de rebalancement (1 seul filtre par date)
+        # Membership snapshot at each rebalance date (single filter per date).
         self._members_cache = {}
         for d in self._sorted_rebals:
             available = self.membership[self.membership["date"] <= d]
@@ -66,8 +66,8 @@ class GridSearch:
         keys   = list(param_grid.keys())
         combos = list(product(*[param_grid[k] for k in keys]))
 
-        # precompute rolling means for every unique window — O(W × T × D) une seule fois
-        # (skipé si les arrays sont fournis en externe, e.g. par build_params_schedule)
+        # Precompute rolling means once for every unique window.
+        # Skip this when arrays are injected externally, e.g. by build_params_schedule.
         if _rolling_ma is not None:
             rolling_ma = _rolling_ma
         else:
@@ -81,7 +81,7 @@ class GridSearch:
         valid_combos = []
         for i, vals in enumerate(combos):
             params_i = dict(zip(keys, vals))
-            # on élimine les combinaisons incohérentes (fenêtre rapide >= fenêtre lente)
+            # Drop invalid combinations where the fast window is not below the slow window.
             if "fast_window" in params_i and "slow_window" in params_i:
                 if params_i["fast_window"] >= params_i["slow_window"]:
                     continue
@@ -102,7 +102,7 @@ class GridSearch:
         keys   = list(param_grid.keys())
         combos = list(product(*[param_grid[k] for k in keys]))
 
-        # precompute momentum scores pour chaque lb unique
+        # Precompute momentum scores for each unique lookback.
         if _mom_score is not None:
             mom_score = _mom_score
             price_skip = _price_skip or {}
@@ -156,7 +156,7 @@ class GridSearch:
         if not active:
             return {}
         if rolling_vol is not None:
-            # lecture vectorisée depuis le cache precomputé
+            # Vectorized lookup from the precomputed cache.
             row = rolling_vol.loc[date, [t for t in active if t in rolling_vol.columns]].dropna()
             vols = {t: v for t, v in row.items() if v > 0}
         else:
@@ -195,7 +195,7 @@ class GridSearch:
         w_arr    = np.empty(0)
 
         for i_d, date in enumerate(dates):
-            # P&L du jour avec les ANCIENS poids
+            # Daily P&L using the previous weights.
             if w_arr.size:
                 r_vec      = ret_np[i_d, w_idx]
                 daily      = float(w_arr @ r_vec)
@@ -212,7 +212,7 @@ class GridSearch:
                     daily = (1 + daily) * (1 - borrow) - 1
 
             if date in self._rebal_dates:
-                # signaux MA via rolling means precomputés
+                # MA signals from precomputed rolling means.
                 members = self._members_cache.get(date, [])
                 signals = {}
                 if rolling_ma is not None:
@@ -243,7 +243,7 @@ class GridSearch:
                 daily    = (1 + daily) * (1 - tc) - 1
                 weights  = new_weights
             else:
-                # dérive mark-to-market des poids entre les rebalancements
+                # Mark-to-market weight drift between rebalances.
                 if weights and w_arr.size:
                     denom = 1.0 + daily
                     if abs(denom) < 1e-12:
@@ -260,7 +260,7 @@ class GridSearch:
                             new_w[t] = weights[t] * (1.0 + r_t) * factor
                         weights = new_w
 
-            # mettre à jour w_idx / w_arr pour le prochain jour
+            # Refresh w_idx / w_arr for the next day.
             active = [t for t, wv in weights.items() if wv != 0 and t in ret_cols]
             if active:
                 w_idx = [ret_cols[t] for t in active]
@@ -287,7 +287,7 @@ class GridSearch:
         w_arr    = np.empty(0)
 
         for i_d, date in enumerate(dates):
-            # P&L du jour avec les ANCIENS poids
+            # Daily P&L using the previous weights.
             if w_arr.size:
                 r_vec      = ret_np[i_d, w_idx]
                 daily      = float(w_arr @ r_vec)
@@ -304,7 +304,7 @@ class GridSearch:
                     daily = (1 + daily) * (1 - borrow) - 1
 
             if date in self._rebal_dates:
-                # scores momentum via arrays precomputés
+                # Momentum scores from precomputed arrays.
                 members = self._members_cache.get(date, [])
                 if mom_score is not None and lb in mom_score:
                     score_row = mom_score[lb].loc[date]
@@ -329,7 +329,7 @@ class GridSearch:
                             mom = px.iloc[-1] / px.iloc[-lb] - 1
                         scores[t] = mom
 
-                ranked  = sorted(scores, key=scores.get, reverse=True)
+                ranked  = sorted(scores, key=lambda ticker: scores[ticker], reverse=True)
                 n       = len(ranked)
                 long_t  = ranked[:top_n]
                 short_t = ranked[max(n - top_n, top_n):]
@@ -348,7 +348,7 @@ class GridSearch:
                 daily    = (1 + daily) * (1 - tc) - 1
                 weights  = new_weights
             else:
-                # dérive mark-to-market des poids entre les rebalancements
+                # Mark-to-market weight drift between rebalances.
                 if weights and w_arr.size:
                     denom = 1.0 + daily
                     if abs(denom) < 1e-12:
@@ -365,7 +365,7 @@ class GridSearch:
                             new_w[t] = weights[t] * (1.0 + r_t) * factor
                         weights = new_w
 
-            # mettre à jour w_idx / w_arr pour le prochain jour
+            # Refresh w_idx / w_arr for the next day.
             active = [t for t, wv in weights.items() if wv != 0 and t in ret_cols]
             if active:
                 w_idx = [ret_cols[t] for t in active]
@@ -380,7 +380,7 @@ class GridSearch:
     def _metrics(self, rets):
         if rets.empty or rets.std() == 0:
             return 0, 0, 0
-        # Sharpe annualisé sur les excès de rendement
+        # Annualized Sharpe on excess returns.
         if self.riskfree is not None and not self.riskfree.empty:
             rf = self.riskfree.reindex(rets.index).fillna(0)
             excess = rets - rf
@@ -390,7 +390,7 @@ class GridSearch:
         cum = (1 + rets).cumprod()
         n_years = len(rets) / 252
         cagr = (cum.iloc[-1] ** (1 / n_years) - 1) * 100 if n_years > 0 else 0
-        # max drawdown = pire chute depuis le pic (en %)
+        # Max drawdown = worst peak-to-trough drop (in %).
         running_max = cum.expanding().max()
         max_dd = ((cum - running_max) / running_max).min() * 100
         return round(sharpe, 4), round(cagr, 2), round(max_dd, 2)
@@ -400,14 +400,13 @@ class GridSearch:
                                train_years=3, allocation="EW",
                                reoptim_freq=1, progress_callback=None):
         """
-        Pour chaque date de rebalancement de la période OOS, lance un grid search
-        sur la fenêtre glissante [date - train_years, date].
+        Run a grid search at each out-of-sample rebalance date over the rolling
+        training window [date - train_years, date].
 
-        reoptim_freq : ne ré-optimiser que tous les N rebalancements (ex: 3 = trimestriel
-                       même si le portefeuille rebalance chaque mois).
-        n_jobs       : nombre de threads parallèles (-1 = tous les cœurs disponibles).
+        reoptim_freq: re-optimize only every N rebalances (e.g. 3 = quarterly
+        optimization even if the portfolio rebalances monthly).
         """
-        # calendrier de rebalancement sur la période OOS
+        # Rebalance calendar for the out-of-sample period.
         oos_prices = self._prices_all.loc[oos_start:oos_end]
         oos_dates = oos_prices.index
         if oos_dates.empty:
@@ -418,12 +417,12 @@ class GridSearch:
         if oos_dates[0] not in set(rebal_days):
             rebal_days = rebal_days.insert(0, oos_dates[0])
 
-        # dates auxquelles on relance vraiment le grid search (sous-ensemble)
+        # Dates where the grid search is actually re-run.
         optim_dates = rebal_days[::reoptim_freq]
         total = len(optim_dates)
         optim_results = {}
 
-        # Chaque child GridSearch slicera ces arrays au lieu de les recalculer
+        # Child GridSearch instances slice these arrays instead of recomputing them.
         if strategy == "MA":
             all_windows = set(param_grid.get("fast_window", [])) | set(param_grid.get("slow_window", []))
             _global_rolling_ma  = {w: self._prices_all.rolling(w).mean() for w in all_windows}
@@ -449,8 +448,9 @@ class GridSearch:
                 str(t_start.date()), str(date.date()),
                 self.rebalance_months,
             )
-            # injecter les arrays precomputés
+            # Inject the precomputed arrays.
             if strategy == "MA":
+                assert _global_rolling_ma is not None
                 sliced_ma  = {w: v.loc[:date] for w, v in _global_rolling_ma.items()}
                 sliced_vol = _global_rolling_vol.loc[:date] if _global_rolling_vol is not None else None
                 optim_results[date] = gs_train.best_params(
@@ -458,6 +458,8 @@ class GridSearch:
                     _rolling_ma=sliced_ma, _rolling_vol=sliced_vol
                 )
             else:
+                assert _global_mom_score is not None
+                assert _global_price_skip is not None
                 sliced_ms  = {lb: v.loc[:date] for lb, v in _global_mom_score.items()}
                 sliced_ps  = {s: v.loc[:date]  for s, v  in _global_price_skip.items()}
                 sliced_vol = _global_rolling_vol.loc[:date] if _global_rolling_vol is not None else None
@@ -468,7 +470,7 @@ class GridSearch:
             if progress_callback:
                 progress_callback((i + 1) / total, f"WF {date.date()} ({i+1}/{total})")
 
-        # on propage les params aux dates intermédiaires (carry-forward)
+        # Carry forward parameters to intermediate rebalance dates.
         optim_set = set(optim_dates)
         schedule = {}
         last_params = {}

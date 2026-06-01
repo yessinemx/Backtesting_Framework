@@ -1,1 +1,1 @@
-"""Sous-package des etapes du wizard."""
+"""Wizard steps subpackage."""

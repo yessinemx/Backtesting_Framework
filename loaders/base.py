@@ -1,13 +1,13 @@
 """
-Utilitaires Polars communs aux loaders
-======================================
-Conventions de schéma :
-  - Prix / rendements  : format *wide*  -> 1re colonne "date" (Datetime),
-    puis une colonne Float64 par ticker.
-  - Membership         : format *long*  -> [date, index_id, ticker].
+Common Polars utilities for loaders.
 
-Les fichiers Parquet historiques ont été écrits par pandas avec un index
-date matérialisé en colonne "__index_level_0__" : on la normalise en "date".
+Schema conventions:
+    - Prices / returns: wide format -> first column "date" (Datetime),
+        followed by one Float64 column per ticker.
+    - Membership: long format -> [date, index_id, ticker].
+
+Historical parquet files were written by pandas with the date index
+materialized as "__index_level_0__". This module normalizes it back to "date".
 """
 import polars as pl
 
@@ -16,16 +16,16 @@ _PANDAS_INDEX = "__index_level_0__"
 
 
 def normalize_wide(df: pl.DataFrame) -> pl.DataFrame:
-    """Normalise un parquet wide (prix/rendements) en plaçant "date" en tête.
+    """Normalize a wide parquet frame and move "date" to the first column.
 
-    Gère l'index pandas matérialisé ("__index_level_0__") ou une colonne
-    "date" déjà présente. La colonne date est typée Datetime et triée.
+    Handles a materialized pandas index ("__index_level_0__") or an existing
+    "date" column. The date column is cast to Datetime and sorted.
     """
     cols = df.columns
     if _PANDAS_INDEX in cols:
         df = df.rename({_PANDAS_INDEX: DATE_COL})
     elif DATE_COL not in cols:
-        # à défaut, on suppose que la 1re colonne est la date
+        # Fallback: assume the first column contains the date values.
         df = df.rename({cols[0]: DATE_COL})
 
     if df.schema[DATE_COL] != pl.Datetime:
@@ -36,7 +36,7 @@ def normalize_wide(df: pl.DataFrame) -> pl.DataFrame:
 
 
 def filter_date_range(df: pl.DataFrame, start=None, end=None) -> pl.DataFrame:
-    """Restreint un frame wide à une plage de dates inclusive."""
+    """Restrict a wide frame to an inclusive date range."""
     if start is not None:
         df = df.filter(pl.col(DATE_COL) >= pl.lit(start).str.to_datetime()
                        if isinstance(start, str) else pl.col(DATE_COL) >= start)
@@ -47,16 +47,16 @@ def filter_date_range(df: pl.DataFrame, start=None, end=None) -> pl.DataFrame:
 
 
 def restrict_universe(prices: pl.DataFrame, tickers) -> pl.DataFrame:
-    """Ne conserve que la colonne date + les tickers demandés et présents."""
+    """Keep only the date column plus the requested tickers that are present."""
     keep = [DATE_COL] + [t for t in tickers if t in prices.columns]
     return prices.select(keep)
 
 
 def to_pandas_wide(df: pl.DataFrame):
-    """Convertit un frame wide Polars en DataFrame pandas indexé par date.
+    """Convert a wide Polars frame to a pandas DataFrame indexed by date.
 
-    Pont de compatibilité pour les modules de calcul encore basés sur
-    l'alignement par index pandas (moteur de backtest, indicateurs).
+    Compatibility bridge for computation modules that still rely on pandas
+    index alignment, such as the backtest engine and indicators.
     """
     pdf = df.to_pandas()
     if DATE_COL in pdf.columns:
@@ -66,7 +66,7 @@ def to_pandas_wide(df: pl.DataFrame):
 
 
 def wide_from_pandas(pdf) -> pl.DataFrame:
-    """Convertit un DataFrame pandas (index date) en frame wide Polars."""
+    """Convert a pandas DataFrame with a date index into a wide Polars frame."""
     tmp = pdf.copy()
     tmp.index.name = DATE_COL
     return pl.from_pandas(tmp.reset_index())

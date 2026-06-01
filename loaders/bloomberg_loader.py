@@ -1,11 +1,12 @@
 """
-Loader Bloomberg (Polars)
-=========================
-Encapsule le connecteur blpapi existant (extraction.bloomberg_api.BloombergConnector) et
-renvoie des frames Polars conformes au schéma des loaders.
+Bloomberg loader for Polars.
 
-Nécessite blpapi + un terminal Bloomberg actif. En l'absence de connexion,
-les méthodes renvoient des frames vides (mode offline).
+Wraps the existing blpapi connector
+(extraction.bloomberg_api.BloombergConnector) and returns Polars frames that
+match the loader schema.
+
+Requires blpapi and an active Bloomberg Terminal. Without a connection, the
+methods return empty frames in offline mode.
 """
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -26,7 +27,7 @@ def _to_dt(d, default):
 
 
 class BloombergLoader:
-    """Adaptateur Polars autour de BloombergConnector."""
+    """Polars adapter around BloombergConnector."""
 
     def __init__(self, connector=None):
         self._connector = connector
@@ -41,7 +42,7 @@ class BloombergLoader:
 
     # ------------------------------------------------------------------
     def load_membership(self, index_id=None) -> pl.DataFrame:
-        """Membership [date, index_id, ticker] via INDX_MWEIGHT mensuel."""
+        """Membership [date, index_id, ticker] via monthly INDX_MWEIGHT."""
         bbg = self._connect()
         indices = config.INDEX_CONFIG
         if index_id is not None:
@@ -113,14 +114,14 @@ class BloombergLoader:
         for f in frames[1:]:
             out = out.join(f, on=DATE_COL, how="full", coalesce=True)
         out = out.sort(DATE_COL)
-        # forward-fill des jours fériés
+        # Forward-fill holidays and other missing market days.
         value_cols = [c for c in out.columns if c != DATE_COL]
         out = out.with_columns([pl.col(c).forward_fill() for c in value_cols])
         return out
 
     # ------------------------------------------------------------------
     def load_riskfree(self) -> pl.DataFrame:
-        """Taux sans risque journaliers wide Polars [date, <devises...>]."""
+        """Daily risk-free rates in wide Polars format [date, <currencies...>]."""
         bbg = self._connect()
         dt_start = _to_dt(None, config.DATA_START)
         dt_end = _to_dt(None, config.DATA_END)
@@ -147,7 +148,7 @@ class BloombergLoader:
                 )
             if combined is None:
                 continue
-            # taux annuel (%) -> taux journalier simple
+            # Convert annualized percentage rates into simple daily rates.
             combined = combined.with_columns(
                 (pl.col(ccy) / 100.0 / day_count).alias(ccy)
             )

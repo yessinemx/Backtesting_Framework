@@ -24,7 +24,7 @@ class RiskParityAllocator(BaseAllocator):
             return {}
 
         def _inv_vol_weights(tickers):
-            # calcul de la vol réalisée sur lb jours puis inversion
+            # Compute realized volatility over the lookback window, then invert it.
             vols = {}
             for t in tickers:
                 if t not in returns.columns:
@@ -35,7 +35,7 @@ class RiskParityAllocator(BaseAllocator):
                     if vol > 0:
                         vols[t] = vol
             if not vols:
-                # pas assez d'historique, on repasse en EW
+                # Not enough history, fall back to equal-weighting.
                 available = [t for t in tickers if t in returns.columns]
                 if not available:
                     return {}
@@ -43,7 +43,7 @@ class RiskParityAllocator(BaseAllocator):
                 return {t: w for t in available}
             inv = {t: 1.0 / v for t, v in vols.items()}
             total = sum(inv.values())
-            # on normalise pour que les poids somment à 1
+            # Normalize weights so they sum to 1.
             return {t: iv / total for t, iv in inv.items()}
 
         weights = {}

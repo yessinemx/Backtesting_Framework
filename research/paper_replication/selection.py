@@ -1,17 +1,17 @@
 """
-Sélection des paires
-====================
-Réplication des Sections 2.1 et 2.2 du papier.
+Pair selection.
 
-Deux méthodes :
-  - Minimum Distance (Gatev et al. 2006) : distance quadratique moyenne des
-    prix normalisés, on retient les `top_n` paires les plus proches.
-  - Cointegration (Vidyamurthy 2004)     : test de Johansen (trace) au seuil
-    de 5 %, on retient toutes les paires cointégrées.
+Replication of Sections 2.1 and 2.2 of the paper.
 
-I/O en Polars (frame wide [date, tickers...]), calcul vectorisé en numpy.
-Le test de Johansen sur toutes les paires (N*(N-1)/2) est coûteux : on
-pré-filtre via `candidate_pool` (distance) pour rester exécutable.
+Two methods:
+    - Minimum Distance (Gatev et al. 2006): mean squared distance on normalized
+        prices, keeping the closest `top_n` pairs.
+    - Cointegration (Vidyamurthy 2004): Johansen trace test at the 5% threshold,
+        keeping all cointegrated pairs.
+
+Inputs and outputs use Polars wide frames [date, tickers...], while the core
+computation is vectorized in NumPy. Running Johansen on every pair
+(N*(N-1)/2) is expensive, so `candidate_pool` pre-filters by distance.
 """
 import itertools
 import numpy as np
@@ -21,12 +21,12 @@ from statsmodels.tsa.vector_ar.vecm import coint_johansen
 
 DATE_COL = "date"
 
-# Valeur critique de la statistique de trace (Johansen) pour H0: r=0,
-# cas avec constante (det_order=0), seuil 5 %.
+# Critical value of the Johansen trace statistic for H0: r=0,
+# constant case (det_order=0), 5% threshold.
 _TRACE_CRIT_95_R0 = 15.4943
 
-# Distance normalisée plancher : en deçà, deux séries sont considérées comme
-# le même sous-jacent (double cotation / classe d'actions) -> exclues.
+# Minimum normalized distance: below this, two series are treated as the same
+# underlying (dual listing / share class) and are excluded.
 _MIN_DISTANCE = 1e-4
 
 
@@ -35,12 +35,12 @@ def _value_columns(prices):
 
 
 def _clean_matrix(prices):
-    """Retourne (tickers, matrice numpy T*N) des colonnes sans valeur manquante.
+    """Return (tickers, T*N NumPy matrix) for columns without missing values.
 
-    Les doubles cotations (séries de prix strictement identiques, p. ex. un même
-    titre listé sous plusieurs codes place US/UQ/UW) sont dédupliquées : on ne
-    conserve que la première occurrence afin d'éviter des « paires » dégénérées
-    de distance quasi nulle.
+    Dual listings with strictly identical price series, for example the same
+    security listed under multiple US/UQ/UW venue codes, are deduplicated by
+    keeping only the first occurrence. This avoids degenerate pairs with an
+    almost zero distance.
     """
     cols = _value_columns(prices)
     if not cols:
@@ -51,7 +51,7 @@ def _clean_matrix(prices):
         return keep, np.empty((prices.height, len(keep)))
     mat = prices.select(keep).to_numpy().astype(float)
 
-    # Déduplication des colonnes à série identique (double cotation).
+    # Deduplicate columns with identical time series (dual listings).
     seen = {}
     unique_idx = []
     for idx in range(mat.shape[1]):
@@ -66,11 +66,11 @@ def _clean_matrix(prices):
 
 
 def select_min_distance(train_prices, top_n=1000):
-    """Sélection par distance minimale (calcul vectorisé).
+    """Minimum-distance selection with vectorized computation.
 
     Returns
     -------
-    list[tuple[str, str]] : paires (i, j) triées par distance croissante.
+    list[tuple[str, str]] : pairs (i, j) sorted by increasing distance.
     """
     tickers, mat = _clean_matrix(train_prices)
     if len(tickers) < 2 or mat.size == 0:
@@ -78,8 +78,8 @@ def select_min_distance(train_prices, top_n=1000):
 
     T, N = mat.shape
     norm = mat / mat[0, :]                      # S~ = S / S_t0
-    # distance quadratique moyenne (sqeuclidean direct, sans annulation Gram).
-    # L'ordre condensé de pdist correspond à np.triu_indices(N, 1).
+    # Mean squared distance using direct sqeuclidean, without Gram cancellation.
+    # The condensed pdist order matches np.triu_indices(N, 1).
     d = pdist(norm.T, metric="sqeuclidean") / T
     iu, ju = np.triu_indices(N, k=1)
 
@@ -91,7 +91,7 @@ def select_min_distance(train_prices, top_n=1000):
 
 
 def _is_cointegrated(train_prices, i, j, k_ar_diff=1, det_order=0):
-    """Test de Johansen (trace) pour une paire. True si cointégrée à 5 %."""
+    """Run the Johansen trace test on a pair. True means cointegrated at 5%."""
     pair = train_prices.select([i, j]).drop_nulls()
     if pair.height < (k_ar_diff + 3) * 3:
         return False
@@ -104,11 +104,11 @@ def _is_cointegrated(train_prices, i, j, k_ar_diff=1, det_order=0):
 
 def select_cointegration(train_prices, candidate_pool=2000, k_ar_diff=1,
                          max_pairs=None):
-    """Sélection par cointégration (test de Johansen).
+    """Cointegration-based selection using the Johansen test.
 
     candidate_pool : int | None
-        Pré-filtre les `candidate_pool` paires les plus proches (distance)
-        avant Johansen. None => toutes les paires (très lent).
+        Pre-filter the closest `candidate_pool` pairs by distance before
+        running Johansen. `None` evaluates every pair and is much slower.
     """
     tickers = [c for c in _value_columns(train_prices)]
     if len(tickers) < 2:
@@ -129,7 +129,7 @@ def select_cointegration(train_prices, candidate_pool=2000, k_ar_diff=1,
 
 
 def select_pairs(method, train_prices, **kwargs):
-    """Dispatcher de sélection.
+    """Selection dispatcher.
 
     method : "distance" | "cointegration"
     train_prices : pl.DataFrame wide [date, tickers...]
@@ -145,4 +145,4 @@ def select_pairs(method, train_prices, **kwargs):
             k_ar_diff=kwargs.get("k_ar_diff", 1),
             max_pairs=kwargs.get("max_pairs", None),
         )
-    raise ValueError(f"Méthode de sélection inconnue : {method}")
+    raise ValueError(f"Unknown selection method: {method}")

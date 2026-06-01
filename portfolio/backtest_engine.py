@@ -1,6 +1,4 @@
-"""
-Moteur de backtest returns-based avec frais de transaction.
-"""
+"""Returns-based backtest engine with transaction costs."""
 import pandas as pd
 import numpy as np
 from dataclasses import dataclass, field
@@ -10,7 +8,7 @@ from portfolio.history_tracker import HistoryTracker
 
 @dataclass
 class BacktestResult:
-    # stocker toutes les sorties du backtest dans un seul objet
+    # Keep all backtest outputs in a single object.
     config: dict
     tracker: HistoryTracker = field(default_factory=HistoryTracker)
     riskfree_curve: pd.Series = field(default_factory=pd.Series)
@@ -89,7 +87,7 @@ class BacktestEngine:
 
         trading_dates = prices_oos.index
 
-        # calendrier de rebalancement : dernier jour ouvré de chaque N mois
+        # Rebalance calendar: last business day of each N-month bucket.
         month_ends = trading_dates.to_series().groupby(
             trading_dates.to_period("M")
         ).last()
@@ -107,12 +105,12 @@ class BacktestEngine:
         )
         tracker = result.tracker
 
-        w = {}                                      # poids courants (fixes entre rebals)
+        w = {}                                      # current weights, held between rebalances
         cum_value = float(self.initial_capital)
         total = len(trading_dates)
 
         for i, date in enumerate(trading_dates):
-            # P&L du jour avec les poids courants
+            # Daily P&L using the current weights.
             daily_ret = 0.0
             for t, wt in w.items():
                 if t in returns_oos.columns:
@@ -123,7 +121,7 @@ class BacktestEngine:
 
             cum_value *= (1 + daily_ret)
 
-            # coût d'emprunt journalier sur les positions short
+            # Daily borrow cost on short positions.
             if self.borrow_bps > 0 and w:
                 short_notional = sum(-wt for wt in w.values() if wt < 0)
                 borrow_cost = short_notional * (self.borrow_bps / 10_000.0) / 252
@@ -131,11 +129,11 @@ class BacktestEngine:
                     cum_value *= (1 - borrow_cost)
                     daily_ret = (1 + daily_ret) * (1 - borrow_cost) - 1
 
-            # rebalancement après le P&L du jour
+            # Rebalance after applying the day's P&L.
             if date in rebal_set:
                 members = self._get_members(mem, date)
                 if members and self.strategy and self.allocator:
-                    # mise à jour walk-forward si schedule fourni
+                    # Apply walk-forward parameter updates when a schedule is provided.
                     if params_schedule:
                         sched_p = params_schedule.get(date)
                         if sched_p:
@@ -148,7 +146,7 @@ class BacktestEngine:
                         signals, returns.loc[:date], date
                     )
 
-                    # frais TC = tc_rate × turnover
+                    # Transaction cost = tc_rate × turnover.
                     turnover = sum(
                         abs(new_w.get(t, 0) - w.get(t, 0))
                         for t in set(list(new_w.keys()) + list(w.keys()))
@@ -165,7 +163,7 @@ class BacktestEngine:
             if progress_callback:
                 progress_callback((i + 1) / total, str(date.date()))
 
-        # Risk-free cumulative track
+        # Build the cumulative risk-free curve.
         if riskfree_daily is not None:
             rf_oos = riskfree_daily.reindex(trading_dates).fillna(0)
             result.riskfree_daily = rf_oos

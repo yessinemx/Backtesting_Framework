@@ -1,11 +1,11 @@
 """
-Loader principal (dispatcher multi-source)
-==========================================
-Charge prix / rendements / membership / taux sans risque depuis :
-  - "data"      : Parquet local (data/)
-  - "bloomberg" : API Bloomberg
+Main loader entrypoint (multi-source dispatcher).
 
-Tout est renvoyé en Polars (cf. conventions de schéma dans base.py).
+Loads prices, returns, membership, and risk-free data from:
+    - "data": local parquet files in data/
+    - "bloomberg": Bloomberg API
+
+All outputs are returned as Polars frames.
 """
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -30,7 +30,7 @@ def _as_list(index_id):
 
 
 def load_membership(source="data", index_id=None) -> pl.DataFrame:
-    """Composition d'indice au format long [date, index_id, ticker]."""
+    """Index membership in long format [date, index_id, ticker]."""
     if source == "bloomberg":
         from loaders.bloomberg_loader import BloombergLoader
         mem = BloombergLoader().load_membership(index_id=index_id)
@@ -45,7 +45,7 @@ def load_membership(source="data", index_id=None) -> pl.DataFrame:
 
 
 def _universe_tickers(source, index_id):
-    """Tickers de l'univers (toutes dates) pour restreindre les prix."""
+    """Universe tickers across all dates, used to restrict price data."""
     if index_id is None:
         return None
     mem = load_membership(source="data", index_id=index_id)
@@ -77,7 +77,7 @@ def load_prices(source="data", index_id=None, start=None, end=None,
 
     prices = normalize_wide(prices)
 
-    # restriction d'univers
+    # Universe restriction.
     if tickers is not None:
         prices = restrict_universe(prices, tickers)
     elif index_id is not None:
@@ -91,10 +91,10 @@ def load_prices(source="data", index_id=None, start=None, end=None,
 
 def load_returns(source="data", index_id=None, start=None, end=None,
                  tickers=None, from_prices=False) -> pl.DataFrame:
-    """Rendements journaliers simples au format wide Polars.
+    """Simple daily returns in wide Polars format.
 
-    Si `from_prices=True` (ou source != "data"), recalcule les rendements à
-    partir des prix (pct_change). Sinon lit returns.parquet local.
+    If `from_prices=True` (or source != "data"), recompute returns from prices
+    via pct_change. Otherwise read the local returns.parquet file.
     """
     if source == "data" and not from_prices:
         rets = pl.read_parquet(config.RETURNS_PATH)
@@ -113,18 +113,18 @@ def load_returns(source="data", index_id=None, start=None, end=None,
 
 
 def prices_to_returns(prices: pl.DataFrame) -> pl.DataFrame:
-    """Rendements simples journaliers à partir d'un frame wide de prix."""
+    """Simple daily returns computed from a wide price frame."""
     value_cols = [c for c in prices.columns if c != DATE_COL]
     rets = prices.with_columns([
         (pl.col(c) / pl.col(c).shift(1) - 1.0).alias(c) for c in value_cols
     ])
-    # première ligne sans référence -> 0
+    # The first line has no prior observation, so fill with 0.
     rets = rets.with_columns([pl.col(c).fill_null(0.0) for c in value_cols])
     return rets
 
 
 def load_riskfree(source="data", currency=None) -> pl.DataFrame:
-    """Taux sans risque journaliers au format wide Polars [date, <devises...>]."""
+    """Daily risk-free rates in wide Polars format [date, <currencies...>]."""
     if source == "bloomberg":
         from loaders.bloomberg_loader import BloombergLoader
         rf = BloombergLoader().load_riskfree()

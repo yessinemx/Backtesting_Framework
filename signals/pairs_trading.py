@@ -66,7 +66,7 @@ class PairsTradingWavelet(BaseStrategy):
         if len(window) < max(min_hist, 2 ** level):
             return {}
 
-        # log-prices normalisés sur la fenêtre de formation
+        # Normalized log-prices over the formation window.
         log_px = np.log(window.where(window > 0))
         log_px = log_px.dropna(axis=1, how="any")
         if log_px.shape[1] < 2:
@@ -79,7 +79,7 @@ class PairsTradingWavelet(BaseStrategy):
         )
 
         n_obs, n_assets = denoised.shape
-        # distance euclidienne moyenne entre chaque paire
+        # Mean Euclidean distance between each pair.
         # d_{ij} = mean_t (x_it - x_jt)^2
         sq = denoised ** 2
         gram = denoised.T @ denoised
@@ -87,7 +87,7 @@ class PairsTradingWavelet(BaseStrategy):
         dist = (sumsq[:, None] + sumsq[None, :] - 2.0 * gram) / n_obs
         np.fill_diagonal(dist, np.inf)
 
-        # extrait les top-N paires uniques (i < j)
+        # Extract the top-N unique pairs (i < j).
         iu, ju = np.triu_indices(n_assets, k=1)
         flat = dist[iu, ju]
         if flat.size == 0:
@@ -107,17 +107,17 @@ class PairsTradingWavelet(BaseStrategy):
             z = (spread[-1] - mu) / sigma
             ti, tj = tickers[i], tickers[j]
             if z > entry:
-                # i surperforme -> short i, long j
+                # i outperformed -> short i, long j.
                 signals[ti] -= 1.0
                 signals[tj] += 1.0
             elif z < -entry:
                 signals[ti] += 1.0
                 signals[tj] -= 1.0
             elif abs(z) < exit_thr:
-                # position neutre (exit) -> rien à ajouter
+                # Flat position (exit) -> no additional signal.
                 pass
 
-        # collapse en {-1, 0, +1}
+        # Collapse to {-1, 0, +1}.
         out = {}
         for t, v in signals.items():
             if v > 0:

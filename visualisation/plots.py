@@ -1,6 +1,4 @@
-"""
-Visualisation plotly 
-"""
+"""Plotly visualization helpers."""
 import plotly.graph_objects as go
 import plotly.express as px
 import pandas as pd
@@ -33,7 +31,7 @@ def plot_equity_curve(result, title: str = "Equity Curve"):
 def plot_drawdown(result):
     rets = result.get_returns()
     cum = (1 + rets).cumprod()
-    # drawdown = (valeur courante - max historique) / max historique
+    # drawdown = (current value - historical max) / historical max
     dd = (cum - cum.expanding().max()) / cum.expanding().max() * 100
 
     fig = go.Figure()
@@ -49,7 +47,7 @@ def plot_drawdown(result):
 # Monthly Returns Heatmap
 def plot_monthly_returns(result):
     rets = result.get_returns()
-    # on agrège les rendements journaliers en rendements mensuels composés
+    # Aggregate daily returns into compounded monthly returns.
     monthly = rets.resample("ME").apply(lambda x: (1 + x).prod() - 1)
     mdf = monthly.to_frame("r")
     mdf["year"] = mdf.index.year
@@ -122,7 +120,7 @@ def plot_num_positions(result):
     if not wh:
         return go.Figure().update_layout(title="No weight history")
 
-    # on compte les positions non nulles (seuil 1e-6 pour éviter le bruit numérique)
+    # Count non-zero positions with a small threshold to avoid numerical noise.
     data = [(dt, sum(1 for w in wts.values() if abs(w) > 1e-6))
             for dt, wts in wh.items()]
     df = pd.DataFrame(data, columns=["date", "positions"])
@@ -136,7 +134,7 @@ def plot_num_positions(result):
                       yaxis_title="# Positions")
     return fig
 
-# ROlling Beta vs Benchmark
+# Rolling beta vs benchmark
 def plot_rolling_beta(risk_indicator, window: int = 252):
     beta = risk_indicator.rolling_beta(window)
     fig = go.Figure()
@@ -157,7 +155,7 @@ def plot_rolling_beta(risk_indicator, window: int = 252):
 # Annualised return by sub-period (bar chart)
 def plot_sub_period_bars(result, periods: dict = None):
     if periods is None:
-        # si aucune période fournie, on découpe l'historique en tranches annuelles
+        # If no periods are provided, split the history into annual buckets.
         rets = result.get_returns()
         if not rets.empty:
             y_start, y_end = rets.index[0].year, rets.index[-1].year

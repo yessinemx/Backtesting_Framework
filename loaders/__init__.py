@@ -1,14 +1,14 @@
 """
-Package loaders
-===============
-Chargement unifié des données (prix, membership, rendements, taux sans risque)
-en **Polars** pour la rapidité.
+Loaders package.
 
-Deux sources interchangeables :
-  - "data"      : fichiers Parquet locaux du dossier data/ (défaut)
-  - "bloomberg" : extraction live via l'API Bloomberg (blpapi)
+Unified loading for prices, membership, returns, and risk-free data in
+Polars for speed.
 
-API publique :
+Two interchangeable sources:
+  - "data": local parquet files from data/
+  - "bloomberg": live extraction through the Bloomberg API (blpapi)
+
+Public API:
   - load_prices(source=..., index_id=..., ...)
   - load_returns(...)
   - load_membership(source=..., index_id=...)

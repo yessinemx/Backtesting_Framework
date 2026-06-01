@@ -1,4 +1,4 @@
-"""Step 6 — Results : KPIs, onglets analytiques, export."""
+"""Step 6 — Results: KPIs, analytics tabs, and export."""
 import numpy as np
 import pandas as pd
 import streamlit as st
@@ -54,7 +54,7 @@ def render() -> None:
     </div>
     """, unsafe_allow_html=True)
 
-    # ── Market proxy : EW des membres de l'index sur la fenêtre OOS ──
+    # Equal-weighted market proxy built from index members over the OOS window.
     _mkt_returns = None
     try:
         _all_returns = load_returns()

@@ -1,17 +1,17 @@
 """
-Découpage en périodes de formation / trading
-============================================
-Réplication de la Section 4.2 du papier.
+Formation / trading period construction.
 
-L'historique est découpé en blocs de 252 jours ouvrés. Une période n est :
-  - formation (in-sample)    : bloc k
-  - trading   (out-of-sample): bloc k+1
+Replication of Section 4.2 of the paper.
 
-Comme dans la Table 1, la fenêtre de trading d'une période devient la
-formation de la suivante (blocs consécutifs). K blocs -> K-1 périodes.
+History is split into 252-business-day blocks. A period n is:
+    - formation (in-sample): block k
+    - trading (out-of-sample): block k+1
 
-Travaille en Polars : les périodes stockent des *slices* (offset, longueur)
-dans le frame de prix trié par date, pour un découpage sans copie.
+As in Table 1, the trading window of one period becomes the formation window
+of the next one (consecutive blocks). K blocks -> K-1 periods.
+
+Implemented in Polars: periods store slices (offset, length) into the
+date-sorted price frame so the split happens without copying data.
 """
 from dataclasses import dataclass
 import polars as pl
@@ -21,11 +21,11 @@ TRADING_DAYS_PER_YEAR = 252
 
 @dataclass
 class Period:
-    index: int                       # numéro de période (1-based)
-    train_slice: tuple               # (offset, length) dans le frame trié
+    index: int                       # period number (1-based)
+    train_slice: tuple               # (offset, length) in the sorted frame
     trade_slice: tuple
-    train_dates: pl.Series           # dates de formation
-    trade_dates: pl.Series           # dates de trading
+    train_dates: pl.Series           # formation dates
+    trade_dates: pl.Series           # trading dates
 
     @property
     def train_start(self):
@@ -50,16 +50,16 @@ class Period:
 
 
 def build_periods(dates, block_size=TRADING_DAYS_PER_YEAR, max_periods=None):
-    """Construit la liste des périodes (formation, trading).
+    """Build the list of periods (formation, trading).
 
     Parameters
     ----------
-    dates : pl.Series | séquence de datetimes
-        Calendrier des jours ouvrés (sera trié).
+    dates : pl.Series | sequence of datetimes
+        Business-day calendar (sorted internally).
     block_size : int
-        Taille d'un bloc en jours ouvrés (252 = 1 an).
+        Block size in business days (252 = 1 year).
     max_periods : int | None
-        Limite optionnelle du nombre de périodes.
+        Optional limit on the number of periods.
 
     Returns
     -------

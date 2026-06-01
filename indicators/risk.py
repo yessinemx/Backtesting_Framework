@@ -1,4 +1,4 @@
-"""Indicateurs de risque : drawdown, VaR, CVaR, volatilité, skewness..."""
+"""Risk indicators: drawdown, VaR, CVaR, volatility, skewness, and more."""
 import pandas as pd
 import numpy as np
 from dataclasses import dataclass
@@ -41,7 +41,7 @@ class RiskIndicators:
 
     # Drawdown metrics
     def _compute_drawdown_series(self):
-        # drawdown = (valeur courante - max historique) / max historique
+        # drawdown = (current value - historical max) / historical max
         if self.returns.empty:
             return pd.Series(dtype=float)
         cumulative = (1 + self.returns).cumprod()
@@ -49,7 +49,7 @@ class RiskIndicators:
         return (cumulative - running_max) / running_max
 
     def _get_drawdown_episodes(self):
-        # on identifie chaque période sous l'eau séparément, résultat mis en cache
+        # Identify each underwater period separately and cache the result.
         if self._dd_episodes is not None:
             return self._dd_episodes
         if self._dd_series.empty:
@@ -65,6 +65,7 @@ class RiskIndicators:
                 start = i
             elif val >= 0 and in_dd:
                 in_dd = False
+                assert start is not None
                 episodes.append({
                     'start': start,
                     'end': i,

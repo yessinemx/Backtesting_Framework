@@ -23,7 +23,7 @@ class MovingAverageCrossover(BaseStrategy):
             if ticker not in prices.columns:
                 continue
             px = prices[ticker].loc[:date].dropna()
-            # pas assez d'historique pour calculer la MA lente
+            # Not enough history to compute the slow moving average.
             if len(px) < sw:
                 continue
             fast = px.iloc[-fw:].mean()

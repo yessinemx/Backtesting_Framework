@@ -1,20 +1,21 @@
 """
-Construction du spread et des seuils
-====================================
-Réplication des Sections 4.2 et 4.3 du papier.
+Spread and threshold construction.
 
-Pour une paire (i, j) :
-  - Spread standard  : régression OLS  S_i = α + β·S_j sur la formation,
-    puis  ε_t = S_i,t - α̂ - β̂·S_j,t  sur le trading (prix originaux).
-  - Spread wavelet   : on filtre d'abord les prix (V = MODWT long-terme),
-    régression  V_i = α_w + β_w·V_j sur la formation,
-    puis  ε_w,t = V_i,t - α̂_w - β̂_w·V_j,t  sur le trading.
+Replication of Sections 4.2 and 4.3 of the paper.
 
-Le seuil de trading vaut 2σ (σ = écart-type du spread en formation).
+For a pair (i, j):
+    - Standard spread: OLS regression S_i = α + β·S_j on the formation sample,
+        then ε_t = S_i,t - α̂ - β̂·S_j,t on the trading sample using original prices.
+    - Wavelet spread: first filter prices (V = long-term MODWT component),
+        regress V_i = α_w + β_w·V_j on the formation sample,
+        then ε_w,t = V_i,t - α̂_w - β̂_w·V_j,t on the trading sample.
 
-I/O en Polars (frame wide [date, tickers...]). Le SpreadSpec conserve les
-tableaux numpy alignés nécessaires aux P&L : prix ORIGINAUX de la paire sur
-la période de trading (toujours utilisés pour le rendement, même en wavelet).
+The trading threshold is 2σ, where σ is the standard deviation of the
+formation spread.
+
+Inputs and outputs use Polars wide frames [date, tickers...]. SpreadSpec keeps
+the aligned NumPy arrays needed for P&L, including the original trading-period
+prices, which remain the basis for return calculation even in the wavelet case.
 """
 from dataclasses import dataclass
 import numpy as np
@@ -30,13 +31,13 @@ class SpreadSpec:
     j: str
     alpha: float
     beta: float
-    sigma: float                 # écart-type du spread en formation
+    sigma: float                 # formation spread standard deviation
     threshold: float             # 2σ
     train_spread: np.ndarray
     trade_spread: np.ndarray
-    trade_si: np.ndarray         # prix ORIGINAUX i (trading) pour les P&L
-    trade_sj: np.ndarray         # prix ORIGINAUX j (trading) pour les P&L
-    trade_dates: object          # pl.Series des dates de trading alignées
+    trade_si: np.ndarray         # original trading prices for i used in P&L
+    trade_sj: np.ndarray         # original trading prices for j used in P&L
+    trade_dates: object          # aligned pl.Series of trading dates
     use_wavelet: bool
 
 
@@ -55,7 +56,7 @@ def _ols_alpha_beta(y, x):
 
 
 def _pair_arrays(prices, i, j):
-    """Extrait (dates, S_i, S_j) sans valeur manquante depuis un frame wide."""
+    """Extract (dates, S_i, S_j) without missing values from a wide frame."""
     sub = prices.select([DATE_COL, i, j]).drop_nulls()
     si = sub.get_column(i).to_numpy().astype(float)
     sj = sub.get_column(j).to_numpy().astype(float)
@@ -64,15 +65,15 @@ def _pair_arrays(prices, i, j):
 
 def build_spread(i, j, train_prices, trade_prices, use_wavelet=False,
                  n_sigma=2.0, wavelet=DEFAULT_WAVELET):
-    """Construit le spread d'une paire sur formation + trading.
+    """Build the spread for one pair across formation and trading.
 
     Parameters
     ----------
     train_prices, trade_prices : pl.DataFrame
-        Prix ORIGINAUX wide [date, tickers...] de chaque période.
+        Original wide price frames [date, tickers...] for each period.
     use_wavelet : bool
-        Si True, (α_w, β_w) et le spread sont estimés sur les prix filtrés
-        MODWT ; les P&L (ailleurs) restent calculés sur les prix originaux.
+        If True, estimate (α_w, β_w) and the spread on MODWT-filtered prices.
+        P&L is still computed elsewhere on the original prices.
 
     Returns
     -------
@@ -84,7 +85,7 @@ def build_spread(i, j, train_prices, trade_prices, use_wavelet=False,
         return None
 
     if use_wavelet:
-        # filtrage MODWT recalculé sur chaque fenêtre (cf. A.2)
+        # Recompute MODWT filtering on each window (see Appendix A.2).
         x_tr_i = modwt_smooth(si_tr, wavelet)
         x_tr_j = modwt_smooth(sj_tr, wavelet)
         x_td_i = modwt_smooth(si_td, wavelet)

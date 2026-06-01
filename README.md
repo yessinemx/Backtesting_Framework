@@ -1,63 +1,63 @@
 # Backtesting Framework
 
-Framework de backtesting quantitatif basé sur les rendements, avec extraction Bloomberg, interface Streamlit et espace de recherche séparé pour la réplication du papier de pairs trading par ondelettes.
+Quantitative returns-based backtesting framework with Bloomberg extraction, a Streamlit interface, and a separate research area for the wavelet pairs-trading paper replication.
 
-## Vue d'ensemble
+## Overview
 
-Le repo est maintenant organisé autour de deux périmètres distincts :
+The repository is organized around two distinct scopes:
 
-- `config.py` : configuration globale du backtester générique
-- `research/config.py` : configuration locale de la réplication du papier
+- `config.py`: global configuration for the generic backtester
+- `research/config.py`: local configuration for the paper replication workflow
 
-Le backtester standard et la réplication du papier partagent les loaders et les données, mais gardent des paramètres et des sorties séparés.
+The standard backtester and the paper replication share loaders and data, but keep separate parameters and outputs.
 
 ## Structure
 
 ```
 Backtesting_Framework/
-├── app/                              # Application Streamlit
+├── app/                              # Streamlit application
 │   ├── main.py                       # Entry point : py -m streamlit run app/main.py
-│   ├── sidebar.py                    # Navigation latérale
-│   ├── registry.py                   # Registre stratégies / allocations
-│   ├── data.py                       # Loaders cachés pour l'app
+│   ├── sidebar.py                    # Sidebar navigation
+│   ├── registry.py                   # Strategy / allocator registry
+│   ├── data.py                       # Cached loaders for the app
 │   ├── styles.py                     # CSS
-│   └── steps/                        # Wizard data -> backtest -> réplication papier
-├── allocation/                       # Méthodes d'allocation
-├── extraction/                       # Extraction Bloomberg + API wrapper
+│   └── steps/                        # Wizard: data -> backtest -> paper replication
+├── allocation/                       # Allocation methods
+├── extraction/                       # Bloomberg extraction + API wrapper
 │   ├── bloomberg_api.py
 │   ├── bbg_members.py
 │   ├── bbg_returns.py
 │   └── bbg_riskfree.py
-├── indicators/                       # Indicateurs perf / risque
-├── loaders/                          # Chargement Polars / Bloomberg / parquet
-├── optimization/                     # Grid search walk-forward
-├── portfolio/                        # Moteur de backtest
-├── signals/                          # Stratégies du framework
+├── indicators/                       # Performance / risk indicators
+├── loaders/                          # Polars / Bloomberg / parquet loading
+├── optimization/                     # Walk-forward grid search
+├── portfolio/                        # Backtest engine
+├── signals/                          # Framework strategies
 │   ├── moving_average.py
 │   ├── momentum.py
 │   └── pairs_trading.py
-├── visualisation/                    # Figures du backtester
-├── research/                         # Recherche et réplication du papier
-│   ├── config.py                     # Paramètres fixes de la réplication papier
-│   ├── main.py                       # CLI principale de la réplication papier
-│   ├── docs/                         # Documentation / papier source
-│   ├── outputs/                      # Tables et figures générées
-│   └── paper_replication/            # Code de la réplication du papier
-├── data/                             # Données parquet partagées
-├── config.py                         # Configuration globale du backtester
+├── visualisation/                    # Backtester figures
+├── research/                         # Research and paper replication
+│   ├── config.py                     # Fixed paper replication parameters
+│   ├── main.py                       # Main paper replication CLI
+│   ├── docs/                         # Source documentation / paper
+│   ├── outputs/                      # Generated tables and figures
+│   └── paper_replication/            # Paper replication code
+├── data/                             # Shared parquet data
+├── config.py                         # Global backtester configuration
 ├── requirements.txt
 └── README.md
 ```
 
 ## Installation
 
-Sur Windows :
+On Windows:
 
 ```bash
 py -m pip install -r requirements.txt
 ```
 
-Bloomberg API optionnelle :
+Optional Bloomberg API:
 
 ```bash
 py -m pip install --index-url=https://blpapi.bloomberg.com/repository/releases/python/simple/ blpapi
@@ -65,13 +65,13 @@ py -m pip install --index-url=https://blpapi.bloomberg.com/repository/releases/p
 
 ## Lancement
 
-Application Streamlit :
+Streamlit application:
 
 ```bash
 py -m streamlit run app/main.py
 ```
 
-Smoke test de la réplication papier :
+Paper replication smoke test:
 
 ```bash
 py research/main.py --index-id SPX --max-periods 1 --no-write-outputs --quiet
@@ -79,67 +79,67 @@ py research/main.py --index-id SPX --max-periods 1 --no-write-outputs --quiet
 
 ## Tests et CI
 
-Lancement local de la suite :
+Run the full test suite locally:
 
 ```bash
 py -m unittest discover -s tests
 ```
 
-CI GitHub Actions :
+GitHub Actions CI:
 
-- workflow dans [.github/workflows/tests.yml](.github/workflows/tests.yml)
-- exécution sur `push` et `pull_request` vers `main`
-- vérification de la suite `unittest` et du démarrage de l'aide CLI `research/main.py --help`
+- workflow in [.github/workflows/tests.yml](.github/workflows/tests.yml)
+- runs on `push` and `pull_request` to `main`
+- validates the `unittest` suite and the `research/main.py --help` CLI startup
 
 ## Workflow Streamlit
 
-L'application suit un workflow en 7 étapes :
+The application follows a 7-step workflow:
 
-1. `Data Status` : vérification des jeux de données et extraction Bloomberg conditionnelle
-2. `Index Selection` : sélection de l'univers
-3. `Strategy & Alloc` : choix stratégie / allocation
-4. `Parameters` : réglage des paramètres et grid search éventuel
-5. `Execution` : exécution du backtest
-6. `Results` : métriques et visualisations
-7. `Paper Replication` : exécution séparée de la réplication du papier
+1. `Data Status`: dataset checks and conditional Bloomberg extraction
+2. `Index Selection`: universe selection
+3. `Strategy & Alloc`: strategy / allocator selection
+4. `Parameters`: parameter setup and optional grid search
+5. `Execution`: backtest execution
+6. `Results`: metrics and visualizations
+7. `Paper Replication`: separate execution path for the paper replication
 
 ## Configurations
 
-Configuration globale du backtester dans [config.py](config.py) :
+Global backtester configuration in [config.py](config.py):
 
-- chemins de données partagées
-- univers d'indices et devises
-- taux sans risque
-- fréquences de rebalancement
-- grilles de paramètres du backtester standard
+- shared data paths
+- index universes and currencies
+- risk-free rates
+- rebalance frequencies
+- standard backtester parameter grids
 
-Configuration locale de recherche dans [research/config.py](research/config.py) :
+Local research configuration in [research/config.py](research/config.py):
 
-- chemins `research/docs` et `research/outputs`
-- paramètres fixes de la réplication du papier
-- options de sortie tables / figures
+- `research/docs` and `research/outputs` paths
+- fixed paper replication parameters
+- table / figure output settings
 
-## Données et artefacts
+## Data And Artifacts
 
-Les fichiers de [data](data) et le PDF de [research/docs](research/docs) restent versionnés pour garder un repo reproductible sans étape de bootstrap externe. En revanche, les artefacts générés pendant les runs ne doivent pas être commités :
+The files in [data](data) and the PDF in [research/docs](research/docs) remain versioned so the repository stays reproducible without an external bootstrap step. Generated run artifacts should not be committed:
 
-- [research/outputs](research/outputs) est réservé aux sorties générées
-- `research/outputs/tables` et `research/outputs/figures` sont ignorés par git
-- les données peuvent être régénérées via l'étape `Data Status` de l'app ou via les scripts d'extraction Bloomberg
+- [research/outputs](research/outputs) is reserved for generated outputs
+- `research/outputs/tables` and `research/outputs/figures` are ignored by git
+- data can be regenerated through the app `Data Status` step or via the Bloomberg extraction scripts
 
-## Stratégies disponibles
+## Available Strategies
 
 - `Moving Average Crossover`
 - `Momentum`
-- `Pairs Trading (Wavelet)` dans le framework
+- `Pairs Trading (Wavelet)` in the framework
 
-La réplication papier complète reste séparée dans [research/paper_replication](research/paper_replication) pour éviter de mélanger logique de recherche et moteur de backtest générique.
+The full paper replication remains isolated in [research/paper_replication](research/paper_replication) to avoid mixing research logic with the generic backtest engine.
 
-## Principes du backtester
+## Backtester Principles
 
-- calcul de P&L basé sur les rendements journaliers
-- dérive des poids entre deux rebalancements
-- application du rendement du jour avant rebalancement
-- membership point-in-time pour limiter le survivorship bias
-- taux sans risque journaliers réels par devise
-- signaux calculés en expanding window
+- P&L is computed from daily returns
+- weights drift between rebalances
+- the day's return is applied before rebalancing
+- point-in-time membership limits survivorship bias
+- real daily risk-free rates are used by currency
+- signals are computed on an expanding window
