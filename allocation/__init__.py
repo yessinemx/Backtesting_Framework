@@ -1,0 +1,29 @@
+"""
+Allocation module
+Base interface and implementations for portfolio allocation methods
+"""
+from abc import ABC, abstractmethod
+import pandas as pd
+
+
+class BaseAllocator(ABC):
+
+    def __init__(self, name, parameters):
+        self.name = name
+        self.parameters = parameters
+
+    @abstractmethod
+    def allocate(self, signals, returns, date):
+        # signals : {ticker: +1 / -1 / 0}
+        # retourne {ticker: poids signé} (positif = long, négatif = short)
+        pass
+
+    @staticmethod
+    @abstractmethod
+    def get_parameters_schema():
+        pass
+
+from .equal_weight import EqualWeightAllocator 
+from .risk_parity import RiskParityAllocator  
+
+__all__ = ["BaseAllocator", "EqualWeightAllocator", "RiskParityAllocator"]
