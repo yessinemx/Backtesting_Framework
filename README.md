@@ -39,8 +39,7 @@ Backtesting_Framework/
 ├── visualisation/                    # Figures du backtester
 ├── research/                         # Recherche et réplication du papier
 │   ├── config.py                     # Paramètres fixes de la réplication papier
-│   ├── run_paper_replication.py      # CLI principale
-│   ├── run_pairs_replication.py      # Wrapper de compatibilité
+│   ├── main.py                       # CLI principale de la réplication papier
 │   ├── docs/                         # Documentation / papier source
 │   ├── outputs/                      # Tables et figures générées
 │   └── paper_replication/            # Code de la réplication du papier
@@ -75,7 +74,7 @@ py -m streamlit run app/main.py
 Smoke test de la réplication papier :
 
 ```bash
-py research/run_paper_replication.py --index-id SPX --max-periods 1 --no-write-outputs --quiet
+py research/main.py --index-id SPX --max-periods 1 --no-write-outputs --quiet
 ```
 
 ## Workflow Streamlit
