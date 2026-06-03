@@ -526,11 +526,26 @@ _WAVELET_FAMILIES = ["haar", "db4", "db8", "db16", "sym4", "sym8", "sym12",
 _HORIZONS = [63, 126, 189, 252]
 
 
+def _riskfree_usd():
+    """Daily USD risk-free rate as a date-indexed pandas Series."""
+    from loaders import load_riskfree
+    rf = load_riskfree(source="data").select(["date", "USD"]).to_pandas()
+    return rf.set_index("date")["USD"]
+
+
 def generate_all(prices, periods, params, methods=("distance", "cointegration"),
                  sweeps=True, save=True):
-    """Build every reproducible figure. Returns {name: plotly Figure}."""
+    """Build every reproducible figure plus the asset-pricing alpha table.
+
+    Returns ``(figures, alpha_table)`` where figures is ``{name: plotly Figure}``
+    and alpha_table is a tidy pandas DataFrame of market-model alphas.
+    """
+    from research.paper_replication import asset_pricing as ap
+
     figures = {"fig01_pyramid": fig1_pyramid()}
     example_seen = False
+    rf_usd = _riskfree_usd()
+    alpha_results = []
 
     for method in methods:
         data, selections = collect_run(method, prices, periods, params)
@@ -546,14 +561,32 @@ def generate_all(prices, periods, params, methods=("distance", "cointegration"),
         figures[f"fig0{fig_num}_categories_{method}"] = fig_categories(data, fig_num)
         figures[f"fig08_noise_corr_{method}"] = fig8_noise_corr(data)
 
+        # Section 5.4 - asset-pricing (market model) alpha + Figure 9.
+        mkt = ap.market_excess(data.bench_index, rf_usd)
+        for variant, series in (("standard", data.std_daily), ("wavelet", data.wav_daily)):
+            res = ap.run_market_model(series, mkt, label=f"{method}/{variant}")
+            if res is not None:
+                row = {"method": method, "variant": variant, "model": "Market model",
+                       "alpha_annual_%": round(res.alpha_annual_pct, 2),
+                       "t(alpha)": round(res.t_alpha, 2), "significant_5%": res.significant,
+                       "beta_mkt": round(res.betas.get("Mkt-RF", float("nan")), 3),
+                       "R2": round(res.r2, 3), "n": res.n}
+                alpha_results.append(row)
+        figures[f"fig09_yearly_alpha_{method}"] = ap.fig9_yearly_alpha(
+            data.wav_daily, mkt, method=method)
+
         if sweeps:
             fig10, _ = sweep_wavelets(method, prices, periods, params, selections, _WAVELET_FAMILIES)
             figures[f"fig10_wavelet_classes_{method}"] = fig10
             fig11, _ = sweep_horizons(method, prices, periods, params, selections, _HORIZONS)
             figures[f"fig11_horizons_{method}"] = fig11
 
+    alpha_table = pd.DataFrame(alpha_results)
+
     if save:
-        from research.paper_replication.output_writer import save_figure
+        from research.paper_replication.output_writer import save_figure, save_table
         for name, fig in figures.items():
             save_figure(fig, name)
-    return figures
+        if not alpha_table.empty:
+            save_table(alpha_table, "asset_pricing_alphas")
+    return figures, alpha_table

@@ -9,7 +9,7 @@ FIGURES_DIR = OUTPUTS_DIR / "figures"
 
 # Fixed parameters for the paper replication workflow.
 PAIRS_CONFIG = {
-    "wavelet": "sym20",
+    "wavelet": "sym22",
     "block_size": 252,
     "method": "distance",
     "top_n": 1000,

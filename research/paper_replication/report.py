@@ -73,7 +73,7 @@ def build_report(source="data", methods=("distance", "cointegration"),
         params = dict(research_config.PAIRS_CONFIG)
     params = dict(params)
     params["index_id"] = "SPX"
-    params.setdefault("tc_per_share", 0.0)  # headline: before transaction costs
+    params["tc_per_share"] = 0.0  # headline = before costs, matching paper Table 4
 
     prices = load_prices(source=source, index_id="SPX", start=start, end=end)
     periods = build_periods(prices.get_column("date"), block_size=params["block_size"])
@@ -99,9 +99,9 @@ def build_report(source="data", methods=("distance", "cointegration"),
             "paper_wav_sharpe": p["wav_sr"],
         })
 
-    figures = {}
+    figures, alpha_table = {}, None
     if with_figures:
-        figures = paper_figures.generate_all(
+        figures, alpha_table = paper_figures.generate_all(
             prices, periods, params, methods=methods, sweeps=sweeps, save=save_figures
         )
 
@@ -110,6 +110,7 @@ def build_report(source="data", methods=("distance", "cointegration"),
         "by_period": by_period,
         "comparison": pl.DataFrame(comparison_rows),
         "figures": figures,
+        "alpha_table": alpha_table,
         "params": params,
         "n_periods": len(periods),
         "universe_pool": prices.width - 1,

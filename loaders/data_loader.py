@@ -73,7 +73,9 @@ def members_asof(asof, index_id, source="data") -> list[str]:
     if snap.height == 0:
         return []
     last = snap.get_column("date").max()
-    return (
+    # Sorted for determinism: downstream pair selection is order-sensitive, so a
+    # set / unordered unique would make results vary run to run.
+    return sorted(
         mem.filter(pl.col("date") == last)
         .get_column("ticker")
         .unique()

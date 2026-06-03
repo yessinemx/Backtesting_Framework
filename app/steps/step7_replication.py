@@ -50,7 +50,7 @@ def render() -> None:
     st.success(f"Universe pool: {report['universe_pool']} tickers · {report['n_periods']} periods")
 
     tabs = st.tabs(["📊 Overview", "🔬 Example pair", "📈 Cumulative & Sharpe",
-                    "🧩 Trade categories", "🌫️ Noise", "🧪 Robustness"])
+                    "🧩 Trade categories", "🌫️ Noise", "💰 Asset pricing", "🧪 Robustness"])
 
     with tabs[0]:
         st.markdown('<p class="section-hdr">Paper vs replication</p>', unsafe_allow_html=True)
@@ -85,6 +85,18 @@ def render() -> None:
         _show_figs(figures, "fig08_")
 
     with tabs[5]:
+        st.caption("Section 5.4 — asset-pricing test. Market-model (CAPM) alpha of the daily "
+                   "pairs returns with Newey-West HAC errors; the market factor is the equal-weight "
+                   "S&P 500 excess return. Full FF5 / q-factor / Petkova models need external factor "
+                   "files (Ken French, global-q, FRED).")
+        alpha = report.get("alpha_table")
+        if alpha is not None and not alpha.empty:
+            st.markdown('<p class="section-hdr">Market-model alphas</p>', unsafe_allow_html=True)
+            st.dataframe(alpha, use_container_width=True)
+        st.markdown('<p class="section-hdr">Figure 9 — yearly alpha</p>', unsafe_allow_html=True)
+        _show_figs(figures, "fig09_")
+
+    with tabs[6]:
         if any("fig10_" in n or "fig11_" in n for n in figures):
             st.caption("Figure 10 — returns & Sharpe across wavelet classes. "
                        "Figure 11 — annualized profit by trading horizon.")

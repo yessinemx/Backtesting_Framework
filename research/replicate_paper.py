@@ -134,11 +134,16 @@ def main():
     with pl.Config(tbl_cols=-1, tbl_width_chars=200, float_precision=2):
         print(comp)
 
-    # Reproduce the paper's figures (Fig 1-8, 10, 11; Fig 9 needs factor data).
-    print(f"\n{'='*78}\n  Generating paper figures ...\n{'='*78}")
-    figs = paper_figures.generate_all(prices, periods, params, methods=("distance", "cointegration"),
-                                      sweeps=True, save=True)
+    # Reproduce the paper's figures (Fig 1-11) and the asset-pricing alphas (Sec 5.4).
+    print(f"\n{'='*78}\n  Generating paper figures + asset-pricing alphas ...\n{'='*78}")
+    figs, alpha_table = paper_figures.generate_all(
+        prices, periods, params, methods=("distance", "cointegration"),
+        sweeps=True, save=True)
     print(f"  {len(figs)} figures written.")
+    if alpha_table is not None and not alpha_table.empty:
+        save_table(pl.from_pandas(alpha_table), "asset_pricing_alphas")
+        print("\n  Asset-pricing (market model) alphas:")
+        print(alpha_table.to_string(index=False))
 
     print(f"\nTables  -> {research_config.TABLES_DIR}")
     print(f"Figures -> {research_config.FIGURES_DIR}")
