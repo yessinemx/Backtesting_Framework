@@ -31,6 +31,7 @@ from research import config as research_config
 from research.paper_replication.periods import build_periods
 from research.paper_replication.pipeline import run_period
 from research.paper_replication.output_writer import save_table, save_figure
+from research.paper_replication import figures as paper_figures
 
 START, END = "2010-03-05", "2018-03-15"
 
@@ -132,6 +133,13 @@ def main():
     print(f"{'='*78}\n  PAPER vs REPLICATION (saved to research/outputs/tables/paper_comparison.csv)\n{'='*78}")
     with pl.Config(tbl_cols=-1, tbl_width_chars=200, float_precision=2):
         print(comp)
+
+    # Reproduce the paper's figures (Fig 1-8, 10, 11; Fig 9 needs factor data).
+    print(f"\n{'='*78}\n  Generating paper figures ...\n{'='*78}")
+    figs = paper_figures.generate_all(prices, periods, params, methods=("distance", "cointegration"),
+                                      sweeps=True, save=True)
+    print(f"  {len(figs)} figures written.")
+
     print(f"\nTables  -> {research_config.TABLES_DIR}")
     print(f"Figures -> {research_config.FIGURES_DIR}")
 

@@ -8,6 +8,9 @@ from app.registry import STRATEGIES, ALLOCATORS
 _STRAT_DESC = {
     "Moving Average Crossover": "Long signal when fast MA crosses above slow MA. Trend-following approach.",
     "Momentum": "Cross-sectional ranking by past cumulative returns. Selects top performers.",
+    "Pairs Trading (Wavelet)": "Market-neutral statistical arbitrage. Wavelet-denoises prices, "
+                               "selects co-moving pairs, and trades the mean-reverting spread "
+                               "(Eroğlu, Yener & Yiğit 2023). See Step 7 for the full paper replication.",
 }
 _ALLOC_DESC = {
     "Equal Weight (EW)": "Uniform allocation across selected assets at each rebalance.",
