@@ -48,8 +48,18 @@ def _run_variant(pairs, train_prices, trade_prices, use_wavelet, params):
     return results
 
 
-def run_period(period, prices, params):
-    """Run the pipeline on a single formation/trading period."""
+def run_period(period, prices, params, universe=None):
+    """Run the pipeline on a single formation/trading period.
+
+    universe : list[str] | None
+        Optional point-in-time ticker list. When given, the universe is
+        restricted to these tickers (plus "date") for this period, so pairs are
+        only formed from genuine index constituents of the formation window.
+    """
+    if universe is not None:
+        keep = ["date"] + [t for t in universe if t in prices.columns]
+        prices = prices.select(keep)
+
     train_prices = prices.slice(*period.train_slice)
     trade_prices = prices.slice(*period.trade_slice)
 

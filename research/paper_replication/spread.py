@@ -5,7 +5,7 @@ Replication of Sections 4.2 and 4.3 of the paper.
 
 For a pair (i, j):
     - Standard spread: OLS regression S_i = α + β·S_j on the formation sample,
-        then ε_t = S_i,t - α̂ - β̂·S_j,t on the trading sample using original prices.
+        then ε_t = S_i,t - α̂ - β̂·S_j,t on the trading sample.
     - Wavelet spread: first filter prices (V = long-term MODWT component),
         regress V_i = α_w + β_w·V_j on the formation sample,
         then ε_w,t = V_i,t - α̂_w - β̂_w·V_j,t on the trading sample.
@@ -13,9 +13,26 @@ For a pair (i, j):
 The trading threshold is 2σ, where σ is the standard deviation of the
 formation spread.
 
+Per-window normalization
+------------------------
+Prices are divided by their formation-start value before the spread is built
+(both legs start at 1.0). This is invariant to the split-adjustment reference
+date: with prices back-adjusted for splits that happened after the sample (e.g.
+a stock whose later splits deflate its in-sample price toward zero), a raw-price
+OLS would otherwise produce extreme β and unbounded P&L. Normalizing recovers the
+balanced, dollar-neutral pairs trade the paper intends (β ≈ O(1)). Returns
+(ΔS/S_to) are scale-invariant, so the trade P&L is unaffected by the rescaling
+itself — only the degenerate β explosions are removed.
+
+Wavelet filtering spans the full series
+---------------------------------------
+For the wavelet variant the formation and trading windows are concatenated and
+filtered once, then split, so the trading-period smooth is continuous with the
+formation history (cf. the recursive real-time scheme in Appendix A.2) instead of
+being filtered as an isolated block.
+
 Inputs and outputs use Polars wide frames [date, tickers...]. SpreadSpec keeps
-the aligned NumPy arrays needed for P&L, including the original trading-period
-prices, which remain the basis for return calculation even in the wavelet case.
+the aligned NumPy arrays needed for P&L.
 """
 from dataclasses import dataclass
 import numpy as np
@@ -35,8 +52,8 @@ class SpreadSpec:
     threshold: float             # 2σ
     train_spread: np.ndarray
     trade_spread: np.ndarray
-    trade_si: np.ndarray         # original trading prices for i used in P&L
-    trade_sj: np.ndarray         # original trading prices for j used in P&L
+    trade_si: np.ndarray         # (normalized) trading prices for i used in P&L
+    trade_sj: np.ndarray         # (normalized) trading prices for j used in P&L
     trade_dates: object          # aligned pl.Series of trading dates
     use_wavelet: bool
 
@@ -64,7 +81,7 @@ def _pair_arrays(prices, i, j):
 
 
 def build_spread(i, j, train_prices, trade_prices, use_wavelet=False,
-                 n_sigma=2.0, wavelet=DEFAULT_WAVELET):
+                 n_sigma=2.0, wavelet=DEFAULT_WAVELET, normalize=True):
     """Build the spread for one pair across formation and trading.
 
     Parameters
@@ -73,7 +90,8 @@ def build_spread(i, j, train_prices, trade_prices, use_wavelet=False,
         Original wide price frames [date, tickers...] for each period.
     use_wavelet : bool
         If True, estimate (α_w, β_w) and the spread on MODWT-filtered prices.
-        P&L is still computed elsewhere on the original prices.
+    normalize : bool
+        If True, divide each leg by its formation-start price (see module docstring).
 
     Returns
     -------
@@ -84,15 +102,26 @@ def build_spread(i, j, train_prices, trade_prices, use_wavelet=False,
     if len(si_tr) < 30 or len(si_td) < 5:
         return None
 
-    if use_wavelet:
-        # Recompute MODWT filtering on each window (see Appendix A.2).
-        x_tr_i = modwt_smooth(si_tr, wavelet)
-        x_tr_j = modwt_smooth(sj_tr, wavelet)
-        x_td_i = modwt_smooth(si_td, wavelet)
-        x_td_j = modwt_smooth(sj_td, wavelet)
+    # Per-formation-window normalization (split-adjustment invariant).
+    if normalize:
+        bi, bj = si_tr[0], sj_tr[0]
+        if bi == 0 or bj == 0 or not (np.isfinite(bi) and np.isfinite(bj)):
+            return None
     else:
-        x_tr_i, x_tr_j = si_tr, sj_tr
-        x_td_i, x_td_j = si_td, sj_td
+        bi = bj = 1.0
+    ni_tr, nj_tr = si_tr / bi, sj_tr / bj
+    ni_td, nj_td = si_td / bi, sj_td / bj
+
+    if use_wavelet:
+        # Filter the full (formation + trading) series once, then split.
+        nt = len(ni_tr)
+        fi = modwt_smooth(np.concatenate([ni_tr, ni_td]), wavelet)
+        fj = modwt_smooth(np.concatenate([nj_tr, nj_td]), wavelet)
+        x_tr_i, x_tr_j = fi[:nt], fj[:nt]
+        x_td_i, x_td_j = fi[nt:], fj[nt:]
+    else:
+        x_tr_i, x_tr_j = ni_tr, nj_tr
+        x_td_i, x_td_j = ni_td, nj_td
 
     alpha, beta = _ols_alpha_beta(x_tr_i, x_tr_j)
 
@@ -107,6 +136,6 @@ def build_spread(i, j, train_prices, trade_prices, use_wavelet=False,
         i=i, j=j, alpha=alpha, beta=beta,
         sigma=sigma, threshold=n_sigma * sigma,
         train_spread=train_spread, trade_spread=trade_spread,
-        trade_si=si_td, trade_sj=sj_td, trade_dates=td_dates,
+        trade_si=ni_td, trade_sj=nj_td, trade_dates=td_dates,
         use_wavelet=use_wavelet,
     )

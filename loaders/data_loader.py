@@ -52,6 +52,35 @@ def _universe_tickers(source, index_id):
     return mem.get_column("ticker").unique().to_list()
 
 
+def members_asof(asof, index_id, source="data") -> list[str]:
+    """Point-in-time index constituents as of a given date.
+
+    Returns the tickers belonging to `index_id` at the most recent membership
+    snapshot on or before `asof`. Use this to avoid look-ahead / survivorship
+    bias: a 2012 universe must not contain a stock that only joined the index
+    years later (e.g. it would wrongly pair pre-index trending names).
+
+    Parameters
+    ----------
+    asof : str | datetime
+        Reference date (typically a formation-period start).
+    index_id : str
+        Single index id, e.g. "SPX".
+    """
+    mem = load_membership(source=source, index_id=index_id)
+    asof_dt = pl.lit(asof).str.to_datetime() if isinstance(asof, str) else asof
+    snap = mem.filter(pl.col("date") <= asof_dt)
+    if snap.height == 0:
+        return []
+    last = snap.get_column("date").max()
+    return (
+        mem.filter(pl.col("date") == last)
+        .get_column("ticker")
+        .unique()
+        .to_list()
+    )
+
+
 def load_prices(source="data", index_id=None, start=None, end=None,
                 tickers=None) -> pl.DataFrame:
     """Prix (PX_LAST) au format wide Polars [date, <tickers...>].

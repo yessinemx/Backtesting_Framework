@@ -19,6 +19,7 @@ from loaders.data_loader import (
     load_returns,
     load_membership,
     load_riskfree,
+    members_asof,
 )
 from loaders.bloomberg_loader import BloombergLoader
 
@@ -27,5 +28,6 @@ __all__ = [
     "load_returns",
     "load_membership",
     "load_riskfree",
+    "members_asof",
     "BloombergLoader",
 ]
