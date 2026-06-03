@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from typing import Any
 import polars as pl
 
-from loaders import load_prices
+from loaders import load_prices, load_membership
 from research import config as research_config
 from research.paper_replication.periods import build_periods
 from research.paper_replication.selection import select_pairs
@@ -48,10 +48,97 @@ def _run_variant(pairs, train_prices, trade_prices, use_wavelet, params):
     return results
 
 
-def run_period(period, prices, params):
+def _point_in_time_members(membership, start, end):
+    """Tickers that were continuous index members across [start, end].
+
+    `membership` is a long frame [date, index_id, ticker] of monthly
+    point-in-time constituents (Bloomberg INDX_MWEIGHT). A ticker qualifies
+    for a period only if it appears in EVERY monthly snapshot whose date falls
+    inside the formation+trading window. This reproduces the paper's universe
+    rule (Section 4.1): a stock enters period n only if it was an index member
+    across both formation year n and trading year n+1 ("two consecutive years").
+    """
+    if membership is None or membership.height == 0:
+        return None
+    window = membership.filter(
+        (pl.col("date") >= start) & (pl.col("date") <= end)
+    )
+    n_snapshots = window.get_column("date").n_unique()
+    if n_snapshots == 0:
+        return None
+    counts = window.group_by("ticker").agg(
+        pl.col("date").n_unique().alias("n")
+    )
+    eligible = counts.filter(pl.col("n") == n_snapshots)
+    return set(eligible.get_column("ticker").to_list())
+
+
+def _restrict_to_traded_universe(train_prices, trade_prices):
+    """Keep only tickers with no missing prices across BOTH train and trade.
+
+    Mirrors the paper's universe rule (Section 4.1): a stock enters period n
+    only if it traded across both formation year n and trading year n+1.
+    """
+    date_col = "date"
+    train_cols = [c for c in train_prices.columns if c != date_col]
+    trade_cols = [c for c in trade_prices.columns if c != date_col]
+    common = [c for c in train_cols if c in trade_cols]
+    if not common:
+        return train_prices, trade_prices
+    null_tr = train_prices.select([pl.col(c).null_count().alias(c) for c in common])
+    null_td = trade_prices.select([pl.col(c).null_count().alias(c) for c in common])
+    keep = [c for c in common if null_tr[c][0] == 0 and null_td[c][0] == 0]
+    return (
+        train_prices.select([date_col, *keep]),
+        trade_prices.select([date_col, *keep]),
+    )
+
+
+def _drop_non_trading_days(prices, threshold=0.90):
+    """Drop Bloomberg forward-fill rows that correspond to NYSE holidays.
+
+    Bloomberg's NON_TRADING_WEEKDAYS fill carries the prior price forward on
+    holidays. We detect these by looking for rows where the fraction of
+    tickers with an exactly-unchanged price relative to the previous row
+    exceeds `threshold`. The result keeps only real NYSE trading days,
+    so 252 rows = 1 trading year, matching the paper's calendar.
+    """
+    date_col = "date"
+    cols = [c for c in prices.columns if c != date_col]
+    if not cols or prices.height < 2:
+        return prices
+    # Per-cell flag: True if price equals prior row's price (and both non-null).
+    unchanged = prices.select([
+        ((pl.col(c) == pl.col(c).shift(1)) & pl.col(c).is_not_null()).alias(c)
+        for c in cols
+    ])
+    valid = prices.select([pl.col(c).is_not_null().alias(c) for c in cols])
+    n_unchanged = unchanged.sum_horizontal()
+    n_valid = valid.sum_horizontal()
+    # Keep row if fewer than `threshold` of valid tickers are unchanged.
+    keep_mask = (n_unchanged < threshold * n_valid) | (n_valid == 0)
+    # Always keep the first row (no previous to compare to).
+    keep_mask = pl.Series([True] + keep_mask.to_list()[1:])
+    return prices.filter(keep_mask)
+
+
+def run_period(period, prices, params, membership=None):
     """Run the pipeline on a single formation/trading period."""
     train_prices = prices.slice(*period.train_slice)
     trade_prices = prices.slice(*period.trade_slice)
+    train_prices, trade_prices = _restrict_to_traded_universe(train_prices, trade_prices)
+
+    # Point-in-time S&P 500 membership: keep only stocks that were actual
+    # index members across this period's formation+trading window.
+    members = _point_in_time_members(membership, period.train_start, period.trade_end)
+    if members is not None:
+        date_col = "date"
+        train_prices = train_prices.select(
+            [c for c in train_prices.columns if c == date_col or c in members]
+        )
+        trade_prices = trade_prices.select(
+            [c for c in trade_prices.columns if c == date_col or c in members]
+        )
 
     pairs = select_pairs(
         params["method"], train_prices,
@@ -95,25 +182,51 @@ def run_pipeline(params=None, source="data", verbose=True, write_outputs=True):
     if params is None:
         params = dict(research_config.PAIRS_CONFIG)
 
-    prices = load_prices(source=source, index_id=params.get("index_id"))
+    prices_path = None
+    if params.get("raw_prices") and source == "data":
+        import config as global_config
+        prices_path = global_config.RAW_PRICES_PATH
+        if not prices_path.exists():
+            raise FileNotFoundError(
+                f"raw_prices=True but {prices_path} is missing. "
+                "Run `py extraction/refresh_raw.py SPX` on a Bloomberg terminal "
+                "to download raw unadjusted close prices, or set "
+                "PAIRS_CONFIG['raw_prices']=False to use adjusted prices."
+            )
+
+    prices = load_prices(
+        source=source,
+        index_id=params.get("index_id"),
+        start=params.get("start_date"),
+        end=params.get("end_date"),
+        prices_path=prices_path,
+    )
+    prices = _drop_non_trading_days(prices)
+    membership = load_membership(source=source, index_id=params.get("index_id"))
     periods = build_periods(
         prices.get_column("date"),
         block_size=params["block_size"],
         max_periods=params.get("max_periods"),
+        paper_periods=params.get("paper_periods"),
     )
     if verbose:
-        print(f"Universe: {prices.width - 1} securities, {len(periods)} periods")
+        print(
+            f"Universe: {prices.width - 1} securities, "
+            f"{prices.height} rows, {len(periods)} periods"
+        )
 
     period_results = []
     for period in periods:
         if verbose:
             print(f"  → {period} ...", flush=True)
-        res = run_period(period, prices, params)
+        res = run_period(period, prices, params, membership=membership)
         if res is not None:
             period_results.append(res)
             if verbose:
+                n_kept = res.standard.n_pairs
                 print(
-                    f"     standard R̄={res.standard.mean_return:+.4f} "
+                    f"     pairs={n_kept} | "
+                    f"standard R\u0304={res.standard.mean_return:+.4f} "
                     f"Sharpe={res.standard.sharpe:+.2f} | "
                     f"wavelet R̄={res.wavelet.mean_return:+.4f} "
                     f"Sharpe={res.wavelet.sharpe:+.2f}"

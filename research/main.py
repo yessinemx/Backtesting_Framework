@@ -81,6 +81,16 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Optional cap on the number of rolling periods.",
     )
     parser.add_argument(
+        "--start-date",
+        default=research_config.PAIRS_CONFIG.get("start_date"),
+        help="First date (inclusive) of the price sample, YYYY-MM-DD.",
+    )
+    parser.add_argument(
+        "--end-date",
+        default=research_config.PAIRS_CONFIG.get("end_date"),
+        help="Last date (inclusive) of the price sample, YYYY-MM-DD.",
+    )
+    parser.add_argument(
         "--no-write-outputs",
         action="store_true",
         help="Run the replication without writing tables and figures to research/outputs/.",
@@ -106,6 +116,8 @@ def _build_params(args: argparse.Namespace) -> dict:
             "threshold_sigma": args.threshold_sigma,
             "tc_per_share": args.tc_per_share,
             "max_periods": args.max_periods,
+            "start_date": args.start_date,
+            "end_date": args.end_date,
         }
     )
     return params

@@ -23,6 +23,11 @@ class ConfigLayoutTests(unittest.TestCase):
             "tc_per_share",
             "index_id",
             "max_periods",
+            "start_date",
+            "end_date",
+            "max_beta",
+            "paper_periods",
+            "raw_prices",
         }
         self.assertEqual(set(research_config.PAIRS_CONFIG), expected_keys)
 

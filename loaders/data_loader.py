@@ -53,7 +53,7 @@ def _universe_tickers(source, index_id):
 
 
 def load_prices(source="data", index_id=None, start=None, end=None,
-                tickers=None) -> pl.DataFrame:
+                tickers=None, prices_path=None) -> pl.DataFrame:
     """Prix (PX_LAST) au format wide Polars [date, <tickers...>].
 
     Parameters
@@ -65,6 +65,9 @@ def load_prices(source="data", index_id=None, start=None, end=None,
         Plage de dates inclusive.
     tickers : list[str] | None
         Sous-ensemble explicite de tickers (prioritaire sur index_id).
+    prices_path : str | Path | None
+        Override the local parquet file (e.g. config.RAW_PRICES_PATH for raw
+        unadjusted closes). Only used when source == "data".
     """
     if source == "bloomberg":
         from loaders.bloomberg_loader import BloombergLoader
@@ -72,7 +75,7 @@ def load_prices(source="data", index_id=None, start=None, end=None,
             tickers = _universe_tickers("data", index_id)
         prices = BloombergLoader().load_prices(tickers, start=start, end=end)
     else:
-        prices = pl.read_parquet(config.PRICES_PATH)
+        prices = pl.read_parquet(prices_path or config.PRICES_PATH)
         prices = normalize_wide(prices)
 
     prices = normalize_wide(prices)

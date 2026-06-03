@@ -13,15 +13,25 @@ It uses:
 Note on sym22
 -------------
 The paper uses the `sym22` filter (22 vanishing moments, length 44). PyWavelets
-only provides Symlets up to `sym20`. The paper itself shows in Table 16 that
-Sharpe ratios from sym12 to sym24 are very close and stable: sym20 (~2.57) is
-close to sym22 (~2.61). This implementation therefore defaults to `sym20` as
-the closest available equivalent, while keeping the family configurable.
+only provides Symlets up to `sym20`. We default to `sym20`, the closest
+AVAILABLE member of the SAME family (Symlets are "least-asymmetric", i.e. very
+close to linear phase). The paper's Table 16 shows Sharpe ratios are stable
+across high-order Symlets: sym20 (~2.57) is close to sym22 (~2.61).
+
+Do NOT substitute db22 here. Although db22 shares the same length (44) and
+number of vanishing moments (22), Daubechies wavelets are "extremal phase" and
+highly asymmetric: their scaling-filter energy is centred near index 37 of 44
+(vs the symmetric midpoint ~21.5), introducing a large frequency-dependent
+phase lag that destroys the price-trend extraction the strategy relies on. The
+least-asymmetric Symlet phase is exactly what produces the paper's positive
+wavelet returns.
 """
 import numpy as np
 import pywt
 
-# Default family: the closest available option to sym22 in PyWavelets.
+# Default family: nearest available Symlet to the paper's sym22 (same family,
+# least-asymmetric / near-linear phase). sym20 is the highest Symlet provided
+# by PyWavelets.
 DEFAULT_WAVELET = "sym20"
 
 
@@ -40,35 +50,50 @@ def _modwt_filters(wavelet):
     return g_t, h_t
 
 
-def _filter_level1(x, filt):
-    """Apply a level-1 MODWT filter with symmetric extension.
+def _mra_level1(x, wavelet):
+    """Level-1 MODWT multiresolution analysis (smooth, detail).
 
-    Output[t] = sum_l filt[l] * x[t-l], with boundaries handled by symmetric reflection.
+    Returns (V1, W1) where V1 is the Level-1 long-run (smooth) component and
+    W1 is the Level-1 short-run (detail) component, with V1 + W1 == x.
+
+    Uses the undecimated SWT and its inverse so the reconstruction is
+    ZERO-PHASE: the smooth tracks the price trend without the ~L/2 time lag
+    introduced by a single causal convolution. The boundary is handled by
+    symmetric reflection (the paper's "symmetrization", Section 3.1).
     """
     x = np.asarray(x, dtype=float)
     n = x.size
-    L = filt.size
     if n == 0:
-        return np.array([])
-    # Symmetric padding at the start of the series, using the filter length.
-    xpad = np.pad(x, (L, 0), mode="symmetric")
-    conv = np.convolve(xpad, filt)
-    return conv[L:L + n]
+        return np.array([]), np.array([])
+    # Symmetric reflection padding (paper Section 3.1 "symmetrization") to tame
+    # boundary effects. pywt's SWT-MRA only supports periodization internally,
+    # so we reflect-pad ourselves, then crop back to the original support.
+    L = pywt.Wavelet(wavelet).dec_len
+    pad = L
+    # SWT requires the (padded) length to be a multiple of 2 for level 1.
+    total = n + 2 * pad
+    extra = (-total) % 2
+    xp = np.pad(x, (pad, pad + extra), mode="symmetric")
+    comps = pywt.mra(xp, wavelet, level=1, transform="swt")
+    smooth = np.asarray(comps[0], dtype=float)[pad:pad + n]
+    detail = np.asarray(comps[1], dtype=float)[pad:pad + n]
+    return smooth, detail
 
 
 def modwt_smooth(x, wavelet=DEFAULT_WAVELET):
     """Long-term component V_{1,t} (level-1 approximation).
 
-    This is the denoised series used to build the spread.
+    This is the denoised series used to build the spread. Zero-phase, so the
+    smoothed series is time-aligned with the original prices.
     """
-    g_t, _ = _modwt_filters(wavelet)
-    return _filter_level1(x, g_t)
+    smooth, _ = _mra_level1(x, wavelet)
+    return smooth
 
 
 def modwt_detail(x, wavelet=DEFAULT_WAVELET):
     """Short-term component W_{1,t} (level-1 detail), i.e. filtered noise."""
-    _, h_t = _modwt_filters(wavelet)
-    return _filter_level1(x, h_t)
+    _, detail = _mra_level1(x, wavelet)
+    return detail
 
 
 def filter_prices(prices, wavelet=DEFAULT_WAVELET):

@@ -171,7 +171,8 @@ class BloombergConnector:
     
     # ==================== BDH ====================
     def bdh(self, strSecurity, strFields, startdate, enddate, per='DAILY', 
-            perAdj='CALENDAR', days='NON_TRADING_WEEKDAYS', fill='PREVIOUS_VALUE', curr=None):
+            perAdj='CALENDAR', days='NON_TRADING_WEEKDAYS', fill='PREVIOUS_VALUE', curr=None,
+            adjust=True):
         if not self.connected:
             print("Bloomberg non connecte")
             return {}
@@ -194,6 +195,12 @@ class BloombergConnector:
         request.set('periodicityAdjustment', perAdj)
         request.set('nonTradingDayFillMethod', fill)
         request.set('nonTradingDayFillOption', days)
+        # adjust=True -> total-return-adjusted prices (dividends + splits).
+        # adjust=False -> raw closing prices with no corporate-action adjustment.
+        request.set('adjustmentNormal', adjust)
+        request.set('adjustmentAbnormal', adjust)
+        request.set('adjustmentSplit', adjust)
+        request.set('adjustmentFollowDPDF', False)
         if curr is not None:
             request.set('currency', curr)
         

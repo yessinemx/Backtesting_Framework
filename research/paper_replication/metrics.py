@@ -82,18 +82,29 @@ def _portfolio_daily(pair_results):
 
 
 def aggregate_metrics(pair_results, method, variant, n_pairs=None):
-    """Aggregate a list of PairResult objects into a PairsReport."""
+    """Aggregate a list of PairResult objects into a PairsReport.
+
+    Per paper Appendix A.1 (eq. A2-A3), the mean pair return divides by the
+    total number of selected pairs N_n (including inactive and skipped ones),
+    not just by the count of successfully constructed PairResult objects.
+    """
     if n_pairs is None:
         n_pairs = len(pair_results)
+    n_pairs = max(int(n_pairs), 1)
 
     pnls = np.array([pr.total_pnl for pr in pair_results], dtype=float)
     active = [pr for pr in pair_results if pr.active]
     n_active = len(active)
 
-    mean_return = float(pnls.mean()) if len(pnls) > 0 else 0.0
+    # Eq A3: R-bar_n = sum_ij R_ij / N_n, divided by the FULL pair count.
+    mean_return = float(pnls.sum() / n_pairs) if pnls.size else 0.0
     std_return = float(pnls.std(ddof=1)) if len(pnls) > 1 else 0.0
 
     port_daily = _portfolio_daily(pair_results)
+    # Rescale: _portfolio_daily averages over built pair_results; eq A2 wants
+    # division by N_n (committed-capital basis).
+    if port_daily.size and len(pair_results) > 0:
+        port_daily = port_daily * (len(pair_results) / n_pairs)
     if len(port_daily) > 1 and port_daily.std(ddof=1) > 0:
         sharpe = float(port_daily.mean() / port_daily.std(ddof=1)
                        * np.sqrt(TRADING_DAYS_PER_YEAR))

@@ -96,6 +96,13 @@ def build_spread(i, j, train_prices, trade_prices, use_wavelet=False,
 
     alpha, beta = _ols_alpha_beta(x_tr_i, x_tr_j)
 
+    # Defensive cap: drop pairs with explosive |beta| caused by extreme price-level
+    # mismatches (e.g. BRK.A-class shares vs ordinary equities). Paper Sec. 4.2
+    # notes the spurious-regression issue but its 415-stock SPX universe naturally
+    # avoids such pairings; we apply an explicit cap here.
+    if not np.isfinite(beta) or abs(beta) > 10.0:
+        return None
+
     train_spread = x_tr_i - alpha - beta * x_tr_j
     trade_spread = x_td_i - alpha - beta * x_td_j
 

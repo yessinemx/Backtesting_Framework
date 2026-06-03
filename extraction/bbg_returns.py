@@ -6,7 +6,7 @@ from datetime import datetime
 import polars as pl
 
 from config import (DATA_DIR, MEMBERSHIP_PATH, PRICES_PATH, RETURNS_PATH,
-                    DATA_START, DATA_END)
+                    RAW_PRICES_PATH, RAW_RETURNS_PATH, DATA_START, DATA_END)
 
 DATE_COL = "date"
 
@@ -23,13 +23,19 @@ def _series_frame(ticker, date_vals):
 
 def extract_prices(bbg, membership=None,
                    batch_size: int = 40, progress_callback=None,
-                   tickers=None):
+                   tickers=None, adjust=True,
+                   prices_path=None, returns_path=None):
     """Download PX_LAST and merge it with existing prices/returns files.
 
     tickers: if provided, download only this list and ignore the other
     membership tickers. Otherwise use the full membership universe. Tickers
-    already present in prices.parquet are skipped.
+    already present in the target prices file are skipped.
+    adjust: True -> total-return-adjusted prices; False -> raw close prices.
+    prices_path / returns_path: output files. Default to the adjusted paths;
+    pass RAW_PRICES_PATH / RAW_RETURNS_PATH for an independent raw pull.
     """
+    prices_path = prices_path or PRICES_PATH
+    returns_path = returns_path or RETURNS_PATH
     if membership is None:
         membership = pl.read_parquet(MEMBERSHIP_PATH)
     elif not isinstance(membership, pl.DataFrame):
@@ -42,8 +48,8 @@ def extract_prices(bbg, membership=None,
 
     # Skip tickers already stored in the existing parquet file.
     existing_prices = None
-    if PRICES_PATH.exists():
-        existing_prices = pl.read_parquet(PRICES_PATH)
+    if prices_path.exists():
+        existing_prices = pl.read_parquet(prices_path)
         # Compatibility with older pandas-written parquet files lacking an index name.
         if DATE_COL not in existing_prices.columns:
             for legacy in ("__index_level_0__", "index", "Date"):
@@ -63,7 +69,7 @@ def extract_prices(bbg, membership=None,
         if progress_callback:
             progress_callback(1.0, "Nothing to download")
         # Reload returns as well for consistency.
-        returns = pl.read_parquet(RETURNS_PATH) if RETURNS_PATH.exists() else existing_prices
+        returns = pl.read_parquet(returns_path) if returns_path.exists() else existing_prices
         return existing_prices, returns
 
     print(f"Downloading PX_LAST for {len(new_tickers)} new tickers "
@@ -78,7 +84,7 @@ def extract_prices(bbg, membership=None,
 
     for b_idx, batch in enumerate(batches):
         try:
-            raw = bbg.bdh(batch, "PX_LAST", dt_start, dt_end)
+            raw = bbg.bdh(batch, "PX_LAST", dt_start, dt_end, adjust=adjust)
             if raw and "PX_LAST" in raw:
                 for ticker, date_vals in raw["PX_LAST"].items():
                     if date_vals:
@@ -116,9 +122,9 @@ def extract_prices(bbg, membership=None,
     ])
 
     DATA_DIR.mkdir(parents=True, exist_ok=True)
-    prices.write_parquet(PRICES_PATH)
-    returns.write_parquet(RETURNS_PATH)
+    prices.write_parquet(prices_path)
+    returns.write_parquet(returns_path)
 
-    print(f"prices.parquet  saved: {prices.shape}")
-    print(f"returns.parquet saved: {returns.shape}")
+    print(f"{prices_path.name}  saved: {prices.shape}")
+    print(f"{returns_path.name} saved: {returns.shape}")
     return prices, returns

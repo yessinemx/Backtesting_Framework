@@ -17,6 +17,6 @@ venv/
 dist/
 build/
 .DS_Store
-research/outputs/figures/
-research/outputs/tables/
+#research/outputs/figures/
+#research/outputs/tables/
 research/outputs/__pycache__/

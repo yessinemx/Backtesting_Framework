@@ -6,6 +6,10 @@ DATA_DIR = ROOT_DIR / "data"
 
 PRICES_PATH = DATA_DIR / "prices.parquet"
 RETURNS_PATH = DATA_DIR / "returns.parquet"
+# Raw (unadjusted) closing prices — separate file so adjusted and raw series
+# are never mixed. Used by the wavelet replication study.
+RAW_PRICES_PATH = DATA_DIR / "prices_raw.parquet"
+RAW_RETURNS_PATH = DATA_DIR / "returns_raw.parquet"
 MEMBERSHIP_PATH = DATA_DIR / "membership.parquet"
 RISKFREE_PATH = DATA_DIR / "riskfree.parquet"
 
