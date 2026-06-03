@@ -8,22 +8,28 @@ the `sym22` Symlet at **Level 1**, symmetrizing the series to a dyadic length to
 handle the boundary (Section 3.1), and uses the long-run component V_1 to build
 the spread. The analysis is done in MATLAB (`modwt` / `modwtmra`), Appendix A.2.
 
-This module reproduces that with PyWavelets' multiresolution analysis
-(`pywt.mra(..., transform='swt')`), which is the MODWT MRA: it is undecimated
-(keeps the full length), zero-phase (the smooth is aligned with the price, not
-lagged), and the components sum back to the original series (A_1 + D_1 = x).
+We reproduce eq. (3) with PyWavelets' undecimated SWT scaling/approximation
+coefficient (`pywt.swt(..., trim_approx=True, norm=True)`), which IS the MODWT
+scaling coefficient V_1: a length-L weighted moving average of the prices.
+
+IMPORTANT — V_1 (scaling coefficient) vs A_1 (MRA component)
+-----------------------------------------------------------
+Eq. (3) is the scaling COEFFICIENT V_1, not the multiresolution-analysis
+reconstruction A_1 = x - D_1. The MRA component A_1 barely differs from the price
+(corr ~0.999), so using it makes the wavelet spread almost identical to the
+standard spread (no effect). The scaling coefficient V_1 is a genuine long-run
+component (corr ~0.87-0.99) and is what the paper specifies — using it instead of
+A_1 materially changes the wavelet results.
 
 The sym22 filter (length 44)
 ----------------------------
-PyWavelets only ships Symlets up to `sym20`, but the paper needs `sym22`. The
-MODWT MRA smooth is **zero-phase**, so it depends only on the filter's *magnitude*
-response. A Symlet and a Daubechies wavelet of the same order share the *same*
-magnitude response (they are different phase factorizations of the same half-band
-filter), therefore the level-1 MRA smooth from `sym22` is numerically identical
-to the one from `db22` (verified to ~1e-10), and PyWavelets *does* provide `db22`
-(length 44). We therefore map `sym22` -> `db22` for the smooth, recovering the
-exact paper filter length and vanishing moments (22). Symlets that PyWavelets
-does provide (sym2..sym20) are used directly.
+PyWavelets only ships Symlets up to `sym20`, but the paper needs `sym22`. Symlet
+and Daubechies wavelets of the same order share the *same* magnitude response
+(different phase factorizations of the same half-band filter); for the trading
+spread (where both legs are filtered identically and the signal is what matters)
+`db22` recovers the exact paper filter length and vanishing moments (22), and
+PyWavelets *does* provide `db22` (length 44). We therefore map `sym22` -> `db22`.
+Symlets that PyWavelets does provide (sym2..sym20) are used directly.
 """
 import numpy as np
 import pywt
@@ -40,8 +46,8 @@ _MAX_DB = 38
 def resolve_wavelet(name):
     """Map a requested wavelet to a PyWavelets-available filter.
 
-    `symN` with N > 20 is mapped to `dbN` (identical magnitude response, hence an
-    identical zero-phase MODWT MRA smooth). Everything else is returned as-is.
+    `symN` with N > 20 is mapped to `dbN` (same magnitude response, hence an
+    equivalent long-run component). Everything else is returned as-is.
     """
     if isinstance(name, str) and name.lower().startswith("sym"):
         try:
@@ -53,17 +59,21 @@ def resolve_wavelet(name):
     return name
 
 
-def _mra_smooth(x, wavelet, level):
-    """Zero-phase MODWT MRA approximation A_{level} of a 1-D series.
+def _modwt_coeffs(x, wavelet, level):
+    """MODWT level-J scaling V_J and detail W_J COEFFICIENTS (paper eq. 3).
 
-    The series is symmetrized (reflected) by the filter length on each side to
-    absorb boundary effects, padded up to a length divisible by 2**level, run
-    through the MODWT MRA, and trimmed back to the original support.
+    Eq. (3) defines V_{1,t} = sum_l g~_l Z_{t-l} — the MODWT *scaling
+    coefficient*, a length-L weighted average of the prices (long-run component),
+    NOT the MRA reconstruction A_1 = x - D_1 (which barely differs from x). We
+    therefore take the SWT approximation coefficient (= MODWT scaling coefficient,
+    undecimated, à-trous). The series is symmetrized (reflected) by the filter
+    length on each side — the paper's "symmetrization" — padded to a length
+    divisible by 2**level, transformed, and trimmed back.
     """
     x = np.asarray(x, dtype=float)
     n = x.size
     if n == 0:
-        return x
+        return x, x
     fam = resolve_wavelet(wavelet)
     L = pywt.Wavelet(fam).dec_len
     pad = L
@@ -72,27 +82,23 @@ def _mra_smooth(x, wavelet, level):
     extra = (-xp.size) % step
     if extra:
         xp = np.pad(xp, (0, extra), mode="symmetric")
-    comps = pywt.mra(xp, fam, level=level, transform="swt")
-    return comps[0][pad:pad + n]   # A_level (smooth), realigned to x
-
-
-def _mra_detail(x, wavelet, level):
-    """Filtered-out short-run component x - A_{level} (sum of detail levels)."""
-    x = np.asarray(x, dtype=float)
-    return x - _mra_smooth(x, wavelet, level)
+    coeffs = pywt.swt(xp, fam, level=level, trim_approx=True, norm=True)
+    v = coeffs[0]                  # V_J  : scaling (approximation) coefficient
+    w = coeffs[1] if len(coeffs) > 1 else xp - v   # W_1 : finest detail
+    return v[pad:pad + n], w[pad:pad + n]
 
 
 def modwt_smooth(x, wavelet=DEFAULT_WAVELET, level=DEFAULT_LEVEL):
-    """Long-run component V_{1,t} (level-1 MODWT MRA approximation), zero-phase.
+    """Long-run component V_{1,t} (level-1 MODWT scaling coefficient, eq. 3).
 
     This is the denoised series used to build the spread.
     """
-    return _mra_smooth(x, wavelet, level)
+    return _modwt_coeffs(x, wavelet, level)[0]
 
 
 def modwt_detail(x, wavelet=DEFAULT_WAVELET, level=DEFAULT_LEVEL):
-    """Short-run component W_{1,t} (filtered-out noise), zero-phase."""
-    return _mra_detail(x, wavelet, level)
+    """Short-run component W_{1,t} (filtered-out noise, level-1 detail coeff)."""
+    return _modwt_coeffs(x, wavelet, level)[1]
 
 
 def filter_prices(prices, wavelet=DEFAULT_WAVELET, level=DEFAULT_LEVEL):
