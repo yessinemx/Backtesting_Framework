@@ -1,0 +1,5 @@
+method,variant,period,sigma,trade_spread_std
+distance,standard,3.988087,0.028587,0.077357
+distance,wavelet,3.999714,0.028082,0.076888
+cointegration,standard,4.331862,0.027221,0.074344
+cointegration,wavelet,4.331862,0.026788,0.074279

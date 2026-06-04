@@ -1,0 +1,7 @@
+method,variant,replication_mean_return_pct,paper_mean_return_pct,replication_sharpe,paper_sharpe,return_gap_pct,sharpe_gap
+distance,standard,-0.650000,-0.550000,-0.230000,-0.210000,-0.100000,-0.020000
+distance,wavelet,-2.270000,11.820000,-0.940000,3.690000,-14.090000,-4.630000
+distance,opt,11.710000,,10.010000,,,
+cointegration,standard,-0.740000,-1.810000,-0.300000,-0.400000,1.070000,0.100000
+cointegration,wavelet,-2.450000,9.660000,-0.940000,2.820000,-12.110000,-3.760000
+cointegration,opt,11.310000,,9.420000,,,

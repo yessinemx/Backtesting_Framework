@@ -1,0 +1,7 @@
+method,variant,model,alpha_annual_%,t(alpha),significant_5%,beta_mkt,R2,n
+distance,standard,Market model,-0.430000,-0.510000,false,-0.017000,0.013000,1828
+distance,wavelet,Market model,-1.950000,-2.360000,true,-0.020000,0.016000,1828
+distance,opt(lookahead),Market model,11.210000,20.900000,true,0.045000,0.233000,1828
+cointegration,standard,Market model,-0.570000,-0.590000,false,-0.012000,0.004000,1828
+cointegration,wavelet,Market model,-2.180000,-2.270000,true,-0.015000,0.007000,1828
+cointegration,opt(lookahead),Market model,11.070000,20.090000,true,0.042000,0.203000,1828

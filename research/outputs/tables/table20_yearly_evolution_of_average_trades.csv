@@ -1,0 +1,2 @@
+status,reason
+not_reproduced,Yearly trade-count evolution under transaction-cost scenarios is not generated in the single-pass local workflow.

@@ -20,6 +20,7 @@ REPORT_METRIC_COLUMNS = (
     "skewness",
     "kurtosis",
     "max_drawdown",
+    "var_95",
     "cvar_95",
     "pct_positive",
     "n_full",

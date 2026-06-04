@@ -1,0 +1,2 @@
+n_observations,mean_daily_return,std_daily_return,skewness,kurtosis,min_daily_return,median_daily_return,max_daily_return
+2384507,0.000453,0.016565,3.031805,371.169253,-0.839506,0.000000,2.515497

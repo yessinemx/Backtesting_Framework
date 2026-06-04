@@ -125,7 +125,7 @@ def build_table5(report) -> pl.DataFrame:
                 "method": method,
                 "variant": row["variant"],
                 "max_drawdown": row["max_drawdown"],
-                "var_95": row["var_95"],
+                "var_95": row.get("var_95"),
                 "cvar_95": row["cvar_95"],
                 "pct_positive": row["pct_positive"],
             })
