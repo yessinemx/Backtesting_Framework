@@ -45,25 +45,27 @@ def save_table(df, name, formats=("csv", "parquet"), float_precision=6):
     return written
 
 
-def save_figure(fig, name, formats=("html", "png"), scale=2,
+def save_figure(fig, name, formats=("png",), scale=2,
                 width=1100, height=650):
     """Save a Plotly figure into research/outputs/figures/.
 
-    PNG output requires Kaleido; when it is unavailable, only HTML is written.
+    PNG is rendered with matplotlib (see ``png_export``) — fast, no browser /
+    Kaleido. HTML is only written when explicitly requested.
     """
     ensure_dirs()
     written = []
+    if "png" in formats:
+        path = FIGURES_DIR / f"{name}.png"
+        try:
+            from research.paper_replication.png_export import plotly_to_png
+            plotly_to_png(fig, str(path), width=width, height=height)
+            written.append(path)
+        except Exception as e:  # noqa: BLE001
+            print(f"  PNG not generated ({name}): {e!r}")
     if "html" in formats:
         path = FIGURES_DIR / f"{name}.html"
         fig.write_html(str(path), include_plotlyjs="cdn")
         written.append(path)
-    if "png" in formats:
-        path = FIGURES_DIR / f"{name}.png"
-        try:
-            fig.write_image(str(path), scale=scale, width=width, height=height)
-            written.append(path)
-        except Exception as e:  # noqa: BLE001  (kaleido absent)
-                print(f"  PNG not generated ({name}): {e} — install 'kaleido'")
     return written
 
 
