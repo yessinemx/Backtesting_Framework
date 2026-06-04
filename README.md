@@ -42,11 +42,24 @@ Backtesting_Framework/
 │   └── pairs_trading.py
 ├── visualisation/                    # Backtester figures
 ├── research/                         # Research and paper replication
+│   ├── data/                         # Paper-specific data slice and reference tables
+│   │   ├── spx_membership_paper.parquet
+│   │   ├── spx_prices_adjusted_paper.parquet
+│   │   ├── spx_prices_raw_paper.parquet
+│   │   ├── spx_415_candidate_tickers.csv
+│   │   ├── spx_prices_adjusted_paper_415.parquet
+│   │   ├── spx_prices_raw_paper_415.parquet
+│   │   ├── paper_periods_reference.csv
+│   │   ├── paper_table2_reference.csv
+│   │   ├── paper_universe_counts.csv
+│   │   └── paper_universe_415_counts.csv
 │   ├── main.py                       # Main paper replication CLI
 │   ├── docs/                         # Source documentation / paper
 │   ├── notebooks/                    # Research notebooks
 │   │   └── table_viewer.ipynb        # Notebook to inspect all generated CSV tables
 │   ├── outputs/                      # Generated tables and figures
+│   ├── prepare_paper_data.py         # Builds the paper-specific data slice under research/data
+│   ├── derive_paper_universe_415.py  # Derives a deterministic candidate fixed 415-ticker universe
 │   └── paper_replication/            # Paper replication code
 ├── data/                             # Shared parquet data
 ├── requirements.txt
@@ -119,6 +132,7 @@ Global backtester configuration in [config/config_backtester.py](config/config_b
 
 Local research configuration in [config/config_paper.py](config/config_paper.py):
 
+- `research/data` paths for the paper-specific dataset slice
 - `research/docs` and `research/outputs` paths
 - fixed paper replication parameters
 - table / figure output settings
@@ -128,10 +142,13 @@ Local research configuration in [config/config_paper.py](config/config_paper.py)
 
 The files in [data](data) and the PDF in [research/docs](research/docs) remain versioned so the repository stays reproducible without an external bootstrap step. Generated run artifacts should not be committed:
 
+- [research/data](research/data) isolates the 2010-03-05 to 2018-03-15 SPX paper slice and paper reference tables
 - [research/outputs](research/outputs) is reserved for generated outputs
 - `research/outputs/tables` contains CSV only
 - `research/outputs/tables` and `research/outputs/figures` are ignored by git
 - data can be regenerated through the app `Data Status` step or via the Bloomberg extraction scripts
+
+To rebuild the paper-specific data folder from the shared parquet files, run [research/prepare_paper_data.py](research/prepare_paper_data.py).
 
 To review generated tables quickly, open [research/notebooks/table_viewer.ipynb](research/notebooks/table_viewer.ipynb).
 

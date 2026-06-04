@@ -19,4 +19,9 @@ build/
 .DS_Store
 #research/outputs/figures/
 #research/outputs/tables/
-research/outputs/__pycache__/
+#research/outputs/__pycache__/
+
+# Large Bloomberg data files (regenerate with build_paper_dataset.py)
+#data/*.parquet
+#data/*.csv
+#research/data/*.parquet

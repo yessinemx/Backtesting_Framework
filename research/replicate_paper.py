@@ -37,7 +37,7 @@ def main():
     params["tc_per_share"] = research_config.HEADLINE_TC_PER_SHARE
 
     report = build_report(
-        source="data", methods=research_config.DEFAULT_METHODS,
+        source="paper_data", methods=research_config.DEFAULT_METHODS,
         params=params, with_figures=True, sweeps=True, save_figures=False,
     )
     written = save_paper_outputs(report)

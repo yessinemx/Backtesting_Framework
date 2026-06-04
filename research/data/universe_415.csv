@@ -1,0 +1,416 @@
+selection_rank,ticker,gics_sector,gics_industry_group,gics_industry,gics_sub_industry
+1,1500785D UN Equity,Utilities,Utilities,Multi-Utilities,Multi-Utilities
+2,1518855D US Equity,Communication Services,Media & Entertainment,Interactive Media & Services,Interactive Media & Services
+3,1539941D UN Equity,Energy,Energy,"Oil, Gas & Consumable Fuels",Oil & Gas Storage & Transporta
+4,1541931D UW Equity,Information Technology,Semiconductors & Semiconductor,Semiconductors & Semiconductor,Semiconductors
+5,1697067D UN Equity,Materials,Materials,Chemicals,Diversified Chemicals
+6,1715651D UN Equity,Materials,Materials,Chemicals,Diversified Chemicals
+7,1806854D UN Equity,Industrials,Commercial & Professional Serv,Professional Services,Research & Consulting Services
+8,1831877D UN Equity,Financials,Insurance,Insurance,Property & Casualty Insurance
+9,1856613D UN Equity,Materials,Materials,Chemicals,Fertilizers & Agricultural Che
+10,1922150D UN Equity,Materials,Materials,Chemicals,Industrial Gases
+11,1927294D UN Equity,Industrials,Capital Goods,Aerospace & Defense,Aerospace & Defense
+12,2078185D UN Equity,Consumer Discretionary,Consumer Discretionary Distrib,Specialty Retail,Other Specialty Retail
+13,2258717D UN Equity,Information Technology,Technology Hardware & Equipmen,"Technology Hardware, Storage &","Technology Hardware, Storage &"
+14,2326248D UW Equity,Information Technology,Software & Services,Software,Systems Software
+15,2370058D UN Equity,Financials,Banks,Banks,Regional Banks
+16,2544554D UW Equity,Information Technology,Technology Hardware & Equipmen,"Technology Hardware, Storage &","Technology Hardware, Storage &"
+17,2557974D UN Equity,Utilities,Utilities,Electric Utilities,Electric Utilities
+18,2558202D UN Equity,Communication Services,Media & Entertainment,Media,Broadcasting
+19,2596482D UN Equity,Energy,Energy,Energy Equipment & Services,Oil & Gas Equipment & Services
+20,2596516D UN Equity,Information Technology,Software & Services,IT Services,IT Consulting & Other Services
+21,2616271D UN Equity,Energy,Energy,"Oil, Gas & Consumable Fuels",Oil & Gas Exploration & Produc
+22,2619871D UW Equity,Consumer Discretionary,Consumer Discretionary Distrib,Specialty Retail,Other Specialty Retail
+23,9876566D UN Equity,Financials,Insurance,Insurance,Property & Casualty Insurance
+24,9903115D UN Equity,Financials,Financial Services,Capital Markets,Asset Management & Custody Ban
+25,9980328D UN Equity,Health Care,Health Care Equipment & Servic,Health Care Providers & Servic,Health Care Services
+26,9983490D UN Equity,Information Technology,Technology Hardware & Equipmen,"Electronic Equipment, Instrume",Electronic Manufacturing Servi
+27,9990213D UN Equity,Industrials,Commercial & Professional Serv,Professional Services,Research & Consulting Services
+28,A UN Equity,Health Care,"Pharmaceuticals, Biotechnology",Life Sciences Tools & Services,Life Sciences Tools & Services
+29,AA UN Equity,Materials,Materials,Metals & Mining,Aluminum
+30,AAPL UW Equity,Information Technology,Technology Hardware & Equipmen,"Technology Hardware, Storage &","Technology Hardware, Storage &"
+31,ABT UN Equity,Health Care,Health Care Equipment & Servic,Health Care Equipment & Suppli,Health Care Equipment
+32,ACN UN Equity,Information Technology,Software & Services,IT Services,IT Consulting & Other Services
+33,ADBE UW Equity,Information Technology,Software & Services,Software,Application Software
+34,ADM UN Equity,Consumer Staples,"Food, Beverage & Tobacco",Food Products,Agricultural Products & Servic
+35,ADP UW Equity,Industrials,Commercial & Professional Serv,Professional Services,Human Resource & Employment Se
+36,ADSK UW Equity,Information Technology,Software & Services,Software,Application Software
+37,AEE UN Equity,Utilities,Utilities,Multi-Utilities,Multi-Utilities
+38,AEP UN Equity,Utilities,Utilities,Electric Utilities,Electric Utilities
+39,AES UN Equity,Utilities,Utilities,Independent Power and Renewabl,Independent Power Producers &
+40,AET UN Equity,Health Care,Health Care Equipment & Servic,Health Care Providers & Servic,Managed Health Care
+41,AFL UN Equity,Financials,Insurance,Insurance,Life & Health Insurance
+42,AGN UN Equity,Health Care,"Pharmaceuticals, Biotechnology",Pharmaceuticals,Pharmaceuticals
+43,AIG UN Equity,Financials,Insurance,Insurance,Property & Casualty Insurance
+44,AIV UN Equity,Real Estate,Equity Real Estate Investment,Residential REITs,Multi-Family Residential REITs
+45,AIZ UN Equity,Financials,Insurance,Insurance,Property & Casualty Insurance
+46,AKAM UW Equity,Information Technology,Software & Services,IT Services,Internet Services & Infrastruc
+47,ALL UN Equity,Financials,Insurance,Insurance,Property & Casualty Insurance
+48,ALXN UW Equity,Health Care,"Pharmaceuticals, Biotechnology",Biotechnology,Biotechnology
+49,AMAT UW Equity,Information Technology,Semiconductors & Semiconductor,Semiconductors & Semiconductor,Semiconductor Materials & Equi
+50,AMGN UW Equity,Health Care,"Pharmaceuticals, Biotechnology",Biotechnology,Biotechnology
+51,AMP UN Equity,Financials,Financial Services,Capital Markets,Asset Management & Custody Ban
+52,AMT UN Equity,Real Estate,Equity Real Estate Investment,Specialized REITs,Telecom Tower REITs
+53,AMZN UW Equity,Consumer Discretionary,Consumer Discretionary Distrib,Broadline Retail,Broadline Retail
+54,AN UN Equity,Consumer Discretionary,Consumer Discretionary Distrib,Specialty Retail,Automotive Retail
+55,ANDV UN Equity,Energy,Energy,"Oil, Gas & Consumable Fuels",Oil & Gas Refining & Marketing
+56,AON UN Equity,Financials,Insurance,Insurance,Insurance Brokers
+57,APA UN Equity,Energy,Energy,"Oil, Gas & Consumable Fuels",Oil & Gas Exploration & Produc
+58,APD UN Equity,Materials,Materials,Chemicals,Industrial Gases
+59,APH UN Equity,Information Technology,Technology Hardware & Equipmen,"Electronic Equipment, Instrume",Electronic Components
+60,ARG UN Equity,Materials,Materials,Chemicals,Industrial Gases
+61,AVB UN Equity,Real Estate,Equity Real Estate Investment,Residential REITs,Multi-Family Residential REITs
+62,AVY UN Equity,Materials,Materials,Containers & Packaging,Paper & Plastic Packaging Prod
+63,AXP UN Equity,Financials,Financial Services,Consumer Finance,Consumer Finance
+64,AZO UN Equity,Consumer Discretionary,Consumer Discretionary Distrib,Specialty Retail,Automotive Retail
+65,BA UN Equity,Industrials,Capital Goods,Aerospace & Defense,Aerospace & Defense
+66,BAC UN Equity,Financials,Banks,Banks,Diversified Banks
+67,BALL UN Equity,Materials,Materials,Containers & Packaging,"Metal, Glass & Plastic Contain"
+68,BAX UN Equity,Health Care,Health Care Equipment & Servic,Health Care Equipment & Suppli,Health Care Equipment
+69,BBBYQ UW Equity,Consumer Discretionary,Consumer Discretionary Distrib,Specialty Retail,Homefurnishing Retail
+70,BBWI UN Equity,Consumer Discretionary,Consumer Discretionary Distrib,Specialty Retail,Other Specialty Retail
+71,BBY UN Equity,Consumer Discretionary,Consumer Discretionary Distrib,Specialty Retail,Computer & Electronics Retail
+72,BCR UN Equity,Health Care,Health Care Equipment & Servic,Health Care Equipment & Suppli,Health Care Equipment
+73,BDX UN Equity,Health Care,Health Care Equipment & Servic,Health Care Equipment & Suppli,Health Care Equipment
+74,BEN UN Equity,Financials,Financial Services,Capital Markets,Asset Management & Custody Ban
+75,BF/B UN Equity,Consumer Staples,"Food, Beverage & Tobacco",Beverages,Distillers & Vintners
+76,BHI UN Equity,Energy,Energy,Energy Equipment & Services,Oil & Gas Equipment & Services
+77,BIIB UW Equity,Health Care,"Pharmaceuticals, Biotechnology",Biotechnology,Biotechnology
+78,BKNG UW Equity,Consumer Discretionary,Consumer Services,"Hotels, Restaurants & Leisure","Hotels, Resorts & Cruise Lines"
+79,BMY UN Equity,Health Care,"Pharmaceuticals, Biotechnology",Pharmaceuticals,Pharmaceuticals
+80,BNY UN Equity,Financials,Financial Services,Capital Markets,Asset Management & Custody Ban
+81,BRCM UW Equity,Information Technology,Semiconductors & Semiconductor,Semiconductors & Semiconductor,Semiconductors
+82,BRK/B UN Equity,Financials,Financial Services,Financial Services,Multi-Sector Holdings
+83,BSX UN Equity,Health Care,Health Care Equipment & Servic,Health Care Equipment & Suppli,Health Care Equipment
+84,BWA UN Equity,Consumer Discretionary,Automobiles & Components,Automobile Components,Automotive Parts & Equipment
+85,BXP UN Equity,Real Estate,Equity Real Estate Investment,Office REITs,Office REITs
+86,C UN Equity,Financials,Banks,Banks,Diversified Banks
+87,CAG UN Equity,Consumer Staples,"Food, Beverage & Tobacco",Food Products,Packaged Foods & Meats
+88,CAH UN Equity,Health Care,Health Care Equipment & Servic,Health Care Providers & Servic,Health Care Distributors
+89,CAT UN Equity,Industrials,Capital Goods,Machinery,Construction Machinery & Heavy
+90,CB UN Equity,Financials,Insurance,Insurance,Property & Casualty Insurance
+91,CBRE UN Equity,Real Estate,Real Estate Management & Devel,Real Estate Management & Devel,Real Estate Services
+92,CCEP UN Equity,Consumer Staples,"Food, Beverage & Tobacco",Beverages,Soft Drinks & Non-alcoholic Be
+93,CCI UN Equity,Real Estate,Equity Real Estate Investment,Specialized REITs,Telecom Tower REITs
+94,CCL UN Equity,Consumer Discretionary,Consumer Services,"Hotels, Restaurants & Leisure","Hotels, Resorts & Cruise Lines"
+95,CELG UW Equity,Health Care,"Pharmaceuticals, Biotechnology",Biotechnology,Biotechnology
+96,CERN UW Equity,Health Care,Health Care Equipment & Servic,Health Care Technology,Health Care Technology
+97,CF UN Equity,Materials,Materials,Chemicals,Fertilizers & Agricultural Che
+98,CHKAQ UN Equity,Energy,Energy,"Oil, Gas & Consumable Fuels",Oil & Gas Exploration & Produc
+99,CHRW UW Equity,Industrials,Transportation,Air Freight & Logistics,Air Freight & Logistics
+100,CI UN Equity,Health Care,Health Care Equipment & Servic,Health Care Providers & Servic,Health Care Services
+101,CINF UW Equity,Financials,Insurance,Insurance,Property & Casualty Insurance
+102,CL UN Equity,Consumer Staples,Household & Personal Products,Household Products,Household Products
+103,CLX UN Equity,Consumer Staples,Household & Personal Products,Household Products,Household Products
+104,CMA UN Equity,Financials,Banks,Banks,Diversified Banks
+105,CMCSA UW Equity,Communication Services,Telecommunication Services,Diversified Telecommunication,Integrated Telecommunication S
+106,CME UW Equity,Financials,Financial Services,Capital Markets,Financial Exchanges & Data
+107,CMG UN Equity,Consumer Discretionary,Consumer Services,"Hotels, Restaurants & Leisure",Restaurants
+108,CMI UN Equity,Industrials,Capital Goods,Machinery,Construction Machinery & Heavy
+109,CMS UN Equity,Utilities,Utilities,Multi-Utilities,Multi-Utilities
+110,CNP UN Equity,Utilities,Utilities,Multi-Utilities,Multi-Utilities
+111,CNX UN Equity,Energy,Energy,"Oil, Gas & Consumable Fuels",Oil & Gas Exploration & Produc
+112,COF UN Equity,Financials,Financial Services,Consumer Finance,Consumer Finance
+113,COL UN Equity,Industrials,Capital Goods,Aerospace & Defense,Aerospace & Defense
+114,COP UN Equity,Energy,Energy,"Oil, Gas & Consumable Fuels",Oil & Gas Exploration & Produc
+115,COR UN Equity,Health Care,Health Care Equipment & Servic,Health Care Providers & Servic,Health Care Distributors
+116,COST UW Equity,Consumer Staples,Consumer Staples Distribution,Consumer Staples Distribution,Consumer Staples Merchandise R
+117,CPB UN Equity,Consumer Staples,"Food, Beverage & Tobacco",Food Products,Packaged Foods & Meats
+118,CRM UN Equity,Information Technology,Software & Services,Software,Application Software
+119,CSCO UW Equity,Information Technology,Technology Hardware & Equipmen,Communications Equipment,Communications Equipment
+120,CSX UN Equity,Industrials,Transportation,Ground Transportation,Rail Transportation
+121,CTAS UW Equity,Industrials,Commercial & Professional Serv,Commercial Services & Supplies,Diversified Support Services
+122,CTRA UN Equity,Energy,Energy,"Oil, Gas & Consumable Fuels",Oil & Gas Exploration & Produc
+123,CTSH UW Equity,Information Technology,Software & Services,IT Services,IT Consulting & Other Services
+124,CTXS UW Equity,Information Technology,Software & Services,Software,Application Software
+125,CVS UN Equity,Health Care,Health Care Equipment & Servic,Health Care Providers & Servic,Health Care Services
+126,CVX UN Equity,Energy,Energy,"Oil, Gas & Consumable Fuels",Integrated Oil & Gas
+127,D UN Equity,Utilities,Utilities,Multi-Utilities,Multi-Utilities
+128,DE UN Equity,Industrials,Capital Goods,Machinery,Agricultural & Farm Machinery
+129,DFS UN Equity,Financials,Financial Services,Consumer Finance,Consumer Finance
+130,DGX UN Equity,Health Care,Health Care Equipment & Servic,Health Care Providers & Servic,Health Care Services
+131,DHI UN Equity,Consumer Discretionary,Consumer Durables & Apparel,Household Durables,Homebuilding
+132,DHR UN Equity,Health Care,"Pharmaceuticals, Biotechnology",Life Sciences Tools & Services,Life Sciences Tools & Services
+133,DIS UN Equity,Communication Services,Media & Entertainment,Entertainment,Movies & Entertainment
+134,DISCA UW Equity,Communication Services,Media & Entertainment,Entertainment,Movies & Entertainment
+135,DLTR UW Equity,Consumer Staples,Consumer Staples Distribution,Consumer Staples Distribution,Consumer Staples Merchandise R
+136,DOC UN Equity,Real Estate,Equity Real Estate Investment,Health Care REITs,Health Care REITs
+137,DOFSQ UN Equity,Energy,Energy,Energy Equipment & Services,Oil & Gas Drilling
+138,DOV UN Equity,Industrials,Capital Goods,Machinery,Industrial Machinery & Supplie
+139,DRI UN Equity,Consumer Discretionary,Consumer Services,"Hotels, Restaurants & Leisure",Restaurants
+140,DTE UN Equity,Utilities,Utilities,Multi-Utilities,Multi-Utilities
+141,DUK UN Equity,Utilities,Utilities,Electric Utilities,Electric Utilities
+142,DVA UN Equity,Health Care,Health Care Equipment & Servic,Health Care Providers & Servic,Health Care Services
+143,DVN UN Equity,Energy,Energy,"Oil, Gas & Consumable Fuels",Oil & Gas Exploration & Produc
+144,EA UW Equity,Communication Services,Media & Entertainment,Entertainment,Interactive Home Entertainment
+145,EBAY UW Equity,Consumer Discretionary,Consumer Discretionary Distrib,Broadline Retail,Broadline Retail
+146,ECL UN Equity,Materials,Materials,Chemicals,Specialty Chemicals
+147,ED UN Equity,Utilities,Utilities,Multi-Utilities,Multi-Utilities
+148,EFX UN Equity,Industrials,Commercial & Professional Serv,Professional Services,Research & Consulting Services
+149,EIX UN Equity,Utilities,Utilities,Electric Utilities,Electric Utilities
+150,EL UN Equity,Consumer Staples,Household & Personal Products,Personal Care Products,Personal Care Products
+151,ELV UN Equity,Health Care,Health Care Equipment & Servic,Health Care Providers & Servic,Managed Health Care
+152,EMN UN Equity,Materials,Materials,Chemicals,Specialty Chemicals
+153,EMR UN Equity,Industrials,Capital Goods,Electrical Equipment,Electrical Components & Equipm
+154,EOG UN Equity,Energy,Energy,"Oil, Gas & Consumable Fuels",Oil & Gas Exploration & Produc
+155,EQR UN Equity,Real Estate,Equity Real Estate Investment,Residential REITs,Multi-Family Residential REITs
+156,EQT UN Equity,Energy,Energy,"Oil, Gas & Consumable Fuels",Oil & Gas Exploration & Produc
+157,ES UN Equity,Utilities,Utilities,Electric Utilities,Electric Utilities
+158,ESRX UW Equity,Health Care,Health Care Equipment & Servic,Health Care Providers & Servic,Health Care Services
+159,ETFC UW Equity,Financials,Financial Services,Capital Markets,Investment Banking & Brokerage
+160,ETN UN Equity,Industrials,Capital Goods,Electrical Equipment,Electrical Components & Equipm
+161,ETR UN Equity,Utilities,Utilities,Electric Utilities,Electric Utilities
+162,EW UN Equity,Health Care,Health Care Equipment & Servic,Health Care Equipment & Suppli,Health Care Equipment
+163,EXC UN Equity,Utilities,Utilities,Electric Utilities,Electric Utilities
+164,EXPD UW Equity,Industrials,Transportation,Air Freight & Logistics,Air Freight & Logistics
+165,EXPE UW Equity,Consumer Discretionary,Consumer Services,"Hotels, Restaurants & Leisure","Hotels, Resorts & Cruise Lines"
+166,F UN Equity,Consumer Discretionary,Automobiles & Components,Automobiles,Automobile Manufacturers
+167,FAST UW Equity,Industrials,Capital Goods,Trading Companies & Distributo,Trading Companies & Distributo
+168,FCX UN Equity,Materials,Materials,Metals & Mining,Copper
+169,FDX UN Equity,Industrials,Transportation,Air Freight & Logistics,Air Freight & Logistics
+170,FE UN Equity,Utilities,Utilities,Electric Utilities,Electric Utilities
+171,FFIV UW Equity,Information Technology,Technology Hardware & Equipmen,Communications Equipment,Communications Equipment
+172,FIS UN Equity,Financials,Financial Services,Financial Services,Transaction & Payment Processi
+173,FISV UW Equity,Financials,Financial Services,Financial Services,Transaction & Payment Processi
+174,FITB UW Equity,Financials,Banks,Banks,Diversified Banks
+175,FLIR UW Equity,Information Technology,Technology Hardware & Equipmen,"Electronic Equipment, Instrume",Electronic Equipment & Instrum
+176,FLR UN Equity,Industrials,Capital Goods,Construction & Engineering,Construction & Engineering
+177,FLS UN Equity,Industrials,Capital Goods,Machinery,Industrial Machinery & Supplie
+178,FMC UN Equity,Materials,Materials,Chemicals,Fertilizers & Agricultural Che
+179,FSLR UW Equity,Information Technology,Semiconductors & Semiconductor,Semiconductors & Semiconductor,Semiconductors
+180,FTI UN Equity,Energy,Energy,Energy Equipment & Services,Oil & Gas Equipment & Services
+181,GAP UN Equity,Consumer Discretionary,Consumer Discretionary Distrib,Specialty Retail,Apparel Retail
+182,GD UN Equity,Industrials,Capital Goods,Aerospace & Defense,Aerospace & Defense
+183,GE UN Equity,Industrials,Capital Goods,Aerospace & Defense,Aerospace & Defense
+184,GEN UW Equity,Information Technology,Software & Services,Software,Systems Software
+185,GILD UW Equity,Health Care,"Pharmaceuticals, Biotechnology",Biotechnology,Biotechnology
+186,GIS UN Equity,Consumer Staples,"Food, Beverage & Tobacco",Food Products,Packaged Foods & Meats
+187,GL UN Equity,Financials,Insurance,Insurance,Life & Health Insurance
+188,GLW UN Equity,Information Technology,Technology Hardware & Equipmen,"Electronic Equipment, Instrume",Electronic Components
+189,GME UN Equity,Consumer Discretionary,Consumer Discretionary Distrib,Specialty Retail,Computer & Electronics Retail
+190,GNW UN Equity,Financials,Insurance,Insurance,Life & Health Insurance
+191,GOOGL UW Equity,Communication Services,Media & Entertainment,Interactive Media & Services,Interactive Media & Services
+192,GPC UN Equity,Consumer Discretionary,Consumer Discretionary Distrib,Distributors,Distributors
+193,GS UN Equity,Financials,Financial Services,Capital Markets,Investment Banking & Brokerage
+194,GWW UN Equity,Industrials,Capital Goods,Trading Companies & Distributo,Trading Companies & Distributo
+195,HAL UN Equity,Energy,Energy,Energy Equipment & Services,Oil & Gas Equipment & Services
+196,HAR UN Equity,Consumer Discretionary,Consumer Durables & Apparel,Household Durables,Consumer Electronics
+197,HAS UW Equity,Consumer Discretionary,Consumer Durables & Apparel,Leisure Products,Leisure Products
+198,HBAN UW Equity,Financials,Banks,Banks,Regional Banks
+199,HD UN Equity,Consumer Discretionary,Consumer Discretionary Distrib,Specialty Retail,Home Improvement Retail
+200,HES UN Equity,Energy,Energy,"Oil, Gas & Consumable Fuels",Oil & Gas Exploration & Produc
+201,HIG UN Equity,Financials,Insurance,Insurance,Property & Casualty Insurance
+202,HOG UN Equity,Consumer Discretionary,Automobiles & Components,Automobiles,Motorcycle Manufacturers
+203,HON UN Equity,Industrials,Capital Goods,Industrial Conglomerates,Industrial Conglomerates
+204,HOT UN Equity,Consumer Discretionary,Consumer Services,"Hotels, Restaurants & Leisure","Hotels, Resorts & Cruise Lines"
+205,HP UN Equity,Energy,Energy,Energy Equipment & Services,Oil & Gas Drilling
+206,HPQ UN Equity,Information Technology,Technology Hardware & Equipmen,"Technology Hardware, Storage &","Technology Hardware, Storage &"
+207,HRB UN Equity,Consumer Discretionary,Consumer Services,Diversified Consumer Services,Specialized Consumer Services
+208,HRL UN Equity,Consumer Staples,"Food, Beverage & Tobacco",Food Products,Packaged Foods & Meats
+209,HST UN Equity,Real Estate,Equity Real Estate Investment,Hotel & Resort REITs,Hotel & Resort REITs
+210,HSY UN Equity,Consumer Staples,"Food, Beverage & Tobacco",Food Products,Packaged Foods & Meats
+211,HUM UN Equity,Health Care,Health Care Equipment & Servic,Health Care Providers & Servic,Managed Health Care
+212,IBM UN Equity,Information Technology,Software & Services,IT Services,IT Consulting & Other Services
+213,ICE UN Equity,Financials,Financial Services,Capital Markets,Financial Exchanges & Data
+214,IFF UN Equity,Materials,Materials,Chemicals,Specialty Chemicals
+215,INTC UW Equity,Information Technology,Semiconductors & Semiconductor,Semiconductors & Semiconductor,Semiconductors
+216,INTU UW Equity,Information Technology,Software & Services,Software,Application Software
+217,IP UN Equity,Materials,Materials,Containers & Packaging,Paper & Plastic Packaging Prod
+218,IPG UN Equity,Communication Services,Media & Entertainment,Media,Advertising
+219,IRM UN Equity,Real Estate,Equity Real Estate Investment,Specialized REITs,Other Specialized REITs
+220,ISRG UW Equity,Health Care,Health Care Equipment & Servic,Health Care Equipment & Suppli,Health Care Equipment
+221,ITW UN Equity,Industrials,Capital Goods,Machinery,Industrial Machinery & Supplie
+222,IVZ UN Equity,Financials,Financial Services,Capital Markets,Asset Management & Custody Ban
+223,JCI UN Equity,Industrials,Capital Goods,Building Products,Building Products
+224,JEF UN Equity,Financials,Financial Services,Capital Markets,Investment Banking & Brokerage
+225,JNJ UN Equity,Health Care,"Pharmaceuticals, Biotechnology",Pharmaceuticals,Pharmaceuticals
+226,JNPR UN Equity,Information Technology,Technology Hardware & Equipmen,Communications Equipment,Communications Equipment
+227,JPM UN Equity,Financials,Banks,Banks,Diversified Banks
+228,JWN UN Equity,Consumer Discretionary,Consumer Discretionary Distrib,Broadline Retail,Broadline Retail
+229,K UN Equity,Consumer Staples,"Food, Beverage & Tobacco",Food Products,Packaged Foods & Meats
+230,KDP UN Equity,Consumer Staples,"Food, Beverage & Tobacco",Beverages,Soft Drinks & Non-alcoholic Be
+231,KEY UN Equity,Financials,Banks,Banks,Diversified Banks
+232,KIM UN Equity,Real Estate,Equity Real Estate Investment,Retail REITs,Retail REITs
+233,KLAC UW Equity,Information Technology,Semiconductors & Semiconductor,Semiconductors & Semiconductor,Semiconductor Materials & Equi
+234,KMB UN Equity,Consumer Staples,Household & Personal Products,Household Products,Household Products
+235,KMI UN Equity,Energy,Energy,"Oil, Gas & Consumable Fuels",Oil & Gas Storage & Transporta
+236,KMX UN Equity,Consumer Discretionary,Consumer Discretionary Distrib,Specialty Retail,Automotive Retail
+237,KO UN Equity,Consumer Staples,"Food, Beverage & Tobacco",Beverages,Soft Drinks & Non-alcoholic Be
+238,KR UN Equity,Consumer Staples,Consumer Staples Distribution,Consumer Staples Distribution,Food Retail
+239,KSS UN Equity,Consumer Discretionary,Consumer Discretionary Distrib,Broadline Retail,Broadline Retail
+240,L UN Equity,Financials,Insurance,Insurance,Property & Casualty Insurance
+241,LEG UN Equity,Consumer Discretionary,Consumer Durables & Apparel,Household Durables,Home Furnishings
+242,LEN UN Equity,Consumer Discretionary,Consumer Durables & Apparel,Household Durables,Homebuilding
+243,LHX UN Equity,Industrials,Capital Goods,Aerospace & Defense,Aerospace & Defense
+244,LLTC UW Equity,Information Technology,Semiconductors & Semiconductor,Semiconductors & Semiconductor,Semiconductors
+245,LLY UN Equity,Health Care,"Pharmaceuticals, Biotechnology",Pharmaceuticals,Pharmaceuticals
+246,LM UN Equity,Financials,Financial Services,Capital Markets,Asset Management & Custody Ban
+247,LMT UN Equity,Industrials,Capital Goods,Aerospace & Defense,Aerospace & Defense
+248,LNC UN Equity,Financials,Insurance,Insurance,Life & Health Insurance
+249,LOW UN Equity,Consumer Discretionary,Consumer Discretionary Distrib,Specialty Retail,Home Improvement Retail
+250,LRCX UW Equity,Information Technology,Semiconductors & Semiconductor,Semiconductors & Semiconductor,Semiconductor Materials & Equi
+251,LUMN UN Equity,Communication Services,Telecommunication Services,Diversified Telecommunication,Alternative Carriers
+252,LUV UN Equity,Industrials,Transportation,Passenger Airlines,Passenger Airlines
+253,M UN Equity,Consumer Discretionary,Consumer Discretionary Distrib,Broadline Retail,Broadline Retail
+254,MA UN Equity,Financials,Financial Services,Financial Services,Transaction & Payment Processi
+255,MAS UN Equity,Industrials,Capital Goods,Building Products,Building Products
+256,MAT UW Equity,Consumer Discretionary,Consumer Durables & Apparel,Leisure Products,Leisure Products
+257,MCD UN Equity,Consumer Discretionary,Consumer Services,"Hotels, Restaurants & Leisure",Restaurants
+258,MCHP UW Equity,Information Technology,Semiconductors & Semiconductor,Semiconductors & Semiconductor,Semiconductors
+259,MCK UN Equity,Health Care,Health Care Equipment & Servic,Health Care Providers & Servic,Health Care Distributors
+260,MCO UN Equity,Financials,Financial Services,Capital Markets,Financial Exchanges & Data
+261,MDT UN Equity,Health Care,Health Care Equipment & Servic,Health Care Equipment & Suppli,Health Care Equipment
+262,MET UN Equity,Financials,Insurance,Insurance,Life & Health Insurance
+263,MJN UN Equity,Consumer Staples,"Food, Beverage & Tobacco",Food Products,Packaged Foods & Meats
+264,MKC UN Equity,Consumer Staples,"Food, Beverage & Tobacco",Food Products,Packaged Foods & Meats
+265,MMM UN Equity,Industrials,Capital Goods,Industrial Conglomerates,Industrial Conglomerates
+266,MO UN Equity,Consumer Staples,"Food, Beverage & Tobacco",Tobacco,Tobacco
+267,MOS UN Equity,Materials,Materials,Chemicals,Fertilizers & Agricultural Che
+268,MRK UN Equity,Health Care,"Pharmaceuticals, Biotechnology",Pharmaceuticals,Pharmaceuticals
+269,MRO UN Equity,Energy,Energy,"Oil, Gas & Consumable Fuels",Oil & Gas Exploration & Produc
+270,MRSH UN Equity,Financials,Insurance,Insurance,Insurance Brokers
+271,MS UN Equity,Financials,Financial Services,Capital Markets,Investment Banking & Brokerage
+272,MSFT UW Equity,Information Technology,Software & Services,Software,Systems Software
+273,MSI UN Equity,Information Technology,Technology Hardware & Equipmen,Communications Equipment,Communications Equipment
+274,MTB UN Equity,Financials,Banks,Banks,Regional Banks
+275,MU UW Equity,Information Technology,Semiconductors & Semiconductor,Semiconductors & Semiconductor,Semiconductors
+276,MUR UN Equity,Energy,Energy,"Oil, Gas & Consumable Fuels",Oil & Gas Exploration & Produc
+277,MYL UW Equity,Health Care,"Pharmaceuticals, Biotechnology",Pharmaceuticals,Pharmaceuticals
+278,NBL UN Equity,Energy,Energy,"Oil, Gas & Consumable Fuels",Oil & Gas Exploration & Produc
+279,NDAQ UW Equity,Financials,Financial Services,Capital Markets,Financial Exchanges & Data
+280,NEE UN Equity,Utilities,Utilities,Electric Utilities,Electric Utilities
+281,NEM UN Equity,Materials,Materials,Metals & Mining,Gold
+282,NFLX UW Equity,Communication Services,Media & Entertainment,Entertainment,Movies & Entertainment
+283,NFX UN Equity,Energy,Energy,"Oil, Gas & Consumable Fuels",Oil & Gas Exploration & Produc
+284,NI UN Equity,Utilities,Utilities,Multi-Utilities,Multi-Utilities
+285,NKE UN Equity,Consumer Discretionary,Consumer Durables & Apparel,"Textiles, Apparel & Luxury Goo",Footwear
+286,NOC UN Equity,Industrials,Capital Goods,Aerospace & Defense,Aerospace & Defense
+287,NOV UN Equity,Energy,Energy,Energy Equipment & Services,Oil & Gas Equipment & Services
+288,NRG UN Equity,Utilities,Utilities,Electric Utilities,Electric Utilities
+289,NSC UN Equity,Industrials,Transportation,Ground Transportation,Rail Transportation
+290,NTAP UW Equity,Information Technology,Technology Hardware & Equipmen,"Technology Hardware, Storage &","Technology Hardware, Storage &"
+291,NTRS UW Equity,Financials,Financial Services,Capital Markets,Asset Management & Custody Ban
+292,NUE UN Equity,Materials,Materials,Metals & Mining,Steel
+293,NVDA UW Equity,Information Technology,Semiconductors & Semiconductor,Semiconductors & Semiconductor,Semiconductors
+294,NWL UN Equity,Consumer Discretionary,Consumer Durables & Apparel,Household Durables,Housewares & Specialties
+295,OI UN Equity,Materials,Materials,Containers & Packaging,"Metal, Glass & Plastic Contain"
+296,OKE UN Equity,Energy,Energy,"Oil, Gas & Consumable Fuels",Oil & Gas Storage & Transporta
+297,OMC UN Equity,Communication Services,Media & Entertainment,Media,Advertising
+298,ORLY UW Equity,Consumer Discretionary,Consumer Discretionary Distrib,Specialty Retail,Automotive Retail
+299,OXY UN Equity,Energy,Energy,"Oil, Gas & Consumable Fuels",Integrated Oil & Gas
+300,PARA UN Equity,Communication Services,Media & Entertainment,Media,Broadcasting
+301,PAYX UW Equity,Industrials,Commercial & Professional Serv,Professional Services,Human Resource & Employment Se
+302,PBCT UW Equity,Financials,Banks,Banks,Regional Banks
+303,PBI UN Equity,Industrials,Commercial & Professional Serv,Commercial Services & Supplies,Office Services & Supplies
+304,PCAR UW Equity,Industrials,Capital Goods,Machinery,Construction Machinery & Heavy
+305,PCG UN Equity,Utilities,Utilities,Electric Utilities,Electric Utilities
+306,PCP UN Equity,Industrials,Capital Goods,Aerospace & Defense,Aerospace & Defense
+307,PDCO UW Equity,Health Care,Health Care Equipment & Servic,Health Care Providers & Servic,Health Care Distributors
+308,PEG UN Equity,Utilities,Utilities,Multi-Utilities,Multi-Utilities
+309,PEP UN Equity,Consumer Staples,"Food, Beverage & Tobacco",Beverages,Soft Drinks & Non-alcoholic Be
+310,PFE UN Equity,Health Care,"Pharmaceuticals, Biotechnology",Pharmaceuticals,Pharmaceuticals
+311,PFG UN Equity,Financials,Insurance,Insurance,Life & Health Insurance
+312,PG UN Equity,Consumer Staples,Household & Personal Products,Household Products,Household Products
+313,PGR UN Equity,Financials,Insurance,Insurance,Property & Casualty Insurance
+314,PH UN Equity,Industrials,Capital Goods,Machinery,Industrial Machinery & Supplie
+315,PHM UN Equity,Consumer Discretionary,Consumer Durables & Apparel,Household Durables,Homebuilding
+316,PLD UN Equity,Real Estate,Equity Real Estate Investment,Industrial REITs,Industrial REITs
+317,PM UN Equity,Consumer Staples,"Food, Beverage & Tobacco",Tobacco,Tobacco
+318,PNC UN Equity,Financials,Banks,Banks,Diversified Banks
+319,PNW UN Equity,Utilities,Utilities,Electric Utilities,Electric Utilities
+320,PPG UN Equity,Materials,Materials,Chemicals,Specialty Chemicals
+321,PPL UN Equity,Utilities,Utilities,Electric Utilities,Electric Utilities
+322,PRU UN Equity,Financials,Insurance,Insurance,Life & Health Insurance
+323,PSA UN Equity,Real Estate,Equity Real Estate Investment,Specialized REITs,Self-Storage REITs
+324,PWR UN Equity,Industrials,Capital Goods,Construction & Engineering,Construction & Engineering
+325,PXD UN Equity,Energy,Energy,"Oil, Gas & Consumable Fuels",Oil & Gas Exploration & Produc
+326,QCOM UW Equity,Information Technology,Semiconductors & Semiconductor,Semiconductors & Semiconductor,Semiconductors
+327,R UN Equity,Industrials,Transportation,Ground Transportation,Cargo Ground Transportation
+328,RAI UN Equity,Consumer Staples,"Food, Beverage & Tobacco",Tobacco,Tobacco
+329,RF UN Equity,Financials,Banks,Banks,Regional Banks
+330,RHI UN Equity,Industrials,Commercial & Professional Serv,Professional Services,Human Resource & Employment Se
+331,RHT UN Equity,Information Technology,Software & Services,Software,Systems Software
+332,RL UN Equity,Consumer Discretionary,Consumer Durables & Apparel,"Textiles, Apparel & Luxury Goo","Apparel, Accessories & Luxury"
+333,ROK UN Equity,Industrials,Capital Goods,Electrical Equipment,Electrical Components & Equipm
+334,ROP UN Equity,Information Technology,Software & Services,Software,Application Software
+335,ROST UW Equity,Consumer Discretionary,Consumer Discretionary Distrib,Specialty Retail,Apparel Retail
+336,RRC UN Equity,Energy,Energy,"Oil, Gas & Consumable Fuels",Oil & Gas Exploration & Produc
+337,RSG UN Equity,Industrials,Commercial & Professional Serv,Commercial Services & Supplies,Environmental & Facilities Ser
+338,RTN UN Equity,Industrials,Capital Goods,Aerospace & Defense,Aerospace & Defense
+339,RTX UN Equity,Industrials,Capital Goods,Aerospace & Defense,Aerospace & Defense
+340,RVTY UN Equity,Health Care,"Pharmaceuticals, Biotechnology",Life Sciences Tools & Services,Life Sciences Tools & Services
+341,SBUX UW Equity,Consumer Discretionary,Consumer Services,"Hotels, Restaurants & Leisure",Restaurants
+342,SCG UN Equity,Utilities,Utilities,Multi-Utilities,Multi-Utilities
+343,SCHW UN Equity,Financials,Financial Services,Capital Markets,Investment Banking & Brokerage
+344,SEE UN Equity,Materials,Materials,Containers & Packaging,Paper & Plastic Packaging Prod
+345,SHW UN Equity,Materials,Materials,Chemicals,Specialty Chemicals
+346,SIAL UW Equity,Materials,Materials,Chemicals,Specialty Chemicals
+347,SJM UN Equity,Consumer Staples,"Food, Beverage & Tobacco",Food Products,Packaged Foods & Meats
+348,SLB UN Equity,Energy,Energy,Energy Equipment & Services,Oil & Gas Equipment & Services
+349,SNA UN Equity,Industrials,Capital Goods,Machinery,Industrial Machinery & Supplie
+350,SO UN Equity,Utilities,Utilities,Electric Utilities,Electric Utilities
+351,SPG UN Equity,Real Estate,Equity Real Estate Investment,Retail REITs,Retail REITs
+352,SPGI UN Equity,Financials,Financial Services,Capital Markets,Financial Exchanges & Data
+353,SRCL UW Equity,Industrials,Commercial & Professional Serv,Commercial Services & Supplies,Environmental & Facilities Ser
+354,SRE UN Equity,Utilities,Utilities,Multi-Utilities,Multi-Utilities
+355,STJ UN Equity,Health Care,Health Care Equipment & Servic,Health Care Equipment & Suppli,Health Care Equipment
+356,STT UN Equity,Financials,Financial Services,Capital Markets,Asset Management & Custody Ban
+357,STZ UN Equity,Consumer Staples,"Food, Beverage & Tobacco",Beverages,Distillers & Vintners
+358,SWK UN Equity,Industrials,Capital Goods,Machinery,Industrial Machinery & Supplie
+359,SWN UN Equity,Energy,Energy,"Oil, Gas & Consumable Fuels",Oil & Gas Exploration & Produc
+360,SYK UN Equity,Health Care,Health Care Equipment & Servic,Health Care Equipment & Suppli,Health Care Equipment
+361,SYY UN Equity,Consumer Staples,Consumer Staples Distribution,Consumer Staples Distribution,Food Distributors
+362,T UN Equity,Communication Services,Telecommunication Services,Diversified Telecommunication,Integrated Telecommunication S
+363,TAP UN Equity,Consumer Staples,"Food, Beverage & Tobacco",Beverages,Brewers
+364,TDC UN Equity,Information Technology,Software & Services,Software,Systems Software
+365,TFC UN Equity,Financials,Banks,Banks,Regional Banks
+366,TFCFA UW Equity,Communication Services,Media & Entertainment,Entertainment,Movies & Entertainment
+367,TGNA UN Equity,Communication Services,Media & Entertainment,Media,Broadcasting
+368,TGT UN Equity,Consumer Staples,Consumer Staples Distribution,Consumer Staples Distribution,Consumer Staples Merchandise R
+369,THC UN Equity,Health Care,Health Care Equipment & Servic,Health Care Providers & Servic,Health Care Facilities
+370,TJX UN Equity,Consumer Discretionary,Consumer Discretionary Distrib,Specialty Retail,Apparel Retail
+371,TMO UN Equity,Health Care,"Pharmaceuticals, Biotechnology",Life Sciences Tools & Services,Life Sciences Tools & Services
+372,TNL UN Equity,Consumer Discretionary,Consumer Services,"Hotels, Restaurants & Leisure","Hotels, Resorts & Cruise Lines"
+373,TPR UN Equity,Consumer Discretionary,Consumer Durables & Apparel,"Textiles, Apparel & Luxury Goo","Apparel, Accessories & Luxury"
+374,TROW UW Equity,Financials,Financial Services,Capital Markets,Asset Management & Custody Ban
+375,TRV UN Equity,Financials,Insurance,Insurance,Property & Casualty Insurance
+376,TSN UN Equity,Consumer Staples,"Food, Beverage & Tobacco",Food Products,Packaged Foods & Meats
+377,TT UN Equity,Industrials,Capital Goods,Building Products,Building Products
+378,TWC UN Equity,Communication Services,Media & Entertainment,Media,Cable & Satellite
+379,TWX UN Equity,Communication Services,Media & Entertainment,Entertainment,Movies & Entertainment
+380,TXT UN Equity,Industrials,Capital Goods,Aerospace & Defense,Aerospace & Defense
+381,UNH UN Equity,Health Care,Health Care Equipment & Servic,Health Care Providers & Servic,Managed Health Care
+382,UNM UN Equity,Financials,Insurance,Insurance,Life & Health Insurance
+383,UNP UN Equity,Industrials,Transportation,Ground Transportation,Rail Transportation
+384,UPS UN Equity,Industrials,Transportation,Air Freight & Logistics,Air Freight & Logistics
+385,URBN UW Equity,Consumer Discretionary,Consumer Discretionary Distrib,Specialty Retail,Apparel Retail
+386,USB UN Equity,Financials,Banks,Banks,Diversified Banks
+387,V UN Equity,Financials,Financial Services,Financial Services,Transaction & Payment Processi
+388,VAR UN Equity,Health Care,Health Care Equipment & Servic,Health Care Equipment & Suppli,Health Care Equipment
+389,VFC UN Equity,Consumer Discretionary,Consumer Durables & Apparel,"Textiles, Apparel & Luxury Goo","Apparel, Accessories & Luxury"
+390,VLO UN Equity,Energy,Energy,"Oil, Gas & Consumable Fuels",Oil & Gas Refining & Marketing
+391,VMC UN Equity,Materials,Materials,Construction Materials,Construction Materials
+392,VNO UN Equity,Real Estate,Equity Real Estate Investment,Office REITs,Office REITs
+393,VRSN UW Equity,Information Technology,Software & Services,IT Services,Internet Services & Infrastruc
+394,VTR UN Equity,Real Estate,Equity Real Estate Investment,Health Care REITs,Health Care REITs
+395,VZ UN Equity,Communication Services,Telecommunication Services,Diversified Telecommunication,Integrated Telecommunication S
+396,WAT UN Equity,Health Care,"Pharmaceuticals, Biotechnology",Life Sciences Tools & Services,Life Sciences Tools & Services
+397,WEC UN Equity,Utilities,Utilities,Multi-Utilities,Multi-Utilities
+398,WELL UN Equity,Real Estate,Equity Real Estate Investment,Health Care REITs,Health Care REITs
+399,WFC UN Equity,Financials,Banks,Banks,Diversified Banks
+400,WFM UW Equity,Consumer Staples,Consumer Staples Distribution,Consumer Staples Distribution,Food Retail
+401,WHR UN Equity,Consumer Discretionary,Consumer Durables & Apparel,Household Durables,Household Appliances
+402,WM UN Equity,Industrials,Commercial & Professional Serv,Commercial Services & Supplies,Environmental & Facilities Ser
+403,WMB UN Equity,Energy,Energy,"Oil, Gas & Consumable Fuels",Oil & Gas Storage & Transporta
+404,WMT UN Equity,Consumer Staples,Consumer Staples Distribution,Consumer Staples Distribution,Consumer Staples Merchandise R
+405,WU UN Equity,Financials,Financial Services,Financial Services,Transaction & Payment Processi
+406,WY UN Equity,Real Estate,Equity Real Estate Investment,Specialized REITs,Timber REITs
+407,WYNN UW Equity,Consumer Discretionary,Consumer Services,"Hotels, Restaurants & Leisure",Casinos & Gaming
+408,XEL UN Equity,Utilities,Utilities,Electric Utilities,Electric Utilities
+409,XLNX UW Equity,Information Technology,Semiconductors & Semiconductor,Semiconductors & Semiconductor,Semiconductors
+410,XOM UN Equity,Energy,Energy,"Oil, Gas & Consumable Fuels",Integrated Oil & Gas
+411,XRAY UW Equity,Health Care,Health Care Equipment & Servic,Health Care Equipment & Suppli,Health Care Supplies
+412,XRX UN Equity,Information Technology,Technology Hardware & Equipmen,"Technology Hardware, Storage &","Technology Hardware, Storage &"
+413,YUM UN Equity,Consumer Discretionary,Consumer Services,"Hotels, Restaurants & Leisure",Restaurants
+414,ZBH UN Equity,Health Care,Health Care Equipment & Servic,Health Care Equipment & Suppli,Health Care Equipment
+415,ZION UW Equity,Financials,Banks,Banks,Regional Banks

@@ -34,6 +34,10 @@ def load_membership(source="data", index_id=None) -> pl.DataFrame:
     if source == "bloomberg":
         from loaders.bloomberg_loader import BloombergLoader
         mem = BloombergLoader().load_membership(index_id=index_id)
+    elif source == "paper_data":
+        from config import config_paper as _paper_cfg
+        mem = pl.read_parquet(_paper_cfg.PAPER_MEMBERSHIP_PATH)
+        mem = mem.with_columns(pl.col("date").cast(pl.Datetime))
     else:
         mem = pl.read_parquet(config.MEMBERSHIP_PATH)
         mem = mem.with_columns(pl.col("date").cast(pl.Datetime))
@@ -105,6 +109,12 @@ def load_prices(source="data", index_id=None, start=None, end=None,
         if tickers is None:
             tickers = _universe_tickers("data", index_id)
         prices = BloombergLoader().load_prices(tickers, start=start, end=end)
+    elif source == "paper_data":
+        from config import config_paper as _paper_cfg
+        # Use raw 415-ticker parquet (raw_prices=True is the paper default).
+        _paper_path = prices_path or _paper_cfg.PAPER_PRICES_RAW_415_PATH
+        prices = pl.read_parquet(_paper_path)
+        prices = normalize_wide(prices)
     else:
         prices = pl.read_parquet(prices_path or config.PRICES_PATH)
         prices = normalize_wide(prices)

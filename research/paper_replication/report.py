@@ -17,14 +17,14 @@ from research.paper_replication.pipeline import run_period
 from research.paper_replication import figures as paper_figures
 
 
-def run_method(method, prices, periods, params, include_opt=True):
+def run_method(method, prices, periods, params, include_opt=True, source="data"):
     """Run one selection method across all periods (point-in-time SPX universe)."""
     params = dict(params)
     params["method"] = method
     index_id = params.get("index_id", research_config.PAIRS_CONFIG["index_id"])
     rows = []
     for period in periods:
-        universe = members_asof(period.train_start, index_id=index_id)
+        universe = members_asof(period.train_start, index_id=index_id, source=source)
         res = run_period(period, prices, params, universe=universe,
                          include_opt=include_opt)
         if res is None:
@@ -79,7 +79,7 @@ def build_report(source="data", methods=research_config.DEFAULT_METHODS,
 
     summaries, by_period, comparison_rows = {}, {}, []
     for method in methods:
-        df = run_method(method, prices, periods, params)
+        df = run_method(method, prices, periods, params, source=source)
         summaries[method] = summarize(df)
         by_period[method] = df.sort(["period", "variant"])
 
