@@ -18,8 +18,15 @@ class _FakeFigure:
         target.write_text("<html></html>", encoding="utf-8")
         self.html_paths.append(target)
 
-    def write_image(self, path: str, scale: int = 2, width: int = 1100, height: int = 650) -> None:
-        del scale, width, height
+    def write_image(
+        self,
+        path: str,
+        format: str | None = None,
+        scale: int = 2,
+        width: int = 1100,
+        height: int = 650,
+    ) -> None:
+        del format, scale, width, height
         target = Path(path)
         target.write_bytes(b"png")
         self.image_paths.append(target)
@@ -42,26 +49,26 @@ class OutputWriterTests(unittest.TestCase):
     def test_save_table_writes_requested_formats(self) -> None:
         frame = pl.DataFrame({"x": [1, 2], "y": [3.0, 4.0]})
 
-        written = output_writer.save_table(frame, "sample_table", formats=("csv", "parquet"))
-
-        self.assertEqual(len(written), 2)
-        self.assertTrue((self.root / "tables" / "sample_table.csv").exists())
-        self.assertTrue((self.root / "tables" / "sample_table.parquet").exists())
-
-    def test_save_figure_html_only_avoids_png_write(self) -> None:
-        fig = _FakeFigure()
-
-        written = output_writer.save_figure(fig, "sample_figure", formats=("html",))
+        written = output_writer.save_table(frame, "sample_table")
 
         self.assertEqual(len(written), 1)
-        self.assertEqual(fig.image_paths, [])
-        self.assertTrue((self.root / "figures" / "sample_figure.html").exists())
+        self.assertTrue((self.root / "tables" / "sample_table.csv").exists())
+        self.assertFalse((self.root / "tables" / "sample_table.parquet").exists())
+
+    def test_save_figure_png_only_writes_static_image(self) -> None:
+        fig = _FakeFigure()
+
+        written = output_writer.save_figure(fig, "sample_figure")
+
+        self.assertEqual(len(written), 1)
+        self.assertTrue(fig.image_paths)
+        self.assertTrue((self.root / "figures" / "sample_figure.png").exists())
 
     def test_clear_outputs_removes_generated_files(self) -> None:
         frame = pl.DataFrame({"x": [1]})
         fig = _FakeFigure()
         output_writer.save_table(frame, "to_clear", formats=("csv",))
-        output_writer.save_figure(fig, "to_clear", formats=("html",))
+        output_writer.save_figure(fig, "to_clear")
 
         output_writer.clear_outputs()
 

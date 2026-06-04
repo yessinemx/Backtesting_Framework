@@ -32,12 +32,14 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 
+from config import config_paper as research_config
+
 try:
     import statsmodels.api as sm
 except ImportError:  # pragma: no cover
     sm = None
 
-TRADING_DAYS = 252
+TRADING_DAYS = research_config.TRADING_DAYS_PER_YEAR
 
 
 @dataclass

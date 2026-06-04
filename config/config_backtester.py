@@ -1,13 +1,11 @@
 from pathlib import Path
 
 # Paths
-ROOT_DIR = Path(__file__).parent
+ROOT_DIR = Path(__file__).resolve().parents[1]
 DATA_DIR = ROOT_DIR / "data"
 
 PRICES_PATH = DATA_DIR / "prices.parquet"
 RETURNS_PATH = DATA_DIR / "returns.parquet"
-# Raw (unadjusted) closing prices — separate file so adjusted and raw series
-# are never mixed. Used by the wavelet replication study.
 RAW_PRICES_PATH = DATA_DIR / "prices_raw.parquet"
 RAW_RETURNS_PATH = DATA_DIR / "returns_raw.parquet"
 MEMBERSHIP_PATH = DATA_DIR / "membership.parquet"
@@ -57,15 +55,15 @@ INDEX_CONFIG = {
 RISKFREE_CONFIG = {
     "USD": {
         "tickers": ["SOFRRATE Index", "FEDL01 Index"],
-        "day_count": 360,          # ACT/360
+        "day_count": 360,
     },
     "EUR": {
         "tickers": ["ESTRON Index", "EONIA Index"],
-        "day_count": 360,          # ACT/360
+        "day_count": 360,
     },
     "GBP": {
         "tickers": ["SONIO/N Index"],
-        "day_count": 365,          # ACT/365
+        "day_count": 365,
     },
 }
 
@@ -91,3 +89,28 @@ MOMENTUM_PARAM_GRID = {
     "top_n": [5, 10, 15, 20, 30],
     "skip_recent": [0, 21],
 }
+
+__all__ = [
+    "ROOT_DIR",
+    "DATA_DIR",
+    "PRICES_PATH",
+    "RETURNS_PATH",
+    "RAW_PRICES_PATH",
+    "RAW_RETURNS_PATH",
+    "MEMBERSHIP_PATH",
+    "RISKFREE_PATH",
+    "TRANSACTION_COST_BPS",
+    "SHORT_BORROW_BPS",
+    "DATA_START",
+    "DATA_END",
+    "IS_START",
+    "IS_END",
+    "OOS_START",
+    "OOS_END",
+    "INDEX_CONFIG",
+    "RISKFREE_CONFIG",
+    "INDEX_CURRENCY",
+    "REBALANCE_FREQS",
+    "MA_PARAM_GRID",
+    "MOMENTUM_PARAM_GRID",
+]

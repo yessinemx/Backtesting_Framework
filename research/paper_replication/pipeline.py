@@ -14,8 +14,8 @@ from dataclasses import dataclass
 from typing import Any
 import polars as pl
 
+from config import config_paper as research_config
 from loaders import load_prices, load_membership
-from research import config as research_config
 from research.paper_replication.periods import build_periods
 from research.paper_replication.selection import select_pairs
 from research.paper_replication.spread import build_spread
@@ -195,7 +195,7 @@ def run_pipeline(params=None, source="data", verbose=True, write_outputs=True):
     Parameters
     ----------
     params : dict | None
-        Parameter dictionary. Defaults to research.config.PAIRS_CONFIG.
+        Parameter dictionary. Defaults to config.config_paper.PAIRS_CONFIG.
     source : "data" | "bloomberg"
         Price source loaded via the loaders package.
     write_outputs : bool

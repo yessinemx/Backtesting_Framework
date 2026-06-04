@@ -25,8 +25,8 @@ if str(ROOT) not in sys.path:
 
 import polars as pl
 
-from research import config as research_config
-from research.paper_replication.output_writer import save_table
+from config import config_paper as research_config
+from research.paper_replication.paper_outputs import save_paper_outputs
 from research.paper_replication.report import build_report
 
 
@@ -34,20 +34,15 @@ def main():
     print("Running point-in-time S&P 500 replication (this includes the look-ahead Opt "
           "benchmark and all figures; the wavelet-class/horizon sweeps make it ~5 min)...\n")
     params = dict(research_config.PAIRS_CONFIG)
-    params["tc_per_share"] = 0.0  # headline = before transaction costs (Table 4)
+    params["tc_per_share"] = research_config.HEADLINE_TC_PER_SHARE
 
     report = build_report(
-        source="data", methods=("distance", "cointegration"),
-        params=params, with_figures=True, sweeps=True, save_figures=True,
+        source="data", methods=research_config.DEFAULT_METHODS,
+        params=params, with_figures=True, sweeps=True, save_figures=False,
     )
+    written = save_paper_outputs(report)
 
     print(f"Universe pool: {report['universe_pool']} tickers | {report['n_periods']} periods\n")
-
-    # Tables.
-    save_table(report["comparison"], "paper_comparison")
-    for method, summary in report["summaries"].items():
-        save_table(summary, f"summary_{method}")
-        save_table(report["by_period"][method], f"by_period_{method}")
 
     # Console summary.
     for method, summary in report["summaries"].items():
@@ -65,7 +60,9 @@ def main():
         print(f"\n{'='*70}\n  Asset-pricing (market-model) alphas, Section 5.4\n{'='*70}")
         print(report["alpha_table"].to_string(index=False))
 
-    print(f"\n{len(report['figures'])} figures + tables written.")
+    n_tables = len(written["tables"])
+    n_figures = len(written["figures"])
+    print(f"\n{n_figures} static figures + {n_tables} numbered tables written.")
     print(f"Tables  -> {research_config.TABLES_DIR}")
     print(f"Figures -> {research_config.FIGURES_DIR}")
     print("\nNote: 'Opt' is the paper's hypothetical look-ahead upper bound "

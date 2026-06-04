@@ -14,7 +14,9 @@ from dataclasses import dataclass, asdict
 import numpy as np
 import polars as pl
 
-TRADING_DAYS_PER_YEAR = 252
+from config import config_paper as research_config
+
+TRADING_DAYS_PER_YEAR = research_config.TRADING_DAYS_PER_YEAR
 
 
 @dataclass

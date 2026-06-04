@@ -23,12 +23,14 @@ returns ``{figure_name: plotly.graph_objects.Figure}``.
 """
 from __future__ import annotations
 from dataclasses import dataclass, field
+from typing import Optional
 
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
+from config import config_paper as research_config
 from loaders import members_asof
 from research.paper_replication.selection import select_pairs
 from research.paper_replication.spread import build_spread, _ols_alpha_beta, SpreadSpec
@@ -38,7 +40,7 @@ from research.paper_replication.wavelet import modwt_detail, DEFAULT_WAVELET
 _STD_COLOR = "#1f77b4"
 _WAV_COLOR = "#2ca02c"
 _TEMPLATE = "plotly_white"
-TRADING_DAYS = 252
+TRADING_DAYS = research_config.TRADING_DAYS_PER_YEAR
 
 
 # --------------------------------------------------------------------------- #
@@ -53,12 +55,16 @@ class RunData:
     bench_bh: pd.Series                  # buy & hold of paired stocks
     cats: pd.DataFrame                   # per period/variant category props & returns
     noise: pd.DataFrame                  # per period: noise variance vs std return
+    selection_stats: pd.DataFrame = field(default_factory=pd.DataFrame)
+    trade_stats: pd.DataFrame = field(default_factory=pd.DataFrame)
+    unit_root: pd.DataFrame = field(default_factory=pd.DataFrame)
+    spread_stats: pd.DataFrame = field(default_factory=pd.DataFrame)
     example: dict = field(default_factory=dict)   # one pair for Fig 2/3
-    opt_daily: pd.Series = None          # look-ahead "Opt" portfolio daily returns
+    opt_daily: Optional[pd.Series] = None  # look-ahead "Opt" portfolio daily returns
 
 
-def _period_universe(prices, period):
-    universe = members_asof(period.train_start, index_id="SPX")
+def _period_universe(prices, period, index_id):
+    universe = members_asof(period.train_start, index_id=index_id)
     keep = ["date"] + [t for t in universe if t in prices.columns]
     return prices.select(keep)
 
@@ -102,6 +108,40 @@ def _category_stats(pair_results):
     return out
 
 
+def _adf_pvalue(series):
+    """ADF p-value for a spread series, or NaN when the test cannot be run."""
+    try:
+        from statsmodels.tsa.stattools import adfuller
+    except ImportError:
+        return float("nan")
+
+    x = np.asarray(series, dtype=float)
+    if x.size < 20 or not np.isfinite(x).all() or np.std(x) == 0:
+        return float("nan")
+    try:
+        return float(adfuller(x, autolag="AIC")[1])
+    except Exception:  # noqa: BLE001
+        return float("nan")
+
+
+def _trade_summary_rows(period_index, variant, pair_results, n_pairs):
+    total_trades = sum(len(pr.trades) for pr in pair_results)
+    forced_trades = sum(
+        1 for pr in pair_results for tr in pr.trades if tr.forced
+    )
+    active_pairs = sum(1 for pr in pair_results if pr.active)
+    return {
+        "period": period_index,
+        "variant": variant,
+        "n_pairs": n_pairs,
+        "active_pairs": active_pairs,
+        "total_trades": total_trades,
+        "avg_trades_per_selected_pair": total_trades / n_pairs if n_pairs else 0.0,
+        "avg_trades_per_active_pair": total_trades / active_pairs if active_pairs else 0.0,
+        "forced_trade_share": forced_trades / total_trades if total_trades else 0.0,
+    }
+
+
 def collect_run(method, prices, periods, params, selections=None):
     """Run one method across all periods, collecting everything the figures need.
 
@@ -110,9 +150,12 @@ def collect_run(method, prices, periods, params, selections=None):
     """
     wavelet = params.get("wavelet", DEFAULT_WAVELET)
     n_sigma = params.get("threshold_sigma", 2.0)
+    index_id = params.get("index_id", research_config.PAIRS_CONFIG["index_id"])
 
     std_parts, wav_parts, opt_parts, idx_parts, bh_parts = [], [], [], [], []
     cat_rows, noise_rows = [], []
+    selection_rows, trade_rows = [], []
+    unit_root_rows, spread_rows = [], []
     example = {}
     cache = {}
 
@@ -120,7 +163,7 @@ def collect_run(method, prices, periods, params, selections=None):
         if selections is not None and period.index in selections:
             pairs, train_p, trade_p = selections[period.index]
         else:
-            pp = _period_universe(prices, period)
+            pp = _period_universe(prices, period, index_id=index_id)
             train_p = pp.slice(*period.train_slice)
             trade_p = pp.slice(*period.trade_slice)
             pairs = select_pairs(
@@ -128,6 +171,11 @@ def collect_run(method, prices, periods, params, selections=None):
                 candidate_pool=params["candidate_pool"], k_ar_diff=params["k_ar_diff"],
             )
         cache[period.index] = (pairs, train_p, trade_p)
+        selection_rows.append({
+            "period": period.index,
+            "n_universe": max(train_p.width - 1, 0),
+            "n_pairs_selected": len(pairs),
+        })
         if not pairs:
             continue
 
@@ -143,8 +191,34 @@ def collect_run(method, prices, periods, params, selections=None):
             if s_std is not None:
                 std_res.append(simulate_pair(s_std))
                 paired_tickers.update([i, j])
+                pvalue = _adf_pvalue(s_std.trade_spread)
+                unit_root_rows.append({
+                    "period": period.index,
+                    "variant": "standard",
+                    "pvalue": pvalue,
+                    "rejected_5pct": float(pvalue < 0.05) if np.isfinite(pvalue) else float("nan"),
+                })
+                spread_rows.append({
+                    "period": period.index,
+                    "variant": "standard",
+                    "sigma": float(s_std.sigma),
+                    "trade_spread_std": float(np.std(s_std.trade_spread, ddof=1)) if len(s_std.trade_spread) > 1 else 0.0,
+                })
             if s_wav is not None:
                 wav_res.append(simulate_pair(s_wav))
+                pvalue = _adf_pvalue(s_wav.trade_spread)
+                unit_root_rows.append({
+                    "period": period.index,
+                    "variant": "wavelet",
+                    "pvalue": pvalue,
+                    "rejected_5pct": float(pvalue < 0.05) if np.isfinite(pvalue) else float("nan"),
+                })
+                spread_rows.append({
+                    "period": period.index,
+                    "variant": "wavelet",
+                    "sigma": float(s_wav.sigma),
+                    "trade_spread_std": float(np.std(s_wav.trade_spread, ddof=1)) if len(s_wav.trade_spread) > 1 else 0.0,
+                })
             if s_opt is not None:
                 opt_res.append(simulate_pair(s_opt))
 
@@ -157,6 +231,7 @@ def collect_run(method, prices, periods, params, selections=None):
         for variant, res in (("standard", std_res), ("wavelet", wav_res), ("opt", opt_res)):
             cat_rows.append({"period": period.index, "variant": variant,
                              **_category_stats(res)})
+            trade_rows.append(_trade_summary_rows(period.index, variant, res, len(pairs)))
 
         # Filtered-noise variance (mean Var(W_1) across paired stocks).
         nvars = []
@@ -180,15 +255,16 @@ def collect_run(method, prices, periods, params, selections=None):
             i, j = best.i, best.j
             s_std = build_spread(i, j, train_p, trade_p, use_wavelet=False, n_sigma=n_sigma, wavelet=wavelet)
             s_wav = build_spread(i, j, train_p, trade_p, use_wavelet=True, n_sigma=n_sigma, wavelet=wavelet)
-            r_std = simulate_pair(s_std)
-            r_wav = simulate_pair(s_wav)
-            example = {
-                "pair": f"{i} / {j}", "dates": s_wav.trade_dates.to_list(),
-                "std_spread": s_std.trade_spread, "wav_spread": s_wav.trade_spread,
-                "std_thr": s_std.threshold, "wav_thr": s_wav.threshold,
-                "std_trades": r_std.trades, "wav_trades": r_wav.trades,
-                "std_daily": r_std.daily_returns, "wav_daily": r_wav.daily_returns,
-            }
+            if s_std is not None and s_wav is not None:
+                r_std = simulate_pair(s_std)
+                r_wav = simulate_pair(s_wav)
+                example = {
+                    "pair": f"{i} / {j}", "dates": s_wav.trade_dates.to_list(),
+                    "std_spread": s_std.trade_spread, "wav_spread": s_wav.trade_spread,
+                    "std_thr": s_std.threshold, "wav_thr": s_wav.threshold,
+                    "std_trades": r_std.trades, "wav_trades": r_wav.trades,
+                    "std_daily": r_std.daily_returns, "wav_daily": r_wav.daily_returns,
+                }
 
     def _cat(parts):
         return pd.concat(parts).sort_index() if parts else pd.Series(dtype=float)
@@ -198,6 +274,10 @@ def collect_run(method, prices, periods, params, selections=None):
         std_daily=_cat(std_parts), wav_daily=_cat(wav_parts),
         bench_index=_cat(idx_parts), bench_bh=_cat(bh_parts),
         cats=pd.DataFrame(cat_rows), noise=pd.DataFrame(noise_rows),
+        selection_stats=pd.DataFrame(selection_rows),
+        trade_stats=pd.DataFrame(trade_rows),
+        unit_root=pd.DataFrame(unit_root_rows),
+        spread_stats=pd.DataFrame(spread_rows),
         example=example, opt_daily=_cat(opt_parts),
     )
     return data, cache
@@ -295,7 +375,7 @@ def fig4_cumulative(data: RunData):
         if s is None or s.empty:
             continue
         cum = (1.0 + s.fillna(0.0)).cumprod() - 1.0
-        fig.add_trace(go.Scatter(x=cum.index, y=cum.values * 100, name=name,
+        fig.add_trace(go.Scatter(x=cum.index, y=np.asarray(cum.values, dtype=float) * 100.0, name=name,
                                  line=dict(color=color, dash=dash)))
     fig.update_layout(title=f"Figure 4 - Cumulative returns ({data.method})",
                       xaxis_title="Date", yaxis_title="Cumulative return (%)",
@@ -569,8 +649,8 @@ def generate_all(prices, periods, params, methods=("distance", "cointegration"),
                  sweeps=True, save=True):
     """Build every reproducible figure plus the asset-pricing alpha table.
 
-    Returns ``(figures, alpha_table)`` where figures is ``{name: plotly Figure}``
-    and alpha_table is a tidy pandas DataFrame of market-model alphas.
+    Returns ``(figures, diagnostics)`` where figures is ``{name: plotly Figure}``
+    and diagnostics contains the run payloads and table-ready sweep outputs.
     """
     from research.paper_replication import asset_pricing as ap
 
@@ -578,9 +658,13 @@ def generate_all(prices, periods, params, methods=("distance", "cointegration"),
     example_seen = False
     rf_usd = _riskfree_usd()
     alpha_results = []
+    run_payloads = {}
+    wavelet_sweeps = {}
+    horizon_sweeps = {}
 
     for method in methods:
         data, selections = collect_run(method, prices, periods, params)
+        run_payloads[method] = data
 
         if not example_seen and data.example:
             figures["fig02_example_spread"] = fig2_example_spread(data.example)
@@ -612,12 +696,24 @@ def generate_all(prices, periods, params, methods=("distance", "cointegration"),
             data.wav_daily, mkt, method=method)
 
         if sweeps:
-            fig10, _ = sweep_wavelets(method, prices, periods, params, selections, _WAVELET_FAMILIES)
+            fig10, wavelet_df = sweep_wavelets(
+                method, prices, periods, params, selections, _WAVELET_FAMILIES
+            )
             figures[f"fig10_wavelet_classes_{method}"] = fig10
-            fig11, _ = sweep_horizons(method, prices, periods, params, selections, _HORIZONS)
+            wavelet_sweeps[method] = wavelet_df
+            fig11, horizon_df = sweep_horizons(
+                method, prices, periods, params, selections, _HORIZONS
+            )
             figures[f"fig11_horizons_{method}"] = fig11
+            horizon_sweeps[method] = horizon_df
 
     alpha_table = pd.DataFrame(alpha_results)
+    diagnostics = {
+        "alpha_table": alpha_table,
+        "runs": run_payloads,
+        "wavelet_sweeps": wavelet_sweeps,
+        "horizon_sweeps": horizon_sweeps,
+    }
 
     if save:
         from research.paper_replication.output_writer import save_figure, save_table
@@ -625,4 +721,4 @@ def generate_all(prices, periods, params, methods=("distance", "cointegration"),
             save_figure(fig, name)
         if not alpha_table.empty:
             save_table(alpha_table, "asset_pricing_alphas")
-    return figures, alpha_table
+    return figures, diagnostics

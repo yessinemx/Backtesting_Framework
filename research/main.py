@@ -11,7 +11,7 @@ ROOT_DIR = Path(__file__).resolve().parents[1]
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
-from research import config as research_config
+from config import config_paper as research_config
 from research.paper_replication import run_pipeline
 
 

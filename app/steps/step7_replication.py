@@ -1,8 +1,8 @@
 """Paper replication page: wavelet pairs-trading study, with the paper's figures."""
 import streamlit as st
 
-from research import config as research_config
-from research.paper_replication.report import build_report, PAPER
+from config import config_paper as research_config
+from research.paper_replication.report import build_report
 
 
 def _show_figs(figures, prefix):
@@ -23,8 +23,8 @@ def render() -> None:
         with c1:
             source = st.selectbox("Source", ["data", "bloomberg"], index=0)
         with c2:
-            methods = st.multiselect("Methods", ["distance", "cointegration"],
-                                     default=["distance", "cointegration"])
+            methods = st.multiselect("Methods", list(research_config.DEFAULT_METHODS),
+                                     default=list(research_config.DEFAULT_METHODS))
         with c3:
             sweeps = st.checkbox("Include robustness sweeps (Fig 10 & 11) — slower (~5 min)", value=False)
         run = st.button("Run replication", type="primary", use_container_width=True)
@@ -34,7 +34,7 @@ def render() -> None:
             st.warning("Select at least one method.")
             return
         params = dict(research_config.PAIRS_CONFIG)
-        params["tc_per_share"] = 0.0
+        params["tc_per_share"] = research_config.HEADLINE_TC_PER_SHARE
         with st.spinner("Running point-in-time replication and building figures..."):
             report = build_report(source=source, methods=tuple(methods),
                                   params=params, with_figures=True, sweeps=sweeps)

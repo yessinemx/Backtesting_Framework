@@ -29,10 +29,12 @@ wavelet returns.
 import numpy as np
 import pywt
 
+from config import config_paper as research_config
+
 # Default family: nearest available Symlet to the paper's sym22 (same family,
 # least-asymmetric / near-linear phase). sym20 is the highest Symlet provided
 # by PyWavelets.
-DEFAULT_WAVELET = "sym20"
+DEFAULT_WAVELET = research_config.DEFAULT_WAVELET
 
 
 def _modwt_filters(wavelet):
@@ -68,7 +70,8 @@ def _mra_level1(x, wavelet):
     # Symmetric reflection padding (paper Section 3.1 "symmetrization") to tame
     # boundary effects. pywt's SWT-MRA only supports periodization internally,
     # so we reflect-pad ourselves, then crop back to the original support.
-    L = pywt.Wavelet(wavelet).dec_len
+    wavelet_type = getattr(pywt, "Wavelet")
+    L = wavelet_type(wavelet).dec_len
     pad = L
     # SWT requires the (padded) length to be a multiple of 2 for level 1.
     total = n + 2 * pad

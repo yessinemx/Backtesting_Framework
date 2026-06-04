@@ -1,7 +1,7 @@
 import unittest
 
+from config import config_paper as research_config
 import research.main as research_main
-from research import config as research_config
 
 
 class ResearchMainTests(unittest.TestCase):

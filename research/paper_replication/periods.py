@@ -16,7 +16,9 @@ date-sorted price frame so the split happens without copying data.
 from dataclasses import dataclass
 import polars as pl
 
-TRADING_DAYS_PER_YEAR = 252
+from config import config_paper as research_config
+
+TRADING_DAYS_PER_YEAR = research_config.TRADING_DAYS_PER_YEAR
 
 
 @dataclass

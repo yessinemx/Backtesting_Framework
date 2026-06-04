@@ -6,8 +6,8 @@ Quantitative returns-based backtesting framework with Bloomberg extraction, a St
 
 The repository is organized around two distinct scopes:
 
-- `config.py`: global configuration for the generic backtester
-- `research/config.py`: local configuration for the paper replication workflow
+- `config/config_backtester.py`: global configuration for the generic backtester
+- `config/config_paper.py`: fixed configuration for the paper replication workflow
 
 The standard backtester and the paper replication share loaders and data, but keep separate parameters and outputs.
 
@@ -15,6 +15,10 @@ The standard backtester and the paper replication share loaders and data, but ke
 
 ```
 Backtesting_Framework/
+├── config/                           # Centralized configuration package
+│   ├── __init__.py                   # Public generic config entrypoint (`import config`)
+│   ├── config_backtester.py          # Generic backtester settings
+│   └── config_paper.py               # Fixed paper replication settings
 ├── app/                              # Streamlit application
 │   ├── main.py                       # Entry point : py -m streamlit run app/main.py
 │   ├── sidebar.py                    # Sidebar navigation
@@ -38,13 +42,13 @@ Backtesting_Framework/
 │   └── pairs_trading.py
 ├── visualisation/                    # Backtester figures
 ├── research/                         # Research and paper replication
-│   ├── config.py                     # Fixed paper replication parameters
 │   ├── main.py                       # Main paper replication CLI
 │   ├── docs/                         # Source documentation / paper
+│   ├── notebooks/                    # Research notebooks
+│   │   └── table_viewer.ipynb        # Notebook to inspect all generated CSV tables
 │   ├── outputs/                      # Generated tables and figures
 │   └── paper_replication/            # Paper replication code
 ├── data/                             # Shared parquet data
-├── config.py                         # Global backtester configuration
 ├── requirements.txt
 └── README.md
 ```
@@ -105,7 +109,7 @@ The application follows a 7-step workflow:
 
 ## Configurations
 
-Global backtester configuration in [config.py](config.py):
+Global backtester configuration in [config/config_backtester.py](config/config_backtester.py):
 
 - shared data paths
 - index universes and currencies
@@ -113,19 +117,23 @@ Global backtester configuration in [config.py](config.py):
 - rebalance frequencies
 - standard backtester parameter grids
 
-Local research configuration in [research/config.py](research/config.py):
+Local research configuration in [config/config_paper.py](config/config_paper.py):
 
 - `research/docs` and `research/outputs` paths
 - fixed paper replication parameters
 - table / figure output settings
+- notebook path for table review
 
 ## Data And Artifacts
 
 The files in [data](data) and the PDF in [research/docs](research/docs) remain versioned so the repository stays reproducible without an external bootstrap step. Generated run artifacts should not be committed:
 
 - [research/outputs](research/outputs) is reserved for generated outputs
+- `research/outputs/tables` contains CSV only
 - `research/outputs/tables` and `research/outputs/figures` are ignored by git
 - data can be regenerated through the app `Data Status` step or via the Bloomberg extraction scripts
+
+To review generated tables quickly, open [research/notebooks/table_viewer.ipynb](research/notebooks/table_viewer.ipynb).
 
 ## Available Strategies
 

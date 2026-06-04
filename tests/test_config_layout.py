@@ -1,7 +1,7 @@
 import unittest
 
 import config
-from research import config as research_config
+from config import config_paper as research_config
 from research.paper_replication import run_pipeline
 
 
@@ -35,6 +35,13 @@ class ConfigLayoutTests(unittest.TestCase):
         self.assertEqual(research_config.OUTPUTS_DIR.parent, research_config.RESEARCH_DIR)
         self.assertEqual(research_config.TABLES_DIR.parent, research_config.OUTPUTS_DIR)
         self.assertEqual(research_config.FIGURES_DIR.parent, research_config.OUTPUTS_DIR)
+
+    def test_research_config_exposes_fixed_replication_constants(self) -> None:
+        self.assertEqual(research_config.TRADING_DAYS_PER_YEAR, 252)
+        self.assertEqual(research_config.DEFAULT_METHODS, ("distance", "cointegration"))
+        self.assertIn("distance", research_config.PAPER_COMPARISON_TARGETS)
+        self.assertIn("fig01_pyramid", research_config.FIGURE_FILE_NAMES)
+        self.assertIn("table10_marginal_variance_explained_of_principal_components", research_config.UNAVAILABLE_TABLES)
 
     def test_paper_replication_api_is_exposed(self) -> None:
         self.assertTrue(callable(run_pipeline))
