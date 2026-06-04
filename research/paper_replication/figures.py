@@ -152,7 +152,7 @@ def collect_run(method, prices, periods, params, selections=None):
     n_sigma = params.get("threshold_sigma", 2.0)
     index_id = params.get("index_id", research_config.PAIRS_CONFIG["index_id"])
 
-    std_parts, wav_parts, opt_parts, idx_parts, bh_parts = [], [], [], [], []
+    std_parts, wav_parts, pf_parts, idx_parts, bh_parts = [], [], [], [], []
     cat_rows, noise_rows = [], []
     selection_rows, trade_rows = [], []
     unit_root_rows, spread_rows = [], []
@@ -179,15 +179,15 @@ def collect_run(method, prices, periods, params, selections=None):
         if not pairs:
             continue
 
-        std_res, wav_res, opt_res = [], [], []
+        std_res, wav_res, pf_res = [], [], []
         paired_tickers = set()
         for i, j in pairs:
             s_std = build_spread(i, j, train_p, trade_p, use_wavelet=False,
                                  n_sigma=n_sigma, wavelet=wavelet)
             s_wav = build_spread(i, j, train_p, trade_p, use_wavelet=True,
-                                 n_sigma=n_sigma, wavelet=wavelet)
-            s_opt = build_spread(i, j, train_p, trade_p, use_wavelet=False,
-                                 n_sigma=n_sigma, wavelet=wavelet, fit_on_trade=True)
+                                 n_sigma=n_sigma, wavelet=wavelet, boundary="symmetric")
+            s_pf = build_spread(i, j, train_p, trade_p, use_wavelet=True,
+                                n_sigma=n_sigma, wavelet=wavelet, boundary="periodic")
             if s_std is not None:
                 std_res.append(simulate_pair(s_std))
                 paired_tickers.update([i, j])
@@ -224,11 +224,11 @@ def collect_run(method, prices, periods, params, selections=None):
 
         std_parts.append(_portfolio_series(std_res))
         wav_parts.append(_portfolio_series(wav_res))
-        opt_parts.append(_portfolio_series(opt_res))
+        pf_parts.append(_portfolio_series(pf_res))
         idx_parts.append(_equal_weight_benchmark(trade_p, [c for c in trade_p.columns if c != "date"]))
         bh_parts.append(_equal_weight_benchmark(trade_p, sorted(paired_tickers)))
 
-        for variant, res in (("standard", std_res), ("wavelet", wav_res), ("opt", opt_res)):
+        for variant, res in (("standard", std_res), ("wavelet", wav_res), ("wavelet_pf", pf_res)):
             cat_rows.append({"period": period.index, "variant": variant,
                              **_category_stats(res)})
             trade_rows.append(_trade_summary_rows(period.index, variant, res, len(pairs)))
@@ -366,8 +366,8 @@ def fig4_cumulative(data: RunData):
     fig = go.Figure()
     series = [
         ("standard", data.std_daily, _STD_COLOR, "solid"),
-        ("sym wavelet", data.wav_daily, _WAV_COLOR, "solid"),
-        ("Opt (look-ahead, not tradeable)", data.opt_daily, "#d62728", "dashdot"),
+        ("sym wavelet (honest)", data.wav_daily, _WAV_COLOR, "solid"),
+        ("sym wavelet (paper, periodic boundary)", data.pf_daily, "#d62728", "dashdot"),
         ("S&P 500 (EW members)", data.bench_index, "#9467bd", "dot"),
         ("buy & hold pairs", data.bench_bh, "#e08a1e", "dash"),
     ]
@@ -429,15 +429,16 @@ def fig_categories(data: RunData, fig_num):
 def fig_convergence_jump(data: RunData):
     """Full-convergence rate by variant — the key forensic finding.
 
-    Paper: wavelet lifts full-convergence 12% -> 32%. Here standard and wavelet
-    are ~equal, and only the look-ahead Opt jumps — i.e. the jump needs future
-    information (a trading-period-accurate β), which the wavelet cannot supply.
+    Paper: wavelet lifts full-convergence 12% -> 32%. With the honest (symmetric)
+    boundary it stays ~equal to standard; only the paper-faithful periodic
+    boundary reproduces the jump — i.e. the jump comes from the circular-boundary
+    look-ahead in MATLAB's modwt, not from denoising per se.
     """
     cats = data.cats
     fig = go.Figure()
-    colors = {"standard": _STD_COLOR, "wavelet": _WAV_COLOR, "opt": "#d62728"}
-    labels = {"standard": "standard", "wavelet": "sym wavelet",
-              "opt": "Opt (look-ahead)"}
+    colors = {"standard": _STD_COLOR, "wavelet": _WAV_COLOR, "wavelet_pf": "#d62728"}
+    labels = {"standard": "standard", "wavelet": "sym wavelet (honest)",
+              "wavelet_pf": "sym wavelet (paper, periodic)"}
     if cats is not None and not cats.empty:
         for variant, color in colors.items():
             sub = cats[cats["variant"] == variant].sort_values("period")
@@ -681,8 +682,8 @@ def generate_all(prices, periods, params, methods=("distance", "cointegration"),
         # Section 5.4 - asset-pricing (market model) alpha + Figure 9.
         mkt = ap.market_excess(data.bench_index, rf_usd)
         ap_variants = [("standard", data.std_daily), ("wavelet", data.wav_daily)]
-        if data.opt_daily is not None and not data.opt_daily.empty:
-            ap_variants.append(("opt(lookahead)", data.opt_daily))
+        if data.pf_daily is not None and not data.pf_daily.empty:
+            ap_variants.append(("wavelet_pf(paper)", data.pf_daily))
         for variant, series in ap_variants:
             res = ap.run_market_model(series, mkt, label=f"{method}/{variant}")
             if res is not None:

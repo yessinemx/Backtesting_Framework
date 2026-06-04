@@ -82,7 +82,7 @@ def _pair_arrays(prices, i, j):
 
 def build_spread(i, j, train_prices, trade_prices, use_wavelet=False,
                  n_sigma=2.0, wavelet=DEFAULT_WAVELET, normalize=True,
-                 fit_on_trade=False):
+                 boundary="symmetric"):
     """Build the spread for one pair across formation and trading.
 
     Parameters
@@ -93,12 +93,10 @@ def build_spread(i, j, train_prices, trade_prices, use_wavelet=False,
         If True, estimate (α_w, β_w) and the spread on MODWT-filtered prices.
     normalize : bool
         If True, divide each leg by its formation-start price (see module docstring).
-    fit_on_trade : bool
-        LOOK-AHEAD. If True, estimate (α, β) and σ on the *trading* window instead
-        of the formation window — the paper's hypothetical "Opt" scenario
-        (Table 11, last row): the trading-period profit-fitting coefficients.
-        This is NOT tradeable (it uses future data); it is an upper-bound
-        benchmark only, exactly as the paper reports it.
+    boundary : "symmetric" | "periodic"
+        MODWT boundary used when ``use_wavelet`` is True. "symmetric" is honest;
+        "periodic" reproduces the paper's MATLAB result but leaks trading-period
+        data into the in-sample estimate (see wavelet module docstring).
 
     Returns
     -------
@@ -122,18 +120,15 @@ def build_spread(i, j, train_prices, trade_prices, use_wavelet=False,
     if use_wavelet:
         # Filter the full (formation + trading) series once, then split.
         nt = len(ni_tr)
-        fi = modwt_smooth(np.concatenate([ni_tr, ni_td]), wavelet)
-        fj = modwt_smooth(np.concatenate([nj_tr, nj_td]), wavelet)
+        fi = modwt_smooth(np.concatenate([ni_tr, ni_td]), wavelet, boundary=boundary)
+        fj = modwt_smooth(np.concatenate([nj_tr, nj_td]), wavelet, boundary=boundary)
         x_tr_i, x_tr_j = fi[:nt], fj[:nt]
         x_td_i, x_td_j = fi[nt:], fj[nt:]
     else:
         x_tr_i, x_tr_j = ni_tr, nj_tr
         x_td_i, x_td_j = ni_td, nj_td
 
-    if fit_on_trade:
-        alpha, beta = _ols_alpha_beta(x_td_i, x_td_j)   # look-ahead fit
-    else:
-        alpha, beta = _ols_alpha_beta(x_tr_i, x_tr_j)
+    alpha, beta = _ols_alpha_beta(x_tr_i, x_tr_j)
 
     # Defensive cap: drop pairs with explosive |beta| caused by extreme price-level
     # mismatches (e.g. BRK.A-class shares vs ordinary equities). Paper Sec. 4.2
@@ -145,9 +140,7 @@ def build_spread(i, j, train_prices, trade_prices, use_wavelet=False,
     train_spread = x_tr_i - alpha - beta * x_tr_j
     trade_spread = x_td_i - alpha - beta * x_td_j
 
-    # Threshold σ from the same window the coefficients were fit on.
-    ref_spread = trade_spread if fit_on_trade else train_spread
-    sigma = float(np.std(ref_spread, ddof=1))
+    sigma = float(np.std(train_spread, ddof=1))
     if not np.isfinite(sigma) or sigma == 0:
         return None
 

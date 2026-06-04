@@ -40,38 +40,64 @@ DEFAULT_WAVELET = research_config.DEFAULT_WAVELET
 def _modwt_filters(wavelet):
     """Return the MODWT filters (low-pass g~, high-pass h~).
 
-    Orthonormal DWT filters are rescaled by 1/sqrt(2) to obtain the MODWT
-    filters (Percival & Walden, 2000).
+    `symN` with N > 20 is mapped to `sym20` — the closest *actual* Symlet
+    PyWavelets ships. For the raw scaling coefficient (used as the trading
+    signal) the filter PHASE matters, and Symlets are near-linear-phase like the
+    paper's sym22, whereas `dbN` is minimum-phase (lagged) — so `sym20` is the
+    right proxy here. Symlets PyWavelets already provides (sym2..sym20) pass
+    through unchanged.
     """
-    wavelet_type = getattr(pywt, "Wavelet")
-    w = wavelet_type(wavelet)
-    g = np.asarray(w.dec_lo, dtype=float)   # low-pass scaling filter
-    h = np.asarray(w.dec_hi, dtype=float)   # high-pass wavelet filter
-    g_t = g / np.sqrt(2.0)
-    h_t = h / np.sqrt(2.0)
-    return g_t, h_t
+    if isinstance(name, str) and name.lower().startswith("sym"):
+        try:
+            n = int(name[3:])
+        except ValueError:
+            return name
+        if n > _MAX_SYM:
+            return f"sym{_MAX_SYM}"
+    return name
 
 
-def _mra_level1(x, wavelet):
-    """Level-1 MODWT multiresolution analysis (smooth, detail).
+def _modwt_v1_periodic(x, fam, level=1):
+    """Level-1 MODWT scaling V_1 and detail W_1 with CIRCULAR boundary — exactly
+    MATLAB's ``modwt`` default: V_1[t] = sum_l g~_l x[(t-l) mod N].
 
-    Returns (V1, W1) where V1 is the Level-1 long-run (smooth) component and
-    W1 is the Level-1 short-run (detail) component, with V1 + W1 == x.
+    WARNING — boundary look-ahead. On a concatenated [training; trading] series
+    the circular wrap makes the early (training) coefficients depend on the END
+    of the trading window, leaking future information into the in-sample
+    coefficient/threshold estimation. This is what the authors' MATLAB code does
+    (`mainfile_basic_simulations.m`); it reproduces the paper's headline but is
+    NOT tradeable. Only level 1 is supported (the paper's setting).
+    """
+    g = np.asarray(pywt.Wavelet(fam).dec_lo, dtype=float) / np.sqrt(2.0)
+    h = np.asarray(pywt.Wavelet(fam).dec_hi, dtype=float) / np.sqrt(2.0)
+    n = x.size
+    L = g.size
+    idx = (np.arange(n)[:, None] - np.arange(L)[None, :]) % n
+    xi = x[idx]
+    return (xi * g[None, :]).sum(axis=1), (xi * h[None, :]).sum(axis=1)
 
-    Uses the undecimated SWT and its inverse so the reconstruction is
-    ZERO-PHASE: the smooth tracks the price trend without the ~L/2 time lag
-    introduced by a single causal convolution. The boundary is handled by
-    symmetric reflection (the paper's "symmetrization", Section 3.1).
+
+def _modwt_coeffs(x, wavelet, level, boundary="symmetric"):
+    """MODWT level-J scaling V_J and detail W_J COEFFICIENTS (paper eq. 3).
+
+    Eq. (3) defines V_{1,t} = sum_l g~_l Z_{t-l} — the MODWT *scaling
+    coefficient*, a length-L weighted average of the prices (long-run component),
+    NOT the MRA reconstruction A_1 = x - D_1 (which barely differs from x).
+
+    boundary : "symmetric" | "periodic"
+        "symmetric" (default, honest): reflect at the edges; no information
+        crosses the train/trade boundary.
+        "periodic" (paper-faithful): MATLAB's circular boundary — reproduces the
+        paper but injects boundary look-ahead (see ``_modwt_v1_periodic``).
     """
     x = np.asarray(x, dtype=float)
     n = x.size
     if n == 0:
-        return np.array([]), np.array([])
-    # Symmetric reflection padding (paper Section 3.1 "symmetrization") to tame
-    # boundary effects. pywt's SWT-MRA only supports periodization internally,
-    # so we reflect-pad ourselves, then crop back to the original support.
-    wavelet_type = getattr(pywt, "Wavelet")
-    L = wavelet_type(wavelet).dec_len
+        return x, x
+    fam = resolve_wavelet(wavelet)
+    if boundary == "periodic":
+        return _modwt_v1_periodic(x, fam, level)
+    L = pywt.Wavelet(fam).dec_len
     pad = L
     # SWT requires the (padded) length to be a multiple of 2 for level 1.
     total = n + 2 * pad
@@ -83,20 +109,20 @@ def _mra_level1(x, wavelet):
     return smooth, detail
 
 
-def modwt_smooth(x, wavelet=DEFAULT_WAVELET):
-    """Long-term component V_{1,t} (level-1 approximation).
+def modwt_smooth(x, wavelet=DEFAULT_WAVELET, level=DEFAULT_LEVEL,
+                 boundary="symmetric"):
+    """Long-run component V_{1,t} (level-1 MODWT scaling coefficient, eq. 3).
 
-    This is the denoised series used to build the spread. Zero-phase, so the
-    smoothed series is time-aligned with the original prices.
+    This is the denoised series used to build the spread. See ``_modwt_coeffs``
+    for the ``boundary`` option ("symmetric" honest vs "periodic" paper-faithful).
     """
-    smooth, _ = _mra_level1(x, wavelet)
-    return smooth
+    return _modwt_coeffs(x, wavelet, level, boundary)[0]
 
 
-def modwt_detail(x, wavelet=DEFAULT_WAVELET):
-    """Short-term component W_{1,t} (level-1 detail), i.e. filtered noise."""
-    _, detail = _mra_level1(x, wavelet)
-    return detail
+def modwt_detail(x, wavelet=DEFAULT_WAVELET, level=DEFAULT_LEVEL,
+                 boundary="symmetric"):
+    """Short-run component W_{1,t} (filtered-out noise, level-1 detail coeff)."""
+    return _modwt_coeffs(x, wavelet, level, boundary)[1]
 
 
 def filter_prices(prices, wavelet=DEFAULT_WAVELET):

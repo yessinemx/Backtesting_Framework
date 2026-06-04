@@ -30,12 +30,13 @@ class PipelineResult:
     period_index: int
     train_start: object
     trade_end: object
-    opt: PairsReport = None     # look-ahead "Opt" benchmark (optional)
+    paper_faithful: PairsReport = None   # periodic-boundary wavelet (reproduces paper)
 
 
 def _run_variant(pairs, train_prices, trade_prices, use_wavelet, params,
-                 fit_on_trade=False):
+                 boundary=None):
     """Build spreads and simulate trading for one variant."""
+    bnd = boundary or params.get("wavelet_boundary", "symmetric")
     results = []
     for i, j in pairs:
         spec = build_spread(
@@ -43,7 +44,7 @@ def _run_variant(pairs, train_prices, trade_prices, use_wavelet, params,
             use_wavelet=use_wavelet,
             n_sigma=params["threshold_sigma"],
             wavelet=params["wavelet"],
-            fit_on_trade=fit_on_trade,
+            boundary=bnd,
         )
         if spec is None:
             continue
@@ -126,16 +127,16 @@ def _drop_non_trading_days(prices, threshold=0.90):
 
 
 def run_period(period, prices, params, universe=None, membership=None,
-               include_opt=False):
+               include_paper_faithful=False):
     """Run the pipeline on a single formation/trading period.
 
     universe : list[str] | None
         Optional point-in-time ticker list. When given, the universe is
         restricted to these tickers (plus "date") for this period, so pairs are
         only formed from genuine index constituents of the formation window.
-    include_opt : bool
-        Also compute the look-ahead "Opt" benchmark (beta fit on the trading
-        window).
+    include_paper_faithful : bool
+        Also compute the paper-faithful wavelet (periodic MODWT boundary), which
+        reproduces the paper but contains boundary look-ahead.
     """
     if universe is not None:
         keep = ["date"] + [ticker for ticker in universe if ticker in prices.columns]
@@ -167,15 +168,15 @@ def run_period(period, prices, params, universe=None, membership=None,
         return None
 
     std_results = _run_variant(pairs, train_prices, trade_prices, False, params)
-    wav_results = _run_variant(pairs, train_prices, trade_prices, True, params)
+    wav_results = _run_variant(pairs, train_prices, trade_prices, True, params,
+                               boundary="symmetric")
 
-    opt_report = None
-    if include_opt:
-        opt_results = _run_variant(
-            pairs, train_prices, trade_prices, False, params, fit_on_trade=True
-        )
-        opt_report = aggregate_metrics(opt_results, params["method"], "opt",
-                                       n_pairs=len(pairs))
+    pf_report = None
+    if include_paper_faithful:
+        pf_results = _run_variant(pairs, train_prices, trade_prices, True,
+                                  params, boundary="periodic")
+        pf_report = aggregate_metrics(pf_results, params["method"], "wavelet_pf",
+                                      n_pairs=len(pairs))
 
     return PipelineResult(
         standard=aggregate_metrics(std_results, params["method"], "standard",
@@ -185,7 +186,7 @@ def run_period(period, prices, params, universe=None, membership=None,
         period_index=period.index,
         train_start=period.train_start,
         trade_end=period.trade_end,
-        opt=opt_report,
+        paper_faithful=pf_report,
     )
 
 
@@ -277,7 +278,9 @@ def run_pipeline(params=None, source="data", verbose=True, write_outputs=True):
 def _build_period_table(period_results) -> pl.DataFrame:
     rows = []
     for pr in period_results:
-        reps = [pr.standard, pr.wavelet] + ([pr.opt] if pr.opt is not None else [])
+        reps = [pr.standard, pr.wavelet]
+        if pr.paper_faithful is not None:
+            reps.append(pr.paper_faithful)
         for rep in reps:
             row = rep.as_dict()
             row["period"] = pr.period_index
@@ -298,12 +301,12 @@ def _build_summary(period_results) -> pl.DataFrame:
     if not period_results:
         return pl.DataFrame()
     rows = []
-    variants = ["standard", "wavelet"]
-    if any(pr.opt is not None for pr in period_results):
-        variants.append("opt")
-    for variant in variants:
-        reports = [getattr(pr, variant) for pr in period_results
-                   if getattr(pr, variant) is not None]
+    variant_attrs = [("standard", "standard"), ("wavelet", "wavelet")]
+    if any(pr.paper_faithful is not None for pr in period_results):
+        variant_attrs.append(("wavelet_pf", "paper_faithful"))
+    for variant, attr in variant_attrs:
+        reports = [getattr(pr, attr) for pr in period_results
+                   if getattr(pr, attr) is not None]
         if not reports:
             continue
         row: dict[str, Any] = {"variant": variant}

@@ -17,7 +17,17 @@ from research.paper_replication.pipeline import run_period
 from research.paper_replication import figures as paper_figures
 
 
-def run_method(method, prices, periods, params, include_opt=True, source="data"):
+# Paper headline numbers (Tables 4 & 5, before transaction costs).
+PAPER = {
+    "distance":      {"std_ret": -0.55, "wav_ret": 11.82, "std_sr": -0.21, "wav_sr": 3.69},
+    "cointegration": {"std_ret": -1.81, "wav_ret": 9.66,  "std_sr": -0.40, "wav_sr": 2.82},
+}
+
+METRIC_COLS = ["mean_return", "sharpe", "skewness", "kurtosis", "max_drawdown",
+               "cvar_95", "pct_positive", "n_full", "n_partial", "n_non", "n_pairs"]
+
+
+def run_method(method, prices, periods, params, include_paper_faithful=True, source="data"):
     """Run one selection method across all periods (point-in-time SPX universe)."""
     params = dict(params)
     params["method"] = method
@@ -26,10 +36,12 @@ def run_method(method, prices, periods, params, include_opt=True, source="data")
     for period in periods:
         universe = members_asof(period.train_start, index_id=index_id, source=source)
         res = run_period(period, prices, params, universe=universe,
-                         include_opt=include_opt)
+                         include_paper_faithful=include_paper_faithful)
         if res is None:
             continue
-        reps = [res.standard, res.wavelet] + ([res.opt] if res.opt is not None else [])
+        reps = [res.standard, res.wavelet]
+        if res.paper_faithful is not None:
+            reps.append(res.paper_faithful)
         for rep in reps:
             row = {k: getattr(rep, k) for k in research_config.REPORT_METRIC_COLUMNS}
             row["period"] = res.period_index
@@ -85,18 +97,17 @@ def build_report(source="data", methods=research_config.DEFAULT_METHODS,
 
         std = summaries[method].filter(pl.col("variant") == "standard")
         wav = summaries[method].filter(pl.col("variant") == "wavelet")
-        opt = summaries[method].filter(pl.col("variant") == "opt")
+        pf = summaries[method].filter(pl.col("variant") == "wavelet_pf")
         p = research_config.PAPER_COMPARISON_TARGETS[method]
         comparison_rows.append({
             "method": method,
             "repl_std_return_%": round(std["mean_return"][0] * 100, 2),
-            "repl_wav_return_%": round(wav["mean_return"][0] * 100, 2),
-            "opt_return_%(lookahead)": round(opt["mean_return"][0] * 100, 2) if opt.height else None,
+            "repl_wav_return_%(honest)": round(wav["mean_return"][0] * 100, 2),
+            "repl_wav_return_%(paper)": round(pf["mean_return"][0] * 100, 2) if pf.height else None,
             "paper_std_return_%": p["std_ret"],
             "paper_wav_return_%": p["wav_ret"],
-            "repl_std_sharpe": round(std["sharpe"][0], 2),
-            "repl_wav_sharpe": round(wav["sharpe"][0], 2),
-            "opt_sharpe(lookahead)": round(opt["sharpe"][0], 2) if opt.height else None,
+            "repl_wav_sharpe(honest)": round(wav["sharpe"][0], 2),
+            "repl_wav_sharpe(paper)": round(pf["sharpe"][0], 2) if pf.height else None,
             "paper_std_sharpe": p["std_sr"],
             "paper_wav_sharpe": p["wav_sr"],
         })
