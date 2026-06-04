@@ -28,17 +28,19 @@ METRIC_COLS = ["mean_return", "sharpe", "skewness", "kurtosis", "max_drawdown",
                "cvar_95", "pct_positive", "n_full", "n_partial", "n_non", "n_pairs"]
 
 
-def run_method(method, prices, periods, params):
+def run_method(method, prices, periods, params, include_opt=True):
     """Run one selection method across all periods (point-in-time SPX universe)."""
     params = dict(params)
     params["method"] = method
     rows = []
     for period in periods:
         universe = members_asof(period.train_start, index_id="SPX")
-        res = run_period(period, prices, params, universe=universe)
+        res = run_period(period, prices, params, universe=universe,
+                         include_opt=include_opt)
         if res is None:
             continue
-        for rep in (res.standard, res.wavelet):
+        reps = [res.standard, res.wavelet] + ([res.opt] if res.opt is not None else [])
+        for rep in reps:
             row = {k: getattr(rep, k) for k in METRIC_COLS}
             row["period"] = res.period_index
             row["trade_end"] = str(res.trade_end.date())
@@ -86,15 +88,18 @@ def build_report(source="data", methods=("distance", "cointegration"),
 
         std = summaries[method].filter(pl.col("variant") == "standard")
         wav = summaries[method].filter(pl.col("variant") == "wavelet")
+        opt = summaries[method].filter(pl.col("variant") == "opt")
         p = PAPER[method]
         comparison_rows.append({
             "method": method,
             "repl_std_return_%": round(std["mean_return"][0] * 100, 2),
             "repl_wav_return_%": round(wav["mean_return"][0] * 100, 2),
+            "opt_return_%(lookahead)": round(opt["mean_return"][0] * 100, 2) if opt.height else None,
             "paper_std_return_%": p["std_ret"],
             "paper_wav_return_%": p["wav_ret"],
             "repl_std_sharpe": round(std["sharpe"][0], 2),
             "repl_wav_sharpe": round(wav["sharpe"][0], 2),
+            "opt_sharpe(lookahead)": round(opt["sharpe"][0], 2) if opt.height else None,
             "paper_std_sharpe": p["std_sr"],
             "paper_wav_sharpe": p["wav_sr"],
         })

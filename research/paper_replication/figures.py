@@ -54,6 +54,7 @@ class RunData:
     cats: pd.DataFrame                   # per period/variant category props & returns
     noise: pd.DataFrame                  # per period: noise variance vs std return
     example: dict = field(default_factory=dict)   # one pair for Fig 2/3
+    opt_daily: pd.Series = None          # look-ahead "Opt" portfolio daily returns
 
 
 def _period_universe(prices, period):
@@ -110,7 +111,7 @@ def collect_run(method, prices, periods, params, selections=None):
     wavelet = params.get("wavelet", DEFAULT_WAVELET)
     n_sigma = params.get("threshold_sigma", 2.0)
 
-    std_parts, wav_parts, idx_parts, bh_parts = [], [], [], []
+    std_parts, wav_parts, opt_parts, idx_parts, bh_parts = [], [], [], [], []
     cat_rows, noise_rows = [], []
     example = {}
     cache = {}
@@ -130,30 +131,32 @@ def collect_run(method, prices, periods, params, selections=None):
         if not pairs:
             continue
 
-        std_res, wav_res = [], []
+        std_res, wav_res, opt_res = [], [], []
         paired_tickers = set()
         for i, j in pairs:
             s_std = build_spread(i, j, train_p, trade_p, use_wavelet=False,
                                  n_sigma=n_sigma, wavelet=wavelet)
             s_wav = build_spread(i, j, train_p, trade_p, use_wavelet=True,
                                  n_sigma=n_sigma, wavelet=wavelet)
+            s_opt = build_spread(i, j, train_p, trade_p, use_wavelet=False,
+                                 n_sigma=n_sigma, wavelet=wavelet, fit_on_trade=True)
             if s_std is not None:
                 std_res.append(simulate_pair(s_std))
                 paired_tickers.update([i, j])
             if s_wav is not None:
                 wav_res.append(simulate_pair(s_wav))
+            if s_opt is not None:
+                opt_res.append(simulate_pair(s_opt))
 
-        std_d = _portfolio_series(std_res)
-        wav_d = _portfolio_series(wav_res)
-        std_parts.append(std_d)
-        wav_parts.append(wav_d)
+        std_parts.append(_portfolio_series(std_res))
+        wav_parts.append(_portfolio_series(wav_res))
+        opt_parts.append(_portfolio_series(opt_res))
         idx_parts.append(_equal_weight_benchmark(trade_p, [c for c in trade_p.columns if c != "date"]))
         bh_parts.append(_equal_weight_benchmark(trade_p, sorted(paired_tickers)))
 
-        sc = _category_stats(std_res)
-        wc = _category_stats(wav_res)
-        for variant, stats in (("standard", sc), ("wavelet", wc)):
-            cat_rows.append({"period": period.index, "variant": variant, **stats})
+        for variant, res in (("standard", std_res), ("wavelet", wav_res), ("opt", opt_res)):
+            cat_rows.append({"period": period.index, "variant": variant,
+                             **_category_stats(res)})
 
         # Filtered-noise variance (mean Var(W_1) across paired stocks).
         nvars = []
@@ -195,7 +198,7 @@ def collect_run(method, prices, periods, params, selections=None):
         std_daily=_cat(std_parts), wav_daily=_cat(wav_parts),
         bench_index=_cat(idx_parts), bench_bh=_cat(bh_parts),
         cats=pd.DataFrame(cat_rows), noise=pd.DataFrame(noise_rows),
-        example=example,
+        example=example, opt_daily=_cat(opt_parts),
     )
     return data, cache
 
@@ -284,6 +287,7 @@ def fig4_cumulative(data: RunData):
     series = [
         ("standard", data.std_daily, _STD_COLOR, "solid"),
         ("sym wavelet", data.wav_daily, _WAV_COLOR, "solid"),
+        ("Opt (look-ahead, not tradeable)", data.opt_daily, "#d62728", "dashdot"),
         ("S&P 500 (EW members)", data.bench_index, "#9467bd", "dot"),
         ("buy & hold pairs", data.bench_bh, "#e08a1e", "dash"),
     ]
@@ -339,6 +343,34 @@ def fig_categories(data: RunData, fig_num):
                       template=_TEMPLATE, height=440, barmode="group")
     fig.update_xaxes(title_text="Period", row=1, col=1)
     fig.update_xaxes(title_text="Period", row=1, col=2)
+    return fig
+
+
+def fig_convergence_jump(data: RunData):
+    """Full-convergence rate by variant — the key forensic finding.
+
+    Paper: wavelet lifts full-convergence 12% -> 32%. Here standard and wavelet
+    are ~equal, and only the look-ahead Opt jumps — i.e. the jump needs future
+    information (a trading-period-accurate β), which the wavelet cannot supply.
+    """
+    cats = data.cats
+    fig = go.Figure()
+    colors = {"standard": _STD_COLOR, "wavelet": _WAV_COLOR, "opt": "#d62728"}
+    labels = {"standard": "standard", "wavelet": "sym wavelet",
+              "opt": "Opt (look-ahead)"}
+    if cats is not None and not cats.empty:
+        for variant, color in colors.items():
+            sub = cats[cats["variant"] == variant].sort_values("period")
+            if sub.empty:
+                continue
+            fig.add_trace(go.Bar(x=sub["period"], y=sub["full_prop"],
+                                 name=labels[variant], marker_color=color))
+    fig.add_hline(y=32, line=dict(color="#16a34a", width=1, dash="dot"),
+                  annotation_text="paper wavelet 32%")
+    fig.update_layout(title=f"Full-convergence rate by variant ({data.method}) — "
+                            f"only look-ahead reproduces the paper's jump",
+                      xaxis_title="Period", yaxis_title="% fully convergent pairs",
+                      template=_TEMPLATE, height=440, barmode="group")
     return fig
 
 
@@ -560,10 +592,14 @@ def generate_all(prices, periods, params, methods=("distance", "cointegration"),
         fig_num = 6 if method == "cointegration" else 7
         figures[f"fig0{fig_num}_categories_{method}"] = fig_categories(data, fig_num)
         figures[f"fig08_noise_corr_{method}"] = fig8_noise_corr(data)
+        figures[f"fig12_convergence_jump_{method}"] = fig_convergence_jump(data)
 
         # Section 5.4 - asset-pricing (market model) alpha + Figure 9.
         mkt = ap.market_excess(data.bench_index, rf_usd)
-        for variant, series in (("standard", data.std_daily), ("wavelet", data.wav_daily)):
+        ap_variants = [("standard", data.std_daily), ("wavelet", data.wav_daily)]
+        if data.opt_daily is not None and not data.opt_daily.empty:
+            ap_variants.append(("opt(lookahead)", data.opt_daily))
+        for variant, series in ap_variants:
             res = ap.run_market_model(series, mkt, label=f"{method}/{variant}")
             if res is not None:
                 row = {"method": method, "variant": variant, "model": "Market model",

@@ -77,8 +77,12 @@ def render() -> None:
         _show_figs(figures, "fig05_")
 
     with tabs[3]:
-        st.caption("Figures 6 & 7 — yearly proportions and returns per convergence category (wavelet).")
+        st.caption("Figures 6 & 7 — yearly proportions and returns per convergence category (wavelet). "
+                   "The bottom chart is the key forensic finding: full-convergence is ~equal for "
+                   "standard and wavelet, and only the look-ahead **Opt** reproduces the paper's 12%→32% "
+                   "jump — i.e. the jump needs future information that the wavelet cannot supply.")
         _show_figs(figures, "_categories_")
+        _show_figs(figures, "fig12_convergence_jump_")
 
     with tabs[4]:
         st.caption("Figure 8 — variance of the filtered-out noise vs the unfiltered return (negative correlation).")
