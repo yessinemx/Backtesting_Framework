@@ -14,6 +14,7 @@ class ConfigLayoutTests(unittest.TestCase):
     def test_research_config_contains_paper_defaults(self) -> None:
         expected_keys = {
             "wavelet",
+            "wavelet_boundary",
             "block_size",
             "method",
             "top_n",

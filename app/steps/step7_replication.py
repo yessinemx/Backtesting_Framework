@@ -55,9 +55,11 @@ def render() -> None:
     with tabs[0]:
         st.markdown('<p class="section-hdr">Paper vs replication</p>', unsafe_allow_html=True)
         st.dataframe(comp.to_pandas(), use_container_width=True)
-        st.caption("Replication matches the paper's *scale* and *direction* (wavelet ≥ standard); "
-                   "the paper's headline +12% does not fully reproduce on this dataset (≈84–272 names "
-                   "with sparse coverage vs the paper's 415). See the response notes for the analysis.")
+        st.caption("`repl_wav_...(honest)` = symmetric MODWT boundary (no look-ahead, tradeable) — "
+                   "wavelet ≈ standard. `repl_wav_...(paper)` = periodic boundary, exactly MATLAB's "
+                   "`modwt` default, which reproduces the paper's +12% headline but leaks trading-period "
+                   "data into the in-sample estimate (boundary look-ahead). The paper's edge is that "
+                   "boundary artifact, not a tradeable signal.")
         for method in report["summaries"]:
             st.markdown(f'<p class="section-hdr">{method} — standard vs wavelet (avg over periods)</p>',
                         unsafe_allow_html=True)
@@ -77,10 +79,11 @@ def render() -> None:
         _show_figs(figures, "fig05_")
 
     with tabs[3]:
-        st.caption("Figures 6 & 7 — yearly proportions and returns per convergence category (wavelet). "
-                   "The bottom chart is the key forensic finding: full-convergence is ~equal for "
-                   "standard and wavelet, and only the look-ahead **Opt** reproduces the paper's 12%→32% "
-                   "jump — i.e. the jump needs future information that the wavelet cannot supply.")
+        st.caption("Figures 6 & 7 — yearly proportions and returns per convergence category. "
+                   "The bottom chart is the key finding: full-convergence is ~equal for standard and the "
+                   "honest wavelet, and only the **paper-faithful (periodic MODWT boundary)** reproduces "
+                   "the 12%→32% jump — i.e. the jump comes from the circular-boundary look-ahead in "
+                   "MATLAB's `modwt`, not from denoising itself.")
         _show_figs(figures, "_categories_")
         _show_figs(figures, "fig12_convergence_jump_")
 

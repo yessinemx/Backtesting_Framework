@@ -10,6 +10,10 @@ FIGURES_DIR = OUTPUTS_DIR / "figures"
 # Fixed parameters for the paper replication workflow.
 PAIRS_CONFIG = {
     "wavelet": "sym22",
+    # MODWT boundary: "symmetric" = honest (no look-ahead, our default);
+    # "periodic" = MATLAB modwt default, reproduces the paper but the circular
+    # wrap leaks trading-period data into the in-sample estimation (look-ahead).
+    "wavelet_boundary": "symmetric",
     "block_size": 252,
     "method": "distance",
     "top_n": 1000,
