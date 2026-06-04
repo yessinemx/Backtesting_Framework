@@ -30,9 +30,11 @@ class PipelineResult:
     period_index: int
     train_start: object
     trade_end: object
+    opt: PairsReport = None     # look-ahead "Opt" benchmark (optional)
 
 
-def _run_variant(pairs, train_prices, trade_prices, use_wavelet, params):
+def _run_variant(pairs, train_prices, trade_prices, use_wavelet, params,
+                 fit_on_trade=False):
     """Build spreads and simulate trading for one variant."""
     results = []
     for i, j in pairs:
@@ -41,6 +43,7 @@ def _run_variant(pairs, train_prices, trade_prices, use_wavelet, params):
             use_wavelet=use_wavelet,
             n_sigma=params["threshold_sigma"],
             wavelet=params["wavelet"],
+            fit_on_trade=fit_on_trade,
         )
         if spec is None:
             continue
@@ -122,8 +125,22 @@ def _drop_non_trading_days(prices, threshold=0.90):
     return prices.filter(keep_mask)
 
 
-def run_period(period, prices, params, membership=None):
-    """Run the pipeline on a single formation/trading period."""
+def run_period(period, prices, params, universe=None, membership=None,
+               include_opt=False):
+    """Run the pipeline on a single formation/trading period.
+
+    universe : list[str] | None
+        Optional point-in-time ticker list. When given, the universe is
+        restricted to these tickers (plus "date") for this period, so pairs are
+        only formed from genuine index constituents of the formation window.
+    include_opt : bool
+        Also compute the look-ahead "Opt" benchmark (beta fit on the trading
+        window).
+    """
+    if universe is not None:
+        keep = ["date"] + [ticker for ticker in universe if ticker in prices.columns]
+        prices = prices.select(keep)
+
     train_prices = prices.slice(*period.train_slice)
     trade_prices = prices.slice(*period.trade_slice)
     train_prices, trade_prices = _restrict_to_traded_universe(train_prices, trade_prices)
@@ -152,6 +169,14 @@ def run_period(period, prices, params, membership=None):
     std_results = _run_variant(pairs, train_prices, trade_prices, False, params)
     wav_results = _run_variant(pairs, train_prices, trade_prices, True, params)
 
+    opt_report = None
+    if include_opt:
+        opt_results = _run_variant(
+            pairs, train_prices, trade_prices, False, params, fit_on_trade=True
+        )
+        opt_report = aggregate_metrics(opt_results, params["method"], "opt",
+                                       n_pairs=len(pairs))
+
     return PipelineResult(
         standard=aggregate_metrics(std_results, params["method"], "standard",
                                    n_pairs=len(pairs)),
@@ -160,6 +185,7 @@ def run_period(period, prices, params, membership=None):
         period_index=period.index,
         train_start=period.train_start,
         trade_end=period.trade_end,
+        opt=opt_report,
     )
 
 
@@ -251,7 +277,8 @@ def run_pipeline(params=None, source="data", verbose=True, write_outputs=True):
 def _build_period_table(period_results) -> pl.DataFrame:
     rows = []
     for pr in period_results:
-        for rep in (pr.standard, pr.wavelet):
+        reps = [pr.standard, pr.wavelet] + ([pr.opt] if pr.opt is not None else [])
+        for rep in reps:
             row = rep.as_dict()
             row["period"] = pr.period_index
             row["trade_end"] = pr.trade_end
@@ -271,8 +298,14 @@ def _build_summary(period_results) -> pl.DataFrame:
     if not period_results:
         return pl.DataFrame()
     rows = []
-    for variant in ("standard", "wavelet"):
-        reports = [getattr(pr, variant) for pr in period_results]
+    variants = ["standard", "wavelet"]
+    if any(pr.opt is not None for pr in period_results):
+        variants.append("opt")
+    for variant in variants:
+        reports = [getattr(pr, variant) for pr in period_results
+                   if getattr(pr, variant) is not None]
+        if not reports:
+            continue
         row: dict[str, Any] = {"variant": variant}
         for col in _METRIC_COLS:
             vals = [getattr(r, col) for r in reports]
