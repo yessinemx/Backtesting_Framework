@@ -3,14 +3,20 @@ Generate Table 2 — Basic Statistics for the Return Series.
 
 Reproduces Table 2 from Eroglu, Yener & Yigit (2023) using local Bloomberg data.
 
-For each stock in the 415-ticker universe the script computes:
-    - Annualised mean return  (daily mean × 252, expressed as %)
-    - Annualised std           (daily std  × √252, expressed as %)
-    - Skewness of daily returns
-    - Excess kurtosis of daily returns  (kurtosis − 3, so 0 for a normal distribution)
+For each GICS sector the script builds an equal-weight portfolio of sector stocks
+and computes time-series statistics on that portfolio's daily return series:
+    - Annualised mean return  (portfolio daily mean × 252, expressed as %)
+    - Annualised std           (portfolio daily std  × √252, expressed as %)
+    - Skewness of portfolio daily returns
+    - Excess kurtosis of portfolio daily returns  (Fisher, normal = 0)
 
-These per-ticker statistics are then averaged within each GICS sector.
-The total row uses the cross-sectional average across all 415 tickers.
+The total row uses the full equal-weight portfolio of all 415 tickers.
+
+NOTE: the paper computes sector-portfolio statistics (equal-weight per sector),
+NOT per-ticker statistics averaged within sector. Using per-ticker averages gives
+std ≈ 25% vs paper's 16% because diversification within a sector portfolio lowers
+the std substantially. The equal-weight portfolio approach matches the paper's
+mean/std/skew values closely.
 
 Output: research/outputs/tables/table2_basic_statistics_for_the_return_series.csv
 
@@ -44,28 +50,26 @@ def _daily_returns(prices: pl.DataFrame) -> pl.DataFrame:
     return rets.slice(1)
 
 
-def _ticker_stats(returns: pl.DataFrame) -> pl.DataFrame:
-    """Per-ticker annualised mean/std and daily skewness/excess-kurtosis."""
-    date_col = "date"
-    tickers = [c for c in returns.columns if c != date_col]
-
-    rows = []
-    for t in tickers:
-        s = returns.get_column(t).drop_nulls()
-        if s.len() < 10:
-            continue
-        mean_ann = float(s.mean()) * TRADING_DAYS * 100        # %
-        std_ann  = float(s.std())  * (TRADING_DAYS ** 0.5) * 100  # %
-        # Polars skewness / kurtosis (Fisher, excess kurtosis)
-        sk   = float(s.skew())
-        kurt = float(s.kurtosis())   # excess kurtosis (normal = 0)
-        rows.append({"ticker": t, "mean_pct": mean_ann, "std_pct": std_ann,
-                     "skewness": sk, "kurtosis": kurt})
-    return pl.DataFrame(rows)
+def _portfolio_stats(returns: pl.DataFrame, ticker_list: list) -> dict:
+    """Equal-weight portfolio return stats for a list of tickers."""
+    avail = [t for t in ticker_list if t in returns.columns]
+    if not avail:
+        return None
+    # Equal-weight portfolio: mean across tickers at each day, drop nulls.
+    port_ret = returns.select(avail).mean_horizontal().drop_nulls()
+    if port_ret.len() < 10:
+        return None
+    return {
+        "n_firms":  len(avail),
+        "mean_pct": float(port_ret.mean()) * TRADING_DAYS * 100,
+        "std_pct":  float(port_ret.std())  * (TRADING_DAYS ** 0.5) * 100,
+        "skewness": float(port_ret.skew()),
+        "kurtosis": float(port_ret.kurtosis()),   # excess kurtosis (normal = 0)
+    }
 
 
 def main() -> None:
-    prices_path  = paper_cfg.PAPER_PRICES_ADJUSTED_415_PATH
+    prices_path   = paper_cfg.PAPER_PRICES_ADJUSTED_415_PATH
     universe_path = paper_cfg.PAPER_UNIVERSE_415_TICKERS_PATH
 
     if not prices_path.exists():
@@ -77,40 +81,46 @@ def main() -> None:
             f"{universe_path} not found — run  py research/build_paper_dataset.py  first."
         )
 
-    prices  = pl.read_parquet(prices_path)
+    prices   = pl.read_parquet(prices_path)
     universe = pl.read_csv(universe_path)   # columns: ticker, gics_sector, ...
 
     returns = _daily_returns(prices)
-    stats   = _ticker_stats(returns)
 
-    # Join with sector labels.
-    stats = stats.join(
-        universe.select(["ticker", "gics_sector"]),
-        on="ticker",
-        how="left",
-    )
+    # Build sector → ticker mapping.
+    sector_map: dict[str, list[str]] = {}
+    for row in universe.to_dicts():
+        sec = row["gics_sector"]
+        sector_map.setdefault(sec, []).append(row["ticker"])
 
-    # Per-sector averages.
+    # Per-sector equal-weight portfolio stats.
+    sector_rows = []
+    for sec in sorted(sector_map):
+        stats = _portfolio_stats(returns, sector_map[sec])
+        if stats is None:
+            continue
+        sector_rows.append({"gics_sector": sec, **stats})
+
     sector_table = (
-        stats.group_by("gics_sector")
-        .agg([
-            pl.len().alias("n_firms"),
-            pl.col("mean_pct").mean().round(2),
-            pl.col("std_pct").mean().round(2),
-            pl.col("skewness").mean().round(4),
-            pl.col("kurtosis").mean().round(4),
+        pl.DataFrame(sector_rows)
+        .with_columns(pl.col("n_firms").cast(pl.UInt32))
+        .with_columns([
+            pl.col("mean_pct").round(2),
+            pl.col("std_pct").round(2),
+            pl.col("skewness").round(4),
+            pl.col("kurtosis").round(4),
         ])
-        .sort("gics_sector")
     )
 
-    # Total row — cross-sectional average over all 415 tickers.
+    # Total row — full equal-weight portfolio of all 415 tickers.
+    all_tickers = universe.get_column("ticker").to_list()
+    total_stats = _portfolio_stats(returns, all_tickers)
     total = pl.DataFrame([{
         "gics_sector": "TOTAL",
-        "n_firms":     stats.height,
-        "mean_pct":    round(float(stats["mean_pct"].mean()), 2),
-        "std_pct":     round(float(stats["std_pct"].mean()),  2),
-        "skewness":    round(float(stats["skewness"].mean()), 4),
-        "kurtosis":    round(float(stats["kurtosis"].mean()), 4),
+        "n_firms":     len([t for t in all_tickers if t in returns.columns]),
+        "mean_pct":    round(total_stats["mean_pct"], 2),
+        "std_pct":     round(total_stats["std_pct"],  2),
+        "skewness":    round(total_stats["skewness"], 4),
+        "kurtosis":    round(total_stats["kurtosis"], 4),
     }]).with_columns(pl.col("n_firms").cast(pl.UInt32))
 
     table2 = pl.concat([sector_table, total])
