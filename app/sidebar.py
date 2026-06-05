@@ -3,13 +3,13 @@ import streamlit as st
 
 
 _STEPS = {
-    1: ("Data Status"),
-    2: ("Index Selection"),
-    3: ("Strategy & Alloc"),
-    4: ("Parameters"),
-    5: ("Execution"),
-    6: ("Results"),
-    7: ("Paper Replication"),
+    1: ("📥", "Data Status"),
+    2: ("📊", "Index Selection"),
+    3: ("🎯", "Strategy & Alloc"),
+    4: ("⚙️", "Parameters"),
+    5: ("▶️", "Execution"),
+    6: ("📈", "Results"),
+    7: ("🔬", "Paper Replication"),
 }
 
 
@@ -20,10 +20,10 @@ def render() -> None:
             <div style="text-align:center; padding: 1rem 0 0.5rem 0;">
                 <div style="font-size:1.8rem; margin-bottom:0.2rem;">⚡</div>
                 <div style="font-family:'Inter',sans-serif; font-size:1.1rem; font-weight:700; color:#e2e8f0 !important; letter-spacing:-0.02em;">
-                    QUANT BACKTEST
+                    StratArb X
                 </div>
                 <div style="font-family:'JetBrains Mono',monospace; font-size:0.65rem; color:#475569 !important; letter-spacing:0.1em;">
-                    SYSTEMATIC STRATEGIES
+                    SYSTEMATIC STRATEGIES BACKTEST
                 </div>
             </div>
             """,
