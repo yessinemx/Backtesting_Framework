@@ -176,6 +176,8 @@ def collect_run(method, prices, periods, params, selections=None, tc_scenarios=N
     cache = {}
 
     for period in periods:
+        if period.index % 5 == 0 or period.index == 1:
+            print(f"  [collect_run/{method}] period {period.index}/{len(periods)}", flush=True)
         if selections is not None and period.index in selections:
             pairs, train_p, trade_p = selections[period.index]
         else:
@@ -729,8 +731,10 @@ def generate_all(prices, periods, params, methods=("distance", "cointegration"),
     horizon_sweeps = {}
 
     for method in methods:
+        print(f"[generate_all] collect_run method={method}...", flush=True)
         data, selections = collect_run(method, prices, periods, params,
                                        tc_scenarios=tc_scenarios)
+        print(f"[generate_all] collect_run method={method} done", flush=True)
         run_payloads[method] = data
 
         if not example_seen and data.example:

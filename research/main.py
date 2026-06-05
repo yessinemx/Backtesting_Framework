@@ -199,10 +199,18 @@ def _run_full(args: argparse.Namespace) -> None:
 def main() -> None:
     parser = _build_parser()
     args = parser.parse_args()
-    if args.full:
-        _run_full(args)
-    else:
-        _run_single_method(args)
+    try:
+        if args.full:
+            _run_full(args)
+        else:
+            _run_single_method(args)
+    except Exception:
+        import traceback
+        print("\n!!! UNCAUGHT EXCEPTION !!!", flush=True)
+        traceback.print_exc()
+        sys.stdout.flush()
+        sys.stderr.flush()
+        sys.exit(1)
 
 
 if __name__ == "__main__":

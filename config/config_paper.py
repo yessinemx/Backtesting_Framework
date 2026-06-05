@@ -72,10 +72,6 @@ FIGURE_FILE_NAMES = {
     "fig12_convergence_jump_cointegration": "figure12_convergence_jump_cointegration",
 }
 UNAVAILABLE_TABLES = {
-    # The placeholder text below is only used when the corresponding build_tableX
-    # function returns an empty DataFrame (e.g. missing factor file, sweeps=False,
-    # no --tc-sweep). When the pipeline is run end-to-end the real tables are
-    # produced and these messages are ignored.
     "table13_fama_french_five_factor_models": "No readable Fama-French factor file was found. The committed research/data/factors.csv ships with this slice; if missing, run  py research/paper_replication/bootstrap/fetch_factors.py.",
     "table14_q_factor_and_icapm_petkova_models": "No readable q-factor / ICAPM-Petkova factor file was found. Petkova ICAPM needs the committed research/data/factors.csv (the fetch_factors.py fallback only ships FF + q, not the Petkova state variables).",
     "table16_sharpe_ratios_under_different_wavelet_classes": "Run  py research/main.py --full  (sweeps default on) to populate the wavelet-class sweep.",

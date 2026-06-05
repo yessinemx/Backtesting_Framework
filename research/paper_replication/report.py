@@ -34,6 +34,8 @@ def run_method(method, prices, periods, params, include_paper_faithful=True, sou
     index_id = params.get("index_id", research_config.PAIRS_CONFIG["index_id"])
     rows = []
     for period in periods:
+        if period.index % 5 == 0 or period.index == 1:
+            print(f"  [run_method/{method}] period {period.index}/{len(periods)}", flush=True)
         universe = members_asof(period.train_start, index_id=index_id, source=source)
         res = run_period(period, prices, params, universe=universe,
                          include_paper_faithful=include_paper_faithful)
@@ -90,8 +92,10 @@ def build_report(source="data", methods=research_config.DEFAULT_METHODS,
         paper_periods=params.get("paper_periods"),
     )
 
+    print(f"[build_report] {len(periods)} periods, {prices.width-1} tickers, methods={methods}", flush=True)
     summaries, by_period, comparison_rows = {}, {}, []
     for method in methods:
+        print(f"[build_report] running method={method}...", flush=True)
         df = run_method(method, prices, periods, params, source=source)
         summaries[method] = summarize(df)
         by_period[method] = df.sort(["period", "variant"])
@@ -114,6 +118,7 @@ def build_report(source="data", methods=research_config.DEFAULT_METHODS,
             "paper_wav_sharpe": p["wav_sr"],
         })
 
+    print("[build_report] methods done — generating figures...", flush=True)
     figures, figure_diagnostics = {}, {}
     alpha_table = None
     if with_figures:
