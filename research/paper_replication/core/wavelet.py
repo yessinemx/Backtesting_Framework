@@ -10,7 +10,6 @@ from config import config_paper as research_config
 DEFAULT_LEVEL = 1
 DEFAULT_WAVELET = research_config.DEFAULT_WAVELET
 
-# Optional MATLAB Wavelet Toolbox coefficient overrides (orthonormal low-pass filters).
 _LOW_PASS_OVERRIDES: dict[str, tuple[float, ...]] = {}
 
 
@@ -111,7 +110,7 @@ def filter_prices(prices, wavelet=DEFAULT_WAVELET):
 
     Returns
     -------
-    Same type as the input, containing the long-term component V_{1,t}.
+    Same type as the input, containing the long-term component V_{1,t}
     """
     import polars as pl
 
