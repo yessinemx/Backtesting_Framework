@@ -1,7 +1,7 @@
 """Entry point Streamlit — execute via `streamlit run app/main.py`."""
 import streamlit as st
 
-st.set_page_config(page_title="Backtesting Framework", page_icon="📊", layout="wide")
+st.set_page_config(page_title="StratArb X", page_icon="⚡", layout="wide")
 
 from app import styles, sidebar
 from app.steps import (
