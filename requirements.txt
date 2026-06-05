@@ -1,5 +1,5 @@
 # Bloomberg API
-blpapi>=3.19.0
+# blpapi>=3.19.0
 
 # Data & Analysis
 polars>=1.40.0
