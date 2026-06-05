@@ -1,7 +1,7 @@
 method,variant,max_drawdown,var_95,cvar_95,pct_positive
-distance,wavelet,-0.037229,-0.317565,-0.446096,0.481765
-distance,standard,-0.029869,-0.312083,-0.436257,0.512127
-distance,opt,-0.002680,-0.010872,-0.057936,0.906785
-cointegration,wavelet,-0.039741,-0.323778,-0.474616,0.474365
-cointegration,standard,-0.032396,-0.313891,-0.465197,0.503068
-cointegration,opt,-0.002473,-0.012409,-0.058777,0.867499
+distance,wavelet_pf,-0.011442,-0.089508,-0.203566,0.807344
+distance,wavelet,-0.030749,-0.315842,-0.484135,0.515804
+distance,standard,-0.028953,-0.321681,-0.501721,0.526384
+cointegration,wavelet_pf,-0.013866,-0.106491,-0.216746,0.795038
+cointegration,wavelet,-0.034280,-0.321598,-0.529023,0.507347
+cointegration,standard,-0.033934,-0.315759,-0.582253,0.527568

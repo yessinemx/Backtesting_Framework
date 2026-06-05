@@ -1,5 +1,5 @@
 method,variant,rejection_rate_pct,mean_pvalue,n_spreads
-distance,standard,5.194238,0.516901,6873
-distance,wavelet,2.028104,0.652953,6903
-cointegration,standard,5.270575,0.517426,3548
-cointegration,wavelet,2.084507,0.650610,3550
+distance,standard,5.182314,0.522374,6966
+distance,wavelet,1.507321,0.652266,6966
+cointegration,standard,5.086971,0.513131,3047
+cointegration,wavelet,1.476862,0.638616,3047

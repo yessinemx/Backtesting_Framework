@@ -1,7 +1,7 @@
 """
 Shared paper-replication report builder.
 
-Single entry point used by both the CLI driver (`research/replicate_paper.py`)
+Single entry point used by both the CLI driver (`research/main.py --full`)
 and the Streamlit app (Step 7). It runs the point-in-time SPX replication for the
 requested methods, assembles the standard-vs-wavelet summary, the paper-comparison
 table, and (optionally) every reproducible figure.
@@ -12,9 +12,9 @@ import polars as pl
 
 from config import config_paper as research_config
 from loaders import load_prices, members_asof
-from research.paper_replication.periods import build_periods
-from research.paper_replication.pipeline import run_period
-from research.paper_replication import figures as paper_figures
+from research.paper_replication.core.periods import build_periods
+from research.paper_replication.core.pipeline import run_period
+from research.paper_replication.outputs import figures as paper_figures
 
 
 # Paper headline numbers (Tables 4 & 5, before transaction costs).
@@ -63,7 +63,8 @@ def build_report(source="data", methods=research_config.DEFAULT_METHODS,
                  params=None, with_figures=True, sweeps=True,
                  save_figures=False,
                  start=research_config.REPORT_START_DATE,
-                 end=research_config.REPORT_END_DATE):
+                 end=research_config.REPORT_END_DATE,
+                 tc_sweep=None):
     """Run the replication and return summaries, comparison, by-period, figures.
 
     Returns
@@ -106,6 +107,7 @@ def build_report(source="data", methods=research_config.DEFAULT_METHODS,
             "repl_wav_return_%(paper)": round(pf["mean_return"][0] * 100, 2) if pf.height else None,
             "paper_std_return_%": p["std_ret"],
             "paper_wav_return_%": p["wav_ret"],
+            "repl_std_sharpe": round(std["sharpe"][0], 2),
             "repl_wav_sharpe(honest)": round(wav["sharpe"][0], 2),
             "repl_wav_sharpe(paper)": round(pf["sharpe"][0], 2) if pf.height else None,
             "paper_std_sharpe": p["std_sr"],
@@ -116,7 +118,8 @@ def build_report(source="data", methods=research_config.DEFAULT_METHODS,
     alpha_table = None
     if with_figures:
         figures, figure_diagnostics = paper_figures.generate_all(
-            prices, periods, params, methods=methods, sweeps=sweeps, save=save_figures
+            prices, periods, params, methods=methods, sweeps=sweeps, save=save_figures,
+            tc_scenarios=tc_sweep,
         )
         alpha_table = figure_diagnostics.get("alpha_table")
 

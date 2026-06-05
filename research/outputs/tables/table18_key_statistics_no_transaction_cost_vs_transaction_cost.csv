@@ -1,2 +1,9 @@
-status,reason
-not_reproduced,Transaction-cost comparison tables are not generated in the single-pass local workflow.
+method,variant,tc_per_share,mean_return,sharpe,pct_positive,total_cost,mean_return_pct
+cointegration,standard,0.000000,-0.002018,-0.070510,0.527775,0.000000,-0.201823
+cointegration,standard,0.001000,-0.009556,-0.309240,0.513982,22.357782,-0.955611
+cointegration,wavelet,0.000000,-0.004400,-0.176317,0.507579,0.000000,-0.440012
+cointegration,wavelet,0.001000,-0.012053,-0.423241,0.486233,22.765299,-1.205301
+distance,standard,0.000000,0.001865,0.113771,0.526670,0.000000,0.186454
+distance,standard,0.001000,-0.005572,-0.191042,0.514545,52.056125,-0.557205
+distance,wavelet,0.000000,-0.002930,-0.083512,0.516091,0.000000,-0.293021
+distance,wavelet,0.001000,-0.010370,-0.372498,0.493815,52.075598,-1.036958

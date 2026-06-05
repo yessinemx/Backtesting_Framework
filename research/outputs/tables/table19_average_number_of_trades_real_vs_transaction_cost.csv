@@ -1,2 +1,9 @@
-status,reason
-not_reproduced,Transaction-cost trade-count comparisons are not generated in the single-pass local workflow.
+method,variant,tc_per_share,average_number_of_trades,average_active_pairs
+cointegration,standard,0.000000,875.000000,418.285714
+cointegration,standard,0.001000,875.000000,418.285714
+cointegration,wavelet,0.000000,890.000000,420.000000
+cointegration,wavelet,0.001000,890.000000,420.000000
+distance,standard,0.000000,1995.142857,982.428571
+distance,standard,0.001000,1995.142857,982.428571
+distance,wavelet,0.000000,1998.714286,982.714286
+distance,wavelet,0.001000,1998.714286,982.714286

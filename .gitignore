@@ -17,11 +17,25 @@ venv/
 dist/
 build/
 .DS_Store
-#research/outputs/figures/
-#research/outputs/tables/
-#research/outputs/__pycache__/
 
-# Large Bloomberg data files (regenerate with build_paper_dataset.py)
-#data/*.parquet
-#data/*.csv
-#research/data/*.parquet
+# --- Logs ---
+*.log
+
+# --- Research raw data sinks (regenerated via Bloomberg loaders) ---
+research/data/*.mat
+!research/data/.gitkeep
+
+# --- LaTeX build artifacts (slides) ---
+research/slides/*.aux
+research/slides/*.log
+research/slides/*.out
+research/slides/*.toc
+research/slides/*.nav
+research/slides/*.snm
+research/slides/*.vrb
+research/slides/*.synctex.gz
+research/slides/*.fls
+research/slides/*.fdb_latexmk
+
+# --- Archive (kept locally, never pushed) ---
+archive/

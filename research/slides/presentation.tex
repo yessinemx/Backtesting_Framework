@@ -1,0 +1,242 @@
+% =====================================================================
+% Présentation Beamer : « Pairs Trading with Wavelet Transform »
+% Université Paris-Dauphine -- Master 272 -- Arbitrage Statistique
+% Auteurs : Yassine Mannai, Antonin Bezard, Issam Fradi
+% Compilation : pdflatex -interaction=nonstopmode presentation.tex
+%          ou : .\compile.ps1
+% =====================================================================
+\documentclass[10pt,aspectratio=169]{beamer}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{lmodern}
+\usepackage{amsmath, amssymb}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{hyperref}
+
+\usetheme{Madrid}
+\usecolortheme{seahorse}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{caption}[numbered]
+\setbeamerfont{caption}{size=\footnotesize}
+\setbeamersize{text margin left=12pt, text margin right=12pt}
+
+\graphicspath{{../outputs/figures/}}
+
+% Repli gracieux quand une figure n'est pas (encore) générée sur disque.
+\newcommand{\figureorplaceholder}[2][height=0.72\textheight]{%
+  \IfFileExists{../outputs/figures/#2.png}
+    {\includegraphics[#1]{#2}}
+    {\fbox{\parbox{0.42\textwidth}{\centering\footnotesize\ttfamily\detokenize{#2}.png\\[2pt]\upshape\itshape (lancer \texttt{py research/main.py -{}-full} pour g\'en\'erer)}}}%
+}
+
+\title[Pairs Trading par Ondelettes]{Pairs Trading par Transformée en Ondelettes\\\small{Réplication de Eroglu, Yener \& Yigit (2023)}}
+\subtitle{Quantitative Finance, 23(7--8), 1129--1154}
+\author{Yassine Mannai \and Antonin Bezard \and Issam Fradi}
+\institute{Université Paris-Dauphine --- Master 272\\Arbitrage Statistique}
+\date{\today}
+
+\begin{document}
+
+% ---------------------------------------------------------------------
+\begin{frame}
+  \titlepage
+\end{frame}
+
+% ---------------------------------------------------------------------
+\begin{frame}{Plan}
+  \tableofcontents
+\end{frame}
+
+% =====================================================================
+\section{Le papier}
+% =====================================================================
+\begin{frame}{Le papier en une diapositive}
+  \textbf{Eroglu, Yener \& Yigit (2023) --- « Pairs trading with wavelet transform », \textit{Quantitative Finance}.}
+  \vskip4pt
+  \begin{itemize}
+    \item Le pairs trading classique repose sur un spread de prix qui mélange
+          \emph{tendance} (marche aléatoire) et \emph{bruit haute fréquence}.
+    \item Ce bruit gonfle la variance du spread, brouille les signaux
+          d'entrée/sortie et déclenche des sorties prématurées.
+    \item Idée : remplacer le prix brut par sa \textbf{composante lisse
+          d'ondelettes} (MODWT niveau 1+, symlet 20) avant de former le
+          spread. La partie lisse conserve la dynamique lente et
+          écarte la contamination haute fréquence.
+    \item Résultats : 11{,}82~\% (distance) et 9{,}66~\% (cointégration) de
+          rendement moyen par période contre $-0{,}55~\%$ et $-1{,}81~\%$
+          pour la variante standard. Sharpe : 3{,}69 / 2{,}82 contre
+          $-0{,}21$ / $-0{,}40$.
+    \item Univers : S\&P~500, point-in-time, 1986--2020, 415 tickers finaux.
+  \end{itemize}
+\end{frame}
+
+% =====================================================================
+\section{Stratégie}
+% =====================================================================
+\begin{frame}{Découpage formation / trading}
+  \begin{itemize}
+    \item L'historique est découpé en blocs consécutifs de 252 jours ouvrés.
+    \item Pour chaque période $n$ :
+      \begin{itemize}
+        \item formation = bloc $k$ (in-sample),
+        \item trading  = bloc $k+1$ (out-of-sample).
+      \end{itemize}
+    \item La sélection des paires se fait \textbf{uniquement} sur le bloc de
+          formation, à partir de l'univers survivant à cette date
+          (aucun look-ahead bias).
+  \end{itemize}
+
+  \vskip6pt
+  \begin{center}
+    \scriptsize
+    \begin{tabular}{>{\bfseries}r p{0.65\linewidth}}
+      \toprule
+      Distance      & 20 paires minimisant $\sum (P_i^* - P_j^*)^2$ sur les prix normalisés. \\
+      Cointégration & Test ADF d'Engle--Granger sur $\tilde{P}_i - \alpha - \beta \tilde{P}_j$ après pré-filtre par distance. \\
+      \bottomrule
+    \end{tabular}
+  \end{center}
+\end{frame}
+
+\begin{frame}{L'étape ondelettes}
+  \begin{itemize}
+    \item Chaque série de prix est rééchelonnée, $\tilde{P}_t = P_t / P_0$.
+    \item MODWT niveau 1+ avec le \textbf{symlet sym20}, condition aux
+          bords périodique sur le bloc de trading (fidèle au papier,
+          section 4.4).
+    \item On conserve les \textbf{coefficients lisses} (passe-bas), on
+          jette les détails (passe-haut), puis on reconstitue le prix
+          synthétique.
+    \item Le spread de la paire filtrée par ondelettes est alors
+      \[ s_t = \tilde{P}_i^{\text{wav}} - \alpha - \beta\, \tilde{P}_j^{\text{wav}}, \]
+      avec $(\alpha,\beta)$ estimés par MCO sur le bloc de formation.
+    \item La variante standard utilise la même formule \emph{sans} l'étape
+          MODWT --- c'est la seule différence entre les courbes de chaque figure.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Règle de trading}
+  \begin{itemize}
+    \item Calculer $\sigma$ du spread sur la fenêtre de formation.
+    \item Entrer dès que $|s_t| > 2\sigma$ (vente du jambage haut, achat du jambage bas).
+    \item Sortir quand $s_t$ recroise zéro pour la première fois.
+    \item Clôture forcée en fin de bloc de trading ; la variante
+          \textbf{forced-close-only} de la Table~22 n'utilise aucune autre sortie.
+    \item Coûts de transaction : coût par action appliqué à l'entrée et
+          à la sortie. Nous balayons $tc \in \{0~;~0{,}001~;~0{,}005\}$
+          pour les Tables~18--21.
+  \end{itemize}
+\end{frame}
+
+% =====================================================================
+\section{Pipeline de réplication}
+% =====================================================================
+\begin{frame}{Architecture de la réplication}
+  \footnotesize
+  \begin{tabular}{>{\ttfamily}l p{0.65\linewidth}}
+    \toprule
+    research/main.py            & CLI unifiée. \texttt{--full} = run complet du papier, \texttt{--tc-sweep} = Tables~18--21. \\
+    paper\_replication/core/    & Moteur par période : periods, selection, spread, trading, wavelet, metrics. \\
+    paper\_replication/analytics/ & Régressions d'asset pricing (Fama-French, q-factor, ICAPM de Petkova). \\
+    paper\_replication/outputs/ & 22 tables numérotées + 12 figures + résumé de validation. \\
+    paper\_replication/bootstrap/ & Récupération Bloomberg et rafraîchissement des facteurs CSV. \\
+    \bottomrule
+  \end{tabular}
+  \vskip6pt
+  \begin{itemize}
+    \item Polars + numpy + statsmodels (HAC Newey--West), export PNG via matplotlib.
+    \item Sélection des paires et trading : Python pur, déterministe, sans MATLAB.
+    \item 31 tests unitaires (\texttt{py -m pytest -q}) couvrant pipeline,
+          tables et seuils de validation.
+  \end{itemize}
+\end{frame}
+
+% =====================================================================
+\section{Résultats principaux}
+% =====================================================================
+\begin{frame}{Chiffres-clés (Tables 4 \& 5)}
+  \centering
+  \footnotesize
+  \begin{tabular}{l rr rr}
+    \toprule
+                  & \multicolumn{2}{c}{\bfseries Rendement moyen (\%)} & \multicolumn{2}{c}{\bfseries Sharpe} \\
+    \cmidrule(lr){2-3}\cmidrule(lr){4-5}
+    Méthode       & Standard & Ondelettes & Standard & Ondelettes \\
+    \midrule
+    Distance      & $-0{,}55$ & $11{,}82$ & $-0{,}21$ & $3{,}69$ \\
+    Cointégration & $-1{,}81$ & $9{,}66$  & $-0{,}40$ & $2{,}82$ \\
+    \bottomrule
+  \end{tabular}
+  \vskip6pt
+  Les tolérances de réplication sont dans \texttt{paper\_validation\_summary.csv} :
+  \texttt{PASS} si $|\Delta \text{mean}| \leq 1{,}0$~pp et
+  $|\Delta \text{Sharpe}| \leq 0{,}30$.
+\end{frame}
+
+% =====================================================================
+\section{Figures reproduites}
+% =====================================================================
+\newcommand{\figurepair}[2]{%
+  \begin{minipage}[c]{0.48\textwidth}\centering\figureorplaceholder[width=\linewidth]{#1}\end{minipage}\hfill%
+  \begin{minipage}[c]{0.48\textwidth}\centering\figureorplaceholder[width=\linewidth]{#2}\end{minipage}%
+}
+
+\begin{frame}{Figure 4 --- Rendements cumulés en excès}
+  \figurepair{figure4_cumulative_excess_returns_distance}{figure4_cumulative_excess_returns_cointegration}
+  \begin{center}\tiny Gauche : méthode des distances. Droite : méthode de cointégration.\end{center}
+\end{frame}
+
+\begin{frame}{Figure 5 --- Ratios de Sharpe quotidiens}
+  \figurepair{figure5_daily_sharpe_ratios_distance}{figure5_daily_sharpe_ratios_cointegration}
+\end{frame}
+
+\begin{frame}{Figure 8 --- Corrélation du bruit filtré}
+  \figurepair{figure8_filtered_noise_correlation_distance}{figure8_filtered_noise_correlation_cointegration}
+\end{frame}
+
+\begin{frame}{Figure 9 --- Rendements anormaux annuels}
+  \figurepair{figure9_yearly_abnormal_returns_distance}{figure9_yearly_abnormal_returns_cointegration}
+\end{frame}
+
+% =====================================================================
+\section{Bilan}
+% =====================================================================
+\begin{frame}{Couverture de la réplication}
+  \footnotesize
+  \begin{tabular}{l l p{0.55\linewidth}}
+    \toprule
+    Éléments              & Statut      & Notes \\
+    \midrule
+    Tables 1--9           & reproduites & run par défaut \\
+    Table 10              & reproduite  & ACP, Python pur (auparavant marquée MATLAB-only) \\
+    Tables 11, 13--15     & reproduites & nécessitent \texttt{research/data/factors.csv} \\
+    Table 12              & reproduite  & Monte-Carlo contamination MODWT \\
+    Tables 16--17         & reproduites & balayages classe d'ondelettes et horizon \\
+    Tables 18--21         & opt-in      & \texttt{--tc-sweep 0.0 0.001 0.005} \\
+    Table 22              & reproduite  & forced-close-only (paires standard) \\
+    Figures 1--12         & reproduites & matplotlib, PNG style papier \\
+    Résumé de validation  & livré       & \texttt{paper\_validation\_summary.csv} \\
+    \bottomrule
+  \end{tabular}
+  \vskip8pt
+  L'ensemble des 22 tables numérotées et des 12 figures est produit par une seule commande :
+  \begin{center}
+    \texttt{py research/main.py --full --tc-sweep 0.0 0.001 0.005}
+  \end{center}
+\end{frame}
+
+\begin{frame}[plain]
+  \begin{center}
+    \Large\textbf{Merci de votre attention}\\[6pt]
+    \small Code de réplication, slides et sorties :\\
+    sous-arbre \texttt{research/} du backtesting framework.\\[8pt]
+    \footnotesize Yassine Mannai \quad$\cdot$\quad Antonin Bezard \quad$\cdot$\quad Issam Fradi\\
+    \tiny Université Paris-Dauphine --- Master 272 --- Arbitrage Statistique
+  \end{center}
+\end{frame}
+
+\end{document}

@@ -52,7 +52,7 @@ def _universe_tickers(source, index_id):
     """Universe tickers across all dates, used to restrict price data."""
     if index_id is None:
         return None
-    mem = load_membership(source="data", index_id=index_id)
+    mem = load_membership(source=source, index_id=index_id)
     return mem.get_column("ticker").unique().to_list()
 
 
@@ -75,7 +75,7 @@ def members_asof(asof, index_id, source="data") -> list[str]:
     asof_dt = pl.lit(asof).str.to_datetime() if isinstance(asof, str) else asof
     snap = mem.filter(pl.col("date") <= asof_dt)
     if snap.height == 0:
-        return []
+        snap = mem.filter(pl.col("date") == mem.get_column("date").min())
     last = snap.get_column("date").max()
     # Sorted for determinism: downstream pair selection is order-sensitive, so a
     # set / unordered unique would make results vary run to run.

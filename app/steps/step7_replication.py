@@ -114,4 +114,4 @@ def render() -> None:
 
     st.markdown('<p class="section-hdr">Outputs</p>', unsafe_allow_html=True)
     st.write(f"Tables: `{research_config.TABLES_DIR}`  ·  Figures: `{research_config.FIGURES_DIR}`")
-    st.caption("Run `python research/replicate_paper.py` to also write all tables and figures to disk.")
+    st.caption("Run `python research/main.py --full` to also write all tables and figures to disk.")

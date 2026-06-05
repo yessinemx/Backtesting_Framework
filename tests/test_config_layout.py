@@ -42,7 +42,7 @@ class ConfigLayoutTests(unittest.TestCase):
         self.assertEqual(research_config.DEFAULT_METHODS, ("distance", "cointegration"))
         self.assertIn("distance", research_config.PAPER_COMPARISON_TARGETS)
         self.assertIn("fig01_pyramid", research_config.FIGURE_FILE_NAMES)
-        self.assertIn("table10_marginal_variance_explained_of_principal_components", research_config.UNAVAILABLE_TABLES)
+        self.assertIn("table13_fama_french_five_factor_models", research_config.UNAVAILABLE_TABLES)
 
     def test_paper_replication_api_is_exposed(self) -> None:
         self.assertTrue(callable(run_pipeline))

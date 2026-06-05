@@ -1,13 +1,2 @@
-gics_sector,n_firms,mean_pct,std_pct,skewness,kurtosis
-Communication Services,18,18.12,16.5,-0.3243,3.8669
-Consumer Discretionary,50,16.09,17.47,-0.325,3.6273
-Consumer Staples,33,14.68,11.69,-0.3237,2.7022
-Energy,34,6.91,25.66,-0.0925,2.6424
-Financials,65,16.11,20.1,-0.3256,5.3269
-Health Care,46,16.24,15.05,-0.4503,3.1759
-Industrials,54,15.2,17.04,-0.3365,4.2285
-Information Technology,44,17.15,18.53,-0.1846,3.2288
-Materials,25,13.83,18.2,-0.2939,3.4166
-Real Estate,18,13.11,18.18,-0.1078,5.59
-Utilities,28,11.63,14.05,-0.3317,2.6651
-TOTAL,415,14.76,15.57,-0.3729,5.1653
+n_observations,mean_daily_return,std_daily_return,skewness,kurtosis,min_daily_return,median_daily_return,max_daily_return
+868558,0.000497,0.023322,149.112167,56778.268757,-0.898226,0.000000,9.556338

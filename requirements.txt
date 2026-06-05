@@ -17,6 +17,7 @@ scipy>=1.11.0
 # Visualization
 plotly==5.24.1
 streamlit>=1.28.0
+matplotlib>=3.8.0
 
 # Other
 python-dateutil==2.9.0.post0

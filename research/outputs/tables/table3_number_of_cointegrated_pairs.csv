@@ -1,8 +1,8 @@
 period,n_universe,n_pairs_selected,method
-1,499,351,cointegration
-2,500,587,cointegration
-3,500,352,cointegration
-4,500,504,cointegration
-5,500,535,cointegration
-6,502,641,cointegration
-7,504,655,cointegration
+1,391,301,cointegration
+2,402,553,cointegration
+3,411,218,cointegration
+4,415,384,cointegration
+5,415,460,cointegration
+6,415,538,cointegration
+7,407,605,cointegration

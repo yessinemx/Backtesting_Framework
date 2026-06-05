@@ -1,9 +1,9 @@
 horizon_days,standard,wavelet,method
-63,0.672130,-1.330799,distance
-126,-0.305708,-1.997426,distance
-189,-1.021296,-2.717541,distance
-252,-0.545546,-2.118040,distance
-63,0.239441,-1.889825,cointegration
-126,-0.245629,-2.065597,cointegration
-189,-0.856055,-2.631218,cointegration
-252,-0.580925,-2.247110,cointegration
+63,0.884278,0.248333,distance
+126,0.120850,-0.701897,distance
+189,-0.505400,-1.244469,distance
+252,0.329478,-0.113019,distance
+63,-0.009848,-0.326389,cointegration
+126,-0.217192,-0.916102,cointegration
+189,-0.754222,-1.197103,cointegration
+252,0.033950,-0.170544,cointegration

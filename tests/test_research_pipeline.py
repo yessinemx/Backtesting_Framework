@@ -4,9 +4,9 @@ import unittest
 
 import polars as pl
 
-from research.paper_replication.metrics import PairsReport
-from research.paper_replication.pipeline import PipelineResult
-import research.paper_replication.pipeline as pipeline_module
+from research.paper_replication.core.metrics import PairsReport
+from research.paper_replication.core.pipeline import PipelineResult
+import research.paper_replication.core.pipeline as pipeline_module
 
 
 def _report(variant: str, mean_return: float, n_pairs: int, n_active: int) -> PairsReport:

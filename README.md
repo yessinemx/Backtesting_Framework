@@ -42,26 +42,16 @@ Backtesting_Framework/
 │   └── pairs_trading.py
 ├── visualisation/                    # Backtester figures
 ├── research/                         # Research and paper replication
-│   ├── data/                         # Paper-specific data slice and reference tables
-│   │   ├── spx_membership_paper.parquet
-│   │   ├── spx_prices_adjusted_paper.parquet
-│   │   ├── spx_prices_raw_paper.parquet
-│   │   ├── spx_415_candidate_tickers.csv
-│   │   ├── spx_prices_adjusted_paper_415.parquet
-│   │   ├── spx_prices_raw_paper_415.parquet
-│   │   ├── paper_periods_reference.csv
-│   │   ├── paper_table2_reference.csv
-│   │   ├── paper_universe_counts.csv
-│   │   └── paper_universe_415_counts.csv
-│   ├── main.py                       # Main paper replication CLI
+│   ├── README.md                     # Workflow guide for the paper replication
+│   ├── main.py                       # Unified CLI (single-method + --full replication)
+│   ├── paper_replication/            # Library package (core/, analytics/, outputs/, bootstrap/)
+│   ├── data/                         # Paper-specific data slice (gitignored)
 │   ├── docs/                         # Source documentation / paper
 │   ├── notebooks/                    # Research notebooks
-│   │   └── table_viewer.ipynb        # Notebook to inspect all generated CSV tables
-│   ├── outputs/                      # Generated tables and figures
-│   ├── prepare_paper_data.py         # Builds the paper-specific data slice under research/data
-│   ├── derive_paper_universe_415.py  # Derives a deterministic candidate fixed 415-ticker universe
-│   └── paper_replication/            # Paper replication code
+│   ├── outputs/                      # Generated tables and figures (gitignored)
+│   └── source/                       # Original MATLAB sources (paper authors)
 ├── data/                             # Shared parquet data
+├── archive/                          # Legacy / orphaned scripts (gitignored)
 ├── requirements.txt
 └── README.md
 ```
@@ -86,6 +76,12 @@ Streamlit application:
 
 ```bash
 py -m streamlit run app/main.py
+```
+
+Paper replication (full):
+
+```bash
+py research/main.py --full
 ```
 
 Paper replication smoke test:
