@@ -71,16 +71,6 @@ FIGURE_FILE_NAMES = {
     "fig12_convergence_jump_distance": "figure12_convergence_jump_distance",
     "fig12_convergence_jump_cointegration": "figure12_convergence_jump_cointegration",
 }
-UNAVAILABLE_TABLES = {
-    "table13_fama_french_five_factor_models": "No readable Fama-French factor file was found. The committed research/data/factors.csv ships with this slice; if missing, run  py research/paper_replication/bootstrap/fetch_factors.py.",
-    "table14_q_factor_and_icapm_petkova_models": "No readable q-factor / ICAPM-Petkova factor file was found. Petkova ICAPM needs the committed research/data/factors.csv (the fetch_factors.py fallback only ships FF + q, not the Petkova state variables).",
-    "table16_sharpe_ratios_under_different_wavelet_classes": "Run  py research/main.py --full  (sweeps default on) to populate the wavelet-class sweep.",
-    "table17_pairs_trading_returns_at_different_trading_period_spans": "Run  py research/main.py --full  (sweeps default on) to populate the horizon sweep.",
-    "table18_key_statistics_no_transaction_cost_vs_transaction_cost": "Run  py research/main.py --full --tc-sweep 0.0 0.001 0.005  to populate transaction-cost comparisons.",
-    "table19_average_number_of_trades_real_vs_transaction_cost": "Run  py research/main.py --full --tc-sweep 0.0 0.001 0.005  to populate transaction-cost trade counts.",
-    "table20_yearly_evolution_of_average_trades": "Run  py research/main.py --full --tc-sweep 0.0 0.001 0.005  to populate yearly trade-count evolution.",
-    "table21_annualized_abnormal_returns_transaction_cost": "Requires both a readable factor file and the tc-sweep pipeline.",
-}
 
 # Fixed parameters for the paper replication workflow.
 PAIRS_CONFIG = {
