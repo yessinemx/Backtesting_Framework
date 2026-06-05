@@ -9,7 +9,6 @@ _STEPS = {
     4: ("⚙️", "Parameters"),
     5: ("▶️", "Execution"),
     6: ("📈", "Results"),
-    7: ("🔬", "Paper Replication"),
 }
 
 
@@ -40,12 +39,7 @@ def render() -> None:
                 st.markdown(f'<div class="step-pending">○ {label}</div>', unsafe_allow_html=True)
 
         st.divider()
-        if st.button("📚 Open Paper Replication", use_container_width=True):
-            st.session_state.step = 7
-            st.rerun()
-
-        st.divider()
-        if st.button("🔄 Reset", use_container_width=True):
+        if st.button(" Reset", use_container_width=True):
             for k in list(st.session_state.keys()):
                 del st.session_state[k]
             st.rerun()

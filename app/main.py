@@ -6,7 +6,7 @@ st.set_page_config(page_title="StratArb X", page_icon="⚡", layout="wide")
 from app import styles, sidebar
 from app.steps import (
     step1_data, step2_index, step3_strategy,
-    step4_parameters, step5_execution, step6_results, step7_replication,
+    step4_parameters, step5_execution, step6_results,
 )
 
 styles.inject()
@@ -24,7 +24,6 @@ _DISPATCH = {
     4: step4_parameters.render,
     5: step5_execution.render,
     6: step6_results.render,
-    7: step7_replication.render,
 }
 
 _DISPATCH[st.session_state.step]()
