@@ -1,10 +1,8 @@
-"""Asset-pricing tests for the paper replication.
+"""Asset-pricing factor regressions (Fama-French, q-factor, Petkova ICAPM).
 
-The author MATLAB files run Fama-French, q-factor and Petkova ICAPM regressions
-on daily wavelet pairs-trading returns. This module mirrors those specifications
-when a readable local factor file is present. CSV/parquet files are preferred;
-simple MAT matrices are supported; MATLAB MCOS/dataset objects are reported with
-a conversion hint because SciPy cannot decode them reliably without MATLAB.
+Estimates multi-factor alphas on daily wavelet pairs-trading returns.
+Supports CSV, Parquet, and MAT factor files; MATLAB MCOS objects require
+export to a standard tabular format before use.
 """
 from __future__ import annotations
 from collections import OrderedDict

@@ -1,13 +1,8 @@
-"""
-Render Plotly figures to PNG with matplotlib — no browser / Kaleido / Chrome.
+"""Convert Plotly figures to PNG using matplotlib (no Kaleido or browser).
 
-Kaleido is unreliable on this Windows box (0.2.1 hangs; 1.x's Chrome fails to
-launch). matplotlib renders PNG natively, so this converter walks a Plotly
-figure's traces (Scatter, Bar), subplots, shapes (hlines) and annotations and
-redraws them. It covers exactly the chart types used by `figures.py`.
-
-The output style is tuned to look like a typical Quantitative Finance article:
-serif fonts, sober colours, thin lines, light grid, no chartjunk.
+Translates Plotly traces (Scatter, Bar), subplots, shapes, and annotations to
+matplotlib equivalents. Output follows quantitative finance publication conventions:
+serif fonts, neutral palette, thin lines, minimal grid.
 """
 from __future__ import annotations
 

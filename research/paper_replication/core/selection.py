@@ -19,12 +19,11 @@ def _value_columns(prices):
 
 
 def _clean_matrix(prices):
-    """Return (tickers, T*N NumPy matrix) for columns without missing values.
+    """Return (tickers, T×N matrix) with no missing values; deduplicate dual listings.
 
-    Dual listings with strictly identical price series, for example the same
-    security listed under multiple US/UQ/UW venue codes, are deduplicated by
-    keeping only the first occurrence. This avoids degenerate pairs with an
-    almost zero distance.
+    Securities listed under multiple venue codes with identical price series
+    are deduplicated by retaining the first occurrence, eliminating degenerate
+    zero-distance pairs.
     """
     cols = _value_columns(prices)
     if not cols:

@@ -59,10 +59,11 @@ def _point_in_time_members(membership, start, end):
 
 
 def _restrict_to_traded_universe(train_prices, trade_prices):
-    """Keep only tickers with no missing prices across BOTH train and trade.
+    """Retain tickers with complete price records across both formation and trading windows.
 
-    Mirrors the paper's universe rule (Section 4.1): a stock enters period n
-    only if it traded across both formation year n and trading year n+1.
+    Implements the paper's universe rule (Section 4.1): a security is eligible
+    for period n only if it has no missing observations in either the formation
+    or the subsequent trading window.
     """
     date_col = "date"
     train_cols = [c for c in train_prices.columns if c != date_col]
@@ -80,13 +81,11 @@ def _restrict_to_traded_universe(train_prices, trade_prices):
 
 
 def _drop_non_trading_days(prices, threshold=0.90):
-    """Drop Bloomberg forward-fill rows that correspond to NYSE holidays.
+    """Remove Bloomberg forward-filled non-trading rows.
 
-    Bloomberg's NON_TRADING_WEEKDAYS fill carries the prior price forward on
-    holidays. We detect these by looking for rows where the fraction of
-    tickers with an exactly-unchanged price relative to the previous row
-    exceeds `threshold`. The result keeps only real NYSE trading days,
-    so 252 rows = 1 trading year, matching the paper's calendar.
+    Rows where more than `threshold` fraction of tickers are unchanged
+    relative to the prior row are classified as holiday fill-forwards
+    and discarded, retaining approximately 252 actual trading days per year.
     """
     date_col = "date"
     cols = [c for c in prices.columns if c != date_col]

@@ -40,20 +40,20 @@ _PAPER_RET_WAV = "#1f7ad6"       # solid blue for cumulative sym22 return
 @dataclass
 class RunData:
     method: str
-    std_daily: pd.Series                 # portfolio daily returns (standard)
-    wav_daily: pd.Series                 # portfolio daily returns (wavelet)
-    bench_index: pd.Series               # equal-weight member returns
-    bench_bh: pd.Series                  # buy & hold of paired stocks
-    cats: pd.DataFrame                   # per period/variant category props & returns
-    noise: pd.DataFrame                  # per period: noise variance vs std return
+    std_daily: pd.Series
+    wav_daily: pd.Series
+    bench_index: pd.Series
+    bench_bh: pd.Series
+    cats: pd.DataFrame
+    noise: pd.DataFrame
     selection_stats: pd.DataFrame = field(default_factory=pd.DataFrame)
     trade_stats: pd.DataFrame = field(default_factory=pd.DataFrame)
     unit_root: pd.DataFrame = field(default_factory=pd.DataFrame)
     spread_stats: pd.DataFrame = field(default_factory=pd.DataFrame)
     transaction_stats: pd.DataFrame = field(default_factory=pd.DataFrame)
     forced_close_stats: pd.DataFrame = field(default_factory=pd.DataFrame)
-    example: dict = field(default_factory=dict)   # one pair for Fig 2/3
-    pf_daily: Optional[pd.Series] = None  # paper-faithful periodic-boundary daily returns
+    example: dict = field(default_factory=dict)
+    pf_daily: Optional[pd.Series] = None
     std_tc_daily: Optional[pd.Series] = None
     wav_tc_daily: Optional[pd.Series] = None
 
@@ -138,15 +138,13 @@ def _trade_summary_rows(period_index, variant, pair_results, n_pairs):
 
 
 def collect_run(method, prices, periods, params, selections=None, tc_scenarios=None):
-    """Run one method across all periods, collecting everything the figures need.
+    """Aggregate period-level results for all figures and tables.
 
-    Returns (RunData, selections) where `selections` caches the per-period pairs
-    and price windows so they can be reused (e.g. by the wavelet-class sweep).
-
-    ``tc_scenarios`` overrides the single transaction-cost value with a list of
-    per-share costs (used by Tables 18-21 via ``--tc-sweep``). The headline tc
-    used for portfolio time series (std_tc_daily / wav_tc_daily) is always the
-    first non-zero entry, falling back to ``params['tc_per_share']``.
+    Returns (RunData, selections_cache). The selections cache stores per-period
+    pair lists and price windows for reuse across wavelet-class sweeps.
+    When tc_scenarios is provided, simulations are run for each cost level
+    (Tables 18–21); the headline portfolio series uses the first nonzero cost,
+    falling back to params['tc_per_share'].
     """
     wavelet = params.get("wavelet", DEFAULT_WAVELET)
     n_sigma = params.get("threshold_sigma", 2.0)
@@ -188,7 +186,6 @@ def collect_run(method, prices, periods, params, selections=None, tc_scenarios=N
             continue
 
         std_res, wav_res, pf_res = [], [], []
-        # Per-tc simulation results keyed by tc value.
         std_tc_by = {tc: [] for tc in tc_list}
         wav_tc_by = {tc: [] for tc in tc_list}
         std_forced_res = []
