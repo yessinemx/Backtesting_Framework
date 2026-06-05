@@ -1,12 +1,4 @@
-"""
-Main loader entrypoint (multi-source dispatcher).
-
-Loads prices, returns, membership, and risk-free data from:
-    - "data": local parquet files in data/
-    - "bloomberg": Bloomberg API
-
-All outputs are returned as Polars frames.
-"""
+"""Multi-source data loader: Polars frames from local parquet or Bloomberg."""
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 

@@ -1,7 +1,4 @@
-"""
-Equal Weight (EW)
-Assigns 1/N weight to each active ticker
-"""
+"""Equal-weight allocator: 1/N across active positions."""
 import pandas as pd
 from allocation import BaseAllocator
 
@@ -14,7 +11,6 @@ class EqualWeightAllocator(BaseAllocator):
         longs = [t for t, s in signals.items() if s == 1]
         shorts = [t for t, s in signals.items() if s == -1]
 
-        # Both sides are required to keep the portfolio market-neutral.
         if not longs or not shorts:
             return {}
 

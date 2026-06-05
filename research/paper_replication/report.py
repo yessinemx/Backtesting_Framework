@@ -1,11 +1,4 @@
-"""
-Shared paper-replication report builder.
-
-Single entry point used by both the CLI driver (`research/main.py --full`)
-and the Streamlit app (Step 7). It runs the point-in-time SPX replication for the
-requested methods, assembles the standard-vs-wavelet summary, the paper-comparison
-table, and (optionally) every reproducible figure.
-"""
+"""Build paper-replication report: run periods, aggregate summaries, generate figures."""
 from __future__ import annotations
 
 import polars as pl

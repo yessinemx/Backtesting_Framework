@@ -1,15 +1,4 @@
-"""
-Performance metrics for the pairs portfolio.
-
-Replication of Section 5 (result tables) from the paper.
-
-Pairs are aggregated into an equal-weighted portfolio. Mean return covers all
-selected pairs, including inactive ones (P&L = 0):
-    R̄_n = Σ_ij R_ij / N_n   (eq. A2)
-
-The portfolio daily return series is aggregated in Polars
-(group_by date -> mean), then the ratios are computed in NumPy.
-"""
+"""Aggregate pair results into an equal-weighted portfolio and compute metrics."""
 from dataclasses import dataclass, asdict
 import numpy as np
 import polars as pl
@@ -21,8 +10,8 @@ TRADING_DAYS_PER_YEAR = research_config.TRADING_DAYS_PER_YEAR
 
 @dataclass
 class PairsReport:
-    method: str                 # "distance" | "cointegration"
-    variant: str                # "standard" | "wavelet"
+    method: str
+    variant: str
     n_pairs: int
     n_active: int
     mean_return: float

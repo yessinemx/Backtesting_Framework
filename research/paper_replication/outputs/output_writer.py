@@ -9,26 +9,13 @@ FIGURES_DIR = research_config.FIGURES_DIR
 
 
 def ensure_dirs():
-    """Create research/outputs/tables and research/outputs/figures if needed."""
+    """Create tables/ and figures/ directories if absent."""
     TABLES_DIR.mkdir(parents=True, exist_ok=True)
     FIGURES_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def save_table(df, name, formats=research_config.TABLE_FORMATS, float_precision=6):
-    """Save a table (Polars or pandas) into research/outputs/tables/.
-
-    Parameters
-    ----------
-    df : pl.DataFrame | pandas.DataFrame
-    name : str
-        File name without an extension (e.g. "table3_returns").
-    formats : tuple[str]
-        Supported output formats. Only CSV is kept for paper tables.
-
-    Returns
-    -------
-    list[Path] : written files.
-    """
+    """Save table as CSV to research/outputs/tables/; return list of written paths."""
     ensure_dirs()
     if not isinstance(df, pl.DataFrame):
         df = pl.from_pandas(df)

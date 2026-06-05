@@ -1,21 +1,4 @@
-"""
-Trading simulation for a single pair.
-
-Replication of Sections 4.3, 4.4, and Appendix A.1 of the paper.
-
-Rules:
-    - Open when |ε_t| crosses 2σ, leaving the [-2σ, +2σ] band.
-    - ε_t > +2σ: short $1 of S_i and long |β|$ of S_j.
-        ε_t < -2σ: long $1 of S_i and short |β|$ of S_j.
-    - Close on the first sign change of the spread, i.e. a return to zero.
-    - Any position still open at the end of the period is force-closed.
-
-Daily return (eq. A1, using original prices):
-    R_t = sign(ε_open)·[ -(S_i,t - S_i,t-1)/S_i,to + |β|·(S_j,t - S_j,t-1)/S_j,to ]
-
-The computation runs in NumPy, while daily returns keep their dates so the
-portfolio can later be aggregated in Polars.
-"""
+"""Pair trading simulation: open on 2-sigma threshold, close on reversion or period end."""
 from dataclasses import dataclass, field
 import numpy as np
 
@@ -24,11 +7,11 @@ import numpy as np
 class Trade:
     open_idx: int
     close_idx: int
-    sign: int                  # +1 for a positive opening spread, else -1
-    forced: bool               # True when the trade is force-closed at period end
-    pnl: float                 # total trade return, sum of daily R_t
-    ret_i: float               # asset i return over the trade life
-    ret_j: float               # asset j return over the trade life
+    sign: int
+    forced: bool
+    pnl: float
+    ret_i: float
+    ret_j: float
 
 
 @dataclass

@@ -1,14 +1,4 @@
-"""
-Common Polars utilities for loaders.
-
-Schema conventions:
-    - Prices / returns: wide format -> first column "date" (Datetime),
-        followed by one Float64 column per ticker.
-    - Membership: long format -> [date, index_id, ticker].
-
-Historical parquet files were written by pandas with the date index
-materialized as "__index_level_0__". This module normalizes it back to "date".
-"""
+"""Polars utilities: normalize wide/long frames, handle pandas index materialization."""
 import polars as pl
 
 DATE_COL = "date"
@@ -16,16 +6,11 @@ _PANDAS_INDEX = "__index_level_0__"
 
 
 def normalize_wide(df: pl.DataFrame) -> pl.DataFrame:
-    """Normalize a wide parquet frame and move "date" to the first column.
-
-    Handles a materialized pandas index ("__index_level_0__") or an existing
-    "date" column. The date column is cast to Datetime and sorted.
-    """
+    """Normalize a wide parquet frame: materialize date column, cast to Datetime, sort."""
     cols = df.columns
     if _PANDAS_INDEX in cols:
         df = df.rename({_PANDAS_INDEX: DATE_COL})
     elif DATE_COL not in cols:
-        # Fallback: assume the first column contains the date values.
         df = df.rename({cols[0]: DATE_COL})
 
     if df.schema[DATE_COL] != pl.Datetime:

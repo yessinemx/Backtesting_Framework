@@ -1,39 +1,4 @@
-"""
-Spread and threshold construction.
-
-Replication of Sections 4.2 and 4.3 of the paper.
-
-For a pair (i, j):
-    - Standard spread: OLS regression S_i = α + β·S_j on the formation sample,
-        then ε_t = S_i,t - α̂ - β̂·S_j,t on the trading sample.
-    - Wavelet spread: first filter prices (V = long-term MODWT component),
-        regress V_i = α_w + β_w·V_j on the formation sample,
-        then ε_w,t = V_i,t - α̂_w - β̂_w·V_j,t on the trading sample.
-
-The trading threshold is 2σ, where σ is the standard deviation of the
-formation spread.
-
-Per-window normalization
-------------------------
-Prices are divided by their formation-start value before the spread is built
-(both legs start at 1.0). This is invariant to the split-adjustment reference
-date: with prices back-adjusted for splits that happened after the sample (e.g.
-a stock whose later splits deflate its in-sample price toward zero), a raw-price
-OLS would otherwise produce extreme β and unbounded P&L. Normalizing recovers the
-balanced, dollar-neutral pairs trade the paper intends (β ≈ O(1)). Returns
-(ΔS/S_to) are scale-invariant, so the trade P&L is unaffected by the rescaling
-itself — only the degenerate β explosions are removed.
-
-Wavelet filtering spans the full series
----------------------------------------
-For the wavelet variant the formation and trading windows are concatenated and
-filtered once, then split, so the trading-period smooth is continuous with the
-formation history (cf. the recursive real-time scheme in Appendix A.2) instead of
-being filtered as an isolated block.
-
-Inputs and outputs use Polars wide frames [date, tickers...]. SpreadSpec keeps
-the aligned NumPy arrays needed for P&L.
-"""
+"""Spread construction: OLS or wavelet-filtered, with 2-sigma entry thresholds."""
 from dataclasses import dataclass
 import numpy as np
 

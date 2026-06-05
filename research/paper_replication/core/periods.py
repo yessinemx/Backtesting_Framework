@@ -1,18 +1,4 @@
-"""
-Formation / trading period construction.
-
-Replication of Section 4.2 of the paper.
-
-History is split into 252-business-day blocks. A period n is:
-    - formation (in-sample): block k
-    - trading (out-of-sample): block k+1
-
-As in Table 1, the trading window of one period becomes the formation window
-of the next one (consecutive blocks). K blocks -> K-1 periods.
-
-Implemented in Polars: periods store slices (offset, length) into the
-date-sorted price frame so the split happens without copying data.
-"""
+"""Sequential formation/trading period construction (252-day blocks)."""
 from dataclasses import dataclass
 import polars as pl
 

@@ -1,4 +1,4 @@
-"""Registres strategies / allocators."""
+"""Strategy and allocator registry."""
 from signals.moving_average import MovingAverageCrossover
 from signals.momentum import MomentumStrategy
 from signals.pairs_trading_wavelet import PairsTradingWavelet
@@ -7,9 +7,7 @@ from signals.pairs_trading_partial_cointegration import PairsTradingPartialCoint
 from allocation.equal_weight import EqualWeightAllocator
 from allocation.risk_parity import RiskParityAllocator
 
-# Main strategies exposed in the Streamlit sidebar (3 entries).
-# "Pairs Trading" runs PairsTradingWavelet as the primary strategy and
-# also executes PAIRS_BENCHMARKS for side-by-side comparison.
+# Main strategies exposed in Streamlit; Pairs Trading runs composite mode.
 STRATEGIES = {
     "Moving Average Crossover": MovingAverageCrossover,
     "Momentum": MomentumStrategy,

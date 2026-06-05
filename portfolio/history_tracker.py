@@ -1,7 +1,4 @@
-"""
-Records daily equity, returns, weights, signals and transaction costs
-throughout a backtest run
-"""
+"""Records daily equity, returns, weights, signals, and transaction costs during a backtest."""
 import pandas as pd
 import numpy as np
 
@@ -29,8 +26,6 @@ class HistoryTracker:
         self.transaction_costs_history[date] = tc_cost
         if date not in self.rebalance_dates:
             self.rebalance_dates.append(date)
-
-    # Accesseurs
 
     @property
     def total_transaction_costs(self):

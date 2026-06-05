@@ -10,7 +10,7 @@ class BaseStrategy(ABC):
 
     @abstractmethod
     def generate_signals(self, prices, date, members):
-        # returns {ticker: +1/0/-1 for long/neutral/short}
+        """Return {ticker: +1/0/-1 for long/neutral/short}."""
         pass
 
     @abstractmethod

@@ -1,13 +1,4 @@
-"""Level-1 Maximum Overlap Discrete Wavelet Transform (MODWT).
-
-The paper's supplementary appendix defines the level-1 MODWT coefficients as
-
-    V_1,t = sum_l g_l / sqrt(2) * Z_{t-l mod T}
-    W_1,t = sum_l h_l / sqrt(2) * Z_{t-l mod T}
-
-This module implements that convolution directly: no down-sampling, no Wavelet
-Toolbox, and only level 1 because that is the paper setting.
-"""
+"""Level-1 MODWT (Maximum Overlap Discrete Wavelet Transform), no down-sampling."""
 
 from __future__ import annotations
 
@@ -19,9 +10,7 @@ from config import config_paper as research_config
 DEFAULT_LEVEL = 1
 DEFAULT_WAVELET = research_config.DEFAULT_WAVELET
 
-# Hook for exact MATLAB Wavelet Toolbox coefficients when they are available.
-# Values are orthonormal DWT low-pass decomposition filters. The MODWT rescales
-# them by 1/sqrt(2) in _modwt_filters, matching Appendix equation (1).
+# Optional MATLAB Wavelet Toolbox coefficient overrides (orthonormal low-pass filters).
 _LOW_PASS_OVERRIDES: dict[str, tuple[float, ...]] = {}
 
 
@@ -32,11 +21,7 @@ def _qmf_from_low_pass(low_pass: np.ndarray) -> np.ndarray:
 
 
 def resolve_wavelet(name: str) -> str:
-    """Return a usable wavelet name.
-
-    PyWavelets currently ships Symlets up to sym20 in many environments. Exact
-    sym22 is supported only if coefficients are added to _LOW_PASS_OVERRIDES.
-    """
+    """Return a usable wavelet name; raise if sym22 is requested but not bundled."""
     family = str(name).lower()
     if family in _LOW_PASS_OVERRIDES:
         return family

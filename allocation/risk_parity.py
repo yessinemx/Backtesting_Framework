@@ -1,7 +1,4 @@
-"""
-Equal Risk Contribution (ERC)
-Weights proportional to 1/sigma_i for each asset, then normalized to sum to 1
-"""
+"""Risk parity allocator: inverse-volatility weighting, normalized to 1."""
 import pandas as pd
 import numpy as np
 from allocation import BaseAllocator
@@ -24,7 +21,6 @@ class RiskParityAllocator(BaseAllocator):
             return {}
 
         def _inv_vol_weights(tickers):
-            # Compute realized volatility over the lookback window, then invert it.
             vols = {}
             for t in tickers:
                 if t not in returns.columns:

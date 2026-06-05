@@ -8,7 +8,6 @@ from portfolio.history_tracker import HistoryTracker
 
 @dataclass
 class BacktestResult:
-    # Keep all backtest outputs in a single object.
     config: dict
     tracker: HistoryTracker = field(default_factory=HistoryTracker)
     riskfree_curve: pd.Series = field(default_factory=pd.Series)
@@ -81,13 +80,11 @@ class BacktestEngine:
     def run(self, prices, returns, membership, riskfree_daily=None,
             progress_callback=None, params_schedule=None):
 
-        # Stateful strategies (pair trackers, etc.) need a clean slate so that
-        # consecutive backtests do not inherit positions from a previous run.
+        # Reset state to isolate consecutive backtests.
         if self.strategy is not None and hasattr(self.strategy, "reset_state"):
             self.strategy.reset_state()
 
-        # Walk-forward parameter schedules are incompatible with pairs trading
-        # because pair selection is stateful across rebalances.
+        # Walk-forward incompatible with pairs trading (stateful pair selection).
         if params_schedule is not None and getattr(self.strategy, "IS_PAIRS_STRATEGY", False):
             raise ValueError(
                 "Walk-forward optimization is not supported for pairs trading strategies. "

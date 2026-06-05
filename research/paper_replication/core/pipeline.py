@@ -1,15 +1,4 @@
-"""
-Wavelet pairs trading paper replication orchestrator.
-
-For each period (formation, trading):
-    1. Select pairs on the formation sample (distance or cointegration).
-    2. Build both the standard and wavelet spreads.
-    3. Simulate trading on the trading window with 2σ thresholds.
-    4. Aggregate metrics by variant.
-
-Data is loaded through the loaders package in Polars. Replication tables and
-figures are written to research/outputs/tables and research/outputs/figures.
-"""
+"""Pairs trading replication pipeline: select, spread, trade, aggregate per period."""
 from dataclasses import dataclass
 from typing import Any
 import polars as pl
@@ -53,15 +42,7 @@ def _run_variant(pairs, train_prices, trade_prices, use_wavelet, params,
 
 
 def _point_in_time_members(membership, start, end):
-    """Tickers that were continuous index members across [start, end].
-
-    `membership` is a long frame [date, index_id, ticker] of monthly
-    point-in-time constituents (Bloomberg INDX_MWEIGHT). A ticker qualifies
-    for a period only if it appears in EVERY monthly snapshot whose date falls
-    inside the formation+trading window. This reproduces the paper's universe
-    rule (Section 4.1): a stock enters period n only if it was an index member
-    across both formation year n and trading year n+1 ("two consecutive years").
-    """
+    """Return tickers present in all membership snapshots over [start, end]."""
     if membership is None or membership.height == 0:
         return None
     window = membership.filter(

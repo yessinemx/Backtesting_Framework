@@ -1,7 +1,4 @@
-"""
-Momentum strategy.
-Ranks tickers by past return, selects the top N as LONG.
-"""
+"""Momentum: rank by past return; long top N, short bottom N."""
 import pandas as pd
 from signals.base import BaseStrategy
 
@@ -25,7 +22,7 @@ class MomentumStrategy(BaseStrategy):
             px = prices[ticker].loc[:date].dropna()
             if len(px) < lb:
                 continue
-            # Skip the most recent month to avoid short-term reversal effects.
+            # Skip recent days to avoid short-term reversal.
             end_idx = -skip if skip > 0 else None
             start_idx = -lb
             if end_idx is not None and abs(end_idx) < len(px):

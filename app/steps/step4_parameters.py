@@ -124,7 +124,6 @@ def render() -> None:
             sched_df = pd.DataFrame([{"date": str(d.date()), **p} for d, p in schedule.items()])
             st.dataframe(sched_df, use_container_width=True)
 
-    # ── Strategy parameters ──
     st.markdown('<p class="section-hdr">Strategy Parameters</p>', unsafe_allow_html=True)
     strategy_class = STRATEGIES[strategy_name]
     schema = strategy_class.get_parameters_schema()
@@ -133,7 +132,6 @@ def render() -> None:
         default_val = is_best.get(pname, pcfg["default"])
         if pcfg["type"] == "int":
             if pcfg["min"] == pcfg["max"]:
-                # Fixed value — slider would crash (min==max); show as read-only.
                 strategy_params[pname] = int(pcfg["default"])
                 st.caption(f"{pcfg['label']}: **{pcfg['default']}** (fixed)")
             else:
@@ -153,7 +151,6 @@ def render() -> None:
             strategy_params[pname] = st.selectbox(
                 pcfg["label"], opts, index=idx0, key=f"sp_{pname}")
 
-    # ── Benchmark strategies (only for Pairs Trading composite mode) ──
     benchmark_configs: dict = {}
     if strategy_name == _IS_PAIRS:
         st.markdown('<p class="section-hdr">Benchmark Strategies</p>', unsafe_allow_html=True)
@@ -194,7 +191,6 @@ def render() -> None:
                                 key=f"bp_{bench_label}_{pname}")
                     benchmark_configs[bench_label] = bparams
 
-    # ── Allocator parameters ──
     st.markdown('<p class="section-hdr">Allocation Parameters</p>', unsafe_allow_html=True)
     allocator_class = ALLOCATORS[allocator_name]
     a_schema = allocator_class.get_parameters_schema()

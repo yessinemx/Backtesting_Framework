@@ -1,7 +1,4 @@
-"""
-Walk-forward grid search over strategy parameters
-Selects the optimized parameters with the highest Sharpe ratio
-"""
+"""Walk-forward grid search: optimizes strategy parameters by Sharpe ratio."""
 import pandas as pd
 import numpy as np
 from itertools import product
@@ -12,7 +9,6 @@ class GridSearch:
 
     def __init__(self, prices, returns, membership, riskfree,
                  index_id, start, end, rebalance_months=1):
-        # Keep the full datasets available for walk-forward optimization.
         self._prices_all    = prices
         self._returns_all   = returns
         self._membership_all = membership
@@ -30,7 +26,7 @@ class GridSearch:
         self.tc_rate = TRANSACTION_COST_BPS / 10_000.0
         self.borrow_rate_daily = SHORT_BORROW_BPS / 10_000.0 / 252
 
-        # Rebalance calendar: last business day of each N-month bucket.
+        # Build rebalance calendar: monthly bucket endpoints.
         all_dates = self.prices.index
         month_ends = all_dates.to_series().groupby(
             all_dates.to_period("M")
@@ -40,7 +36,7 @@ class GridSearch:
             rebal_vals.add(all_dates[0])
         self._rebal_dates = rebal_vals
 
-        # Shared precomputed caches reused across all parameter combinations.
+        # Shared precomputed caches.
         self._date_pos     = {d: i for i, d in enumerate(self.returns.index)}
         self._sorted_rebals = sorted(d for d in self._rebal_dates if d in self._date_pos)
 
@@ -66,8 +62,7 @@ class GridSearch:
         keys   = list(param_grid.keys())
         combos = list(product(*[param_grid[k] for k in keys]))
 
-        # Precompute rolling means once for every unique window.
-        # Skip this when arrays are injected externally, e.g. by build_params_schedule.
+        # Precompute rolling statistics once.
         if _rolling_ma is not None:
             rolling_ma = _rolling_ma
         else:

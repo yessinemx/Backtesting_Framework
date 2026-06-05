@@ -1,13 +1,4 @@
-"""
-Bloomberg loader for Polars.
-
-Wraps the existing blpapi connector
-(extraction.bloomberg_api.BloombergConnector) and returns Polars frames that
-match the loader schema.
-
-Requires blpapi and an active Bloomberg Terminal. Without a connection, the
-methods return empty frames in offline mode.
-"""
+"""Bloomberg-to-Polars adapter; returns empty frames in offline mode."""
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -40,7 +31,6 @@ class BloombergLoader:
             self._connector.connect()
         return self._connector
 
-    # ------------------------------------------------------------------
     def load_membership(self, index_id=None) -> pl.DataFrame:
         """Membership [date, index_id, ticker] via monthly INDX_MWEIGHT."""
         bbg = self._connect()
@@ -114,7 +104,7 @@ class BloombergLoader:
         for f in frames[1:]:
             out = out.join(f, on=DATE_COL, how="full", coalesce=True)
         out = out.sort(DATE_COL)
-        # Forward-fill holidays and other missing market days.
+        # Forward-fill holidays and missing market days.
         value_cols = [c for c in out.columns if c != DATE_COL]
         out = out.with_columns([pl.col(c).forward_fill() for c in value_cols])
         return out

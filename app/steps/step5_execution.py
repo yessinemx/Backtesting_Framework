@@ -1,4 +1,4 @@
-"""Step 5 — Execution du backtest."""
+"""Step 5 — Backtest execution."""
 import streamlit as st
 
 from config import (
@@ -94,7 +94,6 @@ def render() -> None:
         allocator = ALLOCATORS[allocator_name](allocator_params)
         params_schedule = st.session_state.get("wf_schedule")
 
-        # ── Composite Pairs Trading mode ─────────────────────────────────────
         if strategy_name == _IS_PAIRS:
             runs: dict = {}
 
@@ -144,7 +143,6 @@ def render() -> None:
             </div>
             """, unsafe_allow_html=True)
 
-        # ── Single strategy mode ─────────────────────────────────────────────
         else:
             st.session_state.pairs_results = None
             strategy = STRATEGIES[strategy_name](strategy_params)

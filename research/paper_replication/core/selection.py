@@ -1,18 +1,4 @@
-"""
-Pair selection.
-
-Replication of Sections 2.1 and 2.2 of the paper.
-
-Two methods:
-    - Minimum Distance (Gatev et al. 2006): mean squared distance on normalized
-        prices, keeping the closest `top_n` pairs.
-    - Cointegration (Vidyamurthy 2004): Johansen trace test at the 5% threshold,
-        keeping all cointegrated pairs.
-
-Inputs and outputs use Polars wide frames [date, tickers...], while the core
-computation is vectorized in NumPy. Running Johansen on every pair
-(N*(N-1)/2) is expensive, so `candidate_pool` pre-filters by distance.
-"""
+"""Pair selection: minimum-distance (Gatev et al. 2006) or cointegration (Johansen)."""
 import itertools
 import numpy as np
 import polars as pl
@@ -21,12 +7,10 @@ from statsmodels.tsa.vector_ar.vecm import coint_johansen
 
 DATE_COL = "date"
 
-# Critical value of the Johansen trace statistic for H0: r=0,
-# constant case (det_order=0), 5% threshold.
+# Johansen trace critical value (5%, r=0, det_order=0).
 _TRACE_CRIT_95_R0 = 15.4943
 
-# Minimum normalized distance: below this, two series are treated as the same
-# underlying (dual listing / share class) and are excluded.
+# Threshold to exclude dual listings with identical series.
 _MIN_DISTANCE = 1e-4
 
 

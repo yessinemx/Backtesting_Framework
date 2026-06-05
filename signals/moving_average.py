@@ -1,7 +1,4 @@
-"""
-Moving Average Crossover strategy
-LONG when fast MA > slow MA , SHORT when below, else NEUTRAL
-"""
+"""MA crossover: long when fast > slow, short when fast < slow."""
 import pandas as pd
 from signals.base import BaseStrategy
 
@@ -23,7 +20,6 @@ class MovingAverageCrossover(BaseStrategy):
             if ticker not in prices.columns:
                 continue
             px = prices[ticker].loc[:date].dropna()
-            # Not enough history to compute the slow moving average.
             if len(px) < sw:
                 continue
             fast = px.iloc[-fw:].mean()
