@@ -44,7 +44,7 @@ Backtesting_Framework/
 │   ├── data/                 # Paper data slice (gitignored)
 │   ├── docs/                 # Source paper PDF
 │   └── outputs/              # Generated tables + figures (gitignored)
-├── tests/                    # 28 unit tests
+├── tests/                    # 41 unit tests
 ├── data/                     # Shared parquet data
 ├── requirements.txt
 └── README.md
@@ -88,7 +88,7 @@ py research/main.py --max-periods 1 --no-write-outputs --quiet
 py -m unittest discover -s tests
 ```
 
-28 tests covering the backtest engine, strategy logic, paper pipeline, and output writer.
+41 tests covering the backtest engine, strategy logic, paper pipeline, and output writer.
 
 ## Streamlit Workflow
 

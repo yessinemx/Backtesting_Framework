@@ -78,8 +78,8 @@
     \item Ce bruit gonfle la variance du spread, brouille les signaux
           d'entrée/sortie et déclenche des sorties prématurées.
     \item Idée : remplacer le prix brut par sa \textbf{composante lisse
-          d'ondelettes} (MODWT niveau 1+, symlet 20) avant de former le
-          spread. La partie lisse conserve la dynamique lente et
+          d'ondelettes} (MODWT niveau 1, symlet d'ordre 22 --- sym22) avant
+          de former le spread. La partie lisse conserve la dynamique lente et
           écarte la contamination haute fréquence.
     \item Résultats : 11{,}82~\% (distance) et 9{,}66~\% (cointégration) de
           rendement moyen par période contre $-0{,}55~\%$ et $-1{,}81~\%$
@@ -87,6 +87,102 @@
           $-0{,}21$ / $-0{,}40$.
     \item Univers : S\&P~500, point-in-time, 05/03/2010--15/03/2018 (7 périodes annuelles, cf.~Table~1 du papier), 415 tickers.
   \end{itemize}
+\end{frame}
+
+% =====================================================================
+\section{Les ondelettes}
+% =====================================================================
+\begin{frame}{Qu'est-ce qu'une ondelette ?}
+  \begin{itemize}\setlength{\itemsep}{4pt}
+    \item Une \textbf{ondelette} $\psi$ est une petite onde \emph{localisée}
+          (moyenne nulle, énergie finie) que l'on dilate (échelle $a$) et
+          translate (position $b$) pour sonder un signal :
+          \[ \psi_{a,b}(t) = \tfrac{1}{\sqrt{a}}\,\psi\!\left(\tfrac{t-b}{a}\right). \]
+    \item \textbf{Mécanisme} : corréler le signal avec $\psi_{a,b}$ mesure
+          son contenu autour de l'instant $b$ à l'échelle $a$. Petite échelle
+          $\Rightarrow$ détails rapides (haute fréquence) ; grande échelle
+          $\Rightarrow$ tendance lente (basse fréquence).
+    \item \textbf{Vs Fourier} : les sinus de Fourier sont globaux (aucune
+          localisation temporelle). Les ondelettes sont localisées en
+          \emph{temps ET en fréquence} --- idéales pour des séries
+          financières \emph{non stationnaires}.
+    \item \textbf{Intérêt en finance} : séparer la tendance (marche aléatoire
+          du prix) du bruit micro-structure haute fréquence ; débruitage,
+          analyse multi-résolution, sans imposer de modèle paramétrique.
+  \end{itemize}
+\end{frame}
+
+% -----------------------------------------------------------------------
+\begin{frame}{Familles d'ondelettes}
+  \small
+  \begin{tabular}{>{\bfseries}l p{0.66\linewidth}}
+    \toprule
+    Haar          & La plus simple (support 2), discontinue --- mauvaise pour des prix lisses. \\
+    Daubechies (dbN) & Support compact $2N$, $N$ moments nuls, mais fortement \emph{asymétriques} (déphasage). \\
+    Symlets (symN)   & Daubechies « presque symétriques » : déphasage minimal $\Rightarrow$ le prix filtré reste aligné. \\
+    Coiflets         & Moments nuls aussi sur la fonction d'échelle ; support plus long. \\
+    Meyer / Morlet   & Très lisses mais à support \emph{infini} (Morlet est continue). \\
+    \bottomrule
+  \end{tabular}
+  \vskip6pt
+  \begin{itemize}\setlength{\itemsep}{2pt}
+    \item Compromis : longueur du support $L$ \;vs\; régularité \;vs\; symétrie.
+    \item Le papier choisit un \textbf{symlet} : quasi-symétrie $\Rightarrow$
+          le prix lissé n'est pas décalé dans le temps par rapport au prix brut
+          (essentiel pour des signaux d'entrée/sortie datés au jour près).
+  \end{itemize}
+\end{frame}
+
+% -----------------------------------------------------------------------
+\begin{frame}{DWT vs MODWT : pourquoi discret et non-décimé}
+  \small
+  \begin{block}{Pourquoi \emph{discret} (DWT/MODWT) plutôt que continu (CWT)}
+    La CWT balaie un continuum d'échelles : redondante et coûteuse. Les prix
+    sont échantillonnés quotidiennement $\Rightarrow$ une transformée à
+    échelles dyadiques discrètes ($2^j$) suffit, est rapide et inversible.
+  \end{block}
+  \begin{block}{Pourquoi \emph{MODWT} plutôt que DWT}
+    \begin{itemize}\setlength{\itemsep}{2pt}
+      \item \textbf{DWT} : décimée (sous-échantillonnage $\div 2$ par niveau)
+            $\Rightarrow$ la longueur est divisée par 2, exige $T = 2^J$, et
+            \emph{n'est pas} invariante par translation (le résultat dépend du
+            point de départ).
+      \item \textbf{MODWT} : \emph{non décimée} $\Rightarrow$ garde la longueur
+            $T$ à chaque niveau, fonctionne pour tout $T$, est invariante par
+            translation et \textbf{aligne exactement} la série lissée sur les
+            jours de trading.
+    \end{itemize}
+  \end{block}
+\end{frame}
+
+% -----------------------------------------------------------------------
+\begin{frame}{Pourquoi le symlet d'ordre 22 (sym22)}
+  \begin{itemize}\setlength{\itemsep}{4pt}
+    \item Le papier retient le \textbf{symlet d'ordre 22} : filtre à
+          $L = 44$ coefficients.
+    \item \textbf{Support long} $\Rightarrow$ passe-bas très régulier : capte
+          finement la tendance lente et rejette fortement le bruit.
+    \item \textbf{Quasi-symétrie} $\Rightarrow$ distorsion de phase minimale :
+          le prix filtré n'est ni avancé ni retardé par rapport au prix brut.
+    \item \textbf{Robustesse} : la Table~16 balaie sym16/sym18/sym20/sym22/db8
+          --- les résultats varient peu, le choix précis de l'ondelette n'est
+          pas critique.
+    \item \textit{Note de réplication} : PyWavelets ne fournit pas les
+          coefficients exacts du sym22 ; notre code retombe sur \textbf{sym20}
+          ($L = 40$), un voisin immédiat couvert par la Table~16.
+  \end{itemize}
+\end{frame}
+
+% -----------------------------------------------------------------------
+\begin{frame}{Figure 1 --- Algorithme pyramidal de Mallat}
+  \begin{center}
+    \figureorplaceholder[height=0.70\textheight]{figure1_pyramid_algorithm_of_mallat}
+  \end{center}
+  \begin{center}\tiny
+    Cascade de filtres : à chaque niveau, le passe-bas $\tilde{g}$ extrait la
+    lissée $\widetilde{V}_j$ (tendance) et le passe-haut $\tilde{h}$ les détails
+    $\widetilde{W}_j$. On ne garde que $\widetilde{V}_1$.
+  \end{center}
 \end{frame}
 
 % =====================================================================
@@ -110,19 +206,40 @@
     \scriptsize
     \begin{tabular}{>{\bfseries}r p{0.65\linewidth}}
       \toprule
-      Distance      & 20 paires minimisant $\sum (P_i^* - P_j^*)^2$ sur les prix normalisés. \\
-      Cointégration & Test ADF d'Engle--Granger sur $\tilde{P}_i - \alpha - \beta \tilde{P}_j$ après pré-filtre par distance. \\
+      Distance      & 20 paires minimisant $\sum_t (\tilde{P}_i - \tilde{P}_j)^2$ sur les prix normalisés. \\
+      Cointégration & Test de \emph{Johansen} (trace, 5~\%) sur $(\tilde{P}_i,\tilde{P}_j)$, après pré-filtre par distance. \\
       \bottomrule
     \end{tabular}
   \end{center}
 \end{frame}
 
+% -----------------------------------------------------------------------
+\begin{frame}{Sélection des paires : distance \& cointégration}
+  \small
+  Prix normalisés sur le bloc de formation : $\tilde{P}_{k,t} = P_{k,t}/P_{k,0}$.
+  \vskip4pt
+  \begin{block}{Méthode 1 --- Distance minimale (Gatev et al. 2006)}
+    Pour chaque paire $(i,j)$, somme des écarts quadratiques :
+    \[ d_{ij} = \frac{1}{T}\sum_{t=1}^{T}\bigl(\tilde{P}_{i,t} - \tilde{P}_{j,t}\bigr)^2 . \]
+    On retient les $N = 20$ paires de plus faible $d_{ij}$ (doublons de
+    cotation $d_{ij}\approx 0$ exclus).
+  \end{block}
+  \begin{block}{Méthode 2 --- Cointégration (test de Johansen)}
+    On teste l'existence d'une relation de long terme via la statistique de
+    \textbf{trace} de Johansen sur le vecteur $(\tilde{P}_{i,t},\tilde{P}_{j,t})$ :
+    \[ \mathrm{LR}_{\text{trace}}(r{=}0) > 15{,}4943 \;\;(\text{valeur critique à }5\%) \;\Rightarrow\; \text{paire cointégrée}. \]
+    Pré-filtrage par distance (les 2000 paires les plus proches) pour limiter
+    le coût de calcul.
+  \end{block}
+\end{frame}
+
 \begin{frame}{L'étape ondelettes}
   \begin{itemize}
     \item Chaque série de prix est rééchelonnée, $\tilde{P}_t = P_t / P_0$.
-    \item MODWT niveau 1+ avec le \textbf{symlet sym20}, condition aux
-          bords périodique sur le bloc de trading (fidèle au papier,
-          section 4.4).
+    \item MODWT niveau 1 avec le \textbf{symlet d'ordre 22 (sym22)}, condition
+          aux bords périodique sur le bloc de trading (fidèle au papier,
+          section 4.4). \textit{Notre réplication retombe sur sym20}
+          (coefficients sym22 non fournis par PyWavelets).
     \item On conserve les \textbf{coefficients lisses} (passe-bas), on
           jette les détails (passe-haut), puis on reconstitue le prix
           synthétique.
@@ -145,8 +262,9 @@
   \end{align*}
   où $\tilde{h}_\ell = h_\ell/\sqrt{2}$ (passe-haut) et
   $\tilde{g}_\ell = g_\ell/\sqrt{2}$ (passe-bas) sont les filtres orthogonaux
-  de la famille \textbf{symlet~20} ($L_1 = 39$ coefficients), normalisés pour
-  conserver l'énergie. Bord traité en périodisant $Z$.
+  de la famille \textbf{symlet~22} ($L_1 = 44$ coefficients), normalisés pour
+  conserver l'énergie ($L_1 = 40$ pour le sym20 de notre réplication). Bord
+  traité en périodisant $Z$.
 
   \vskip4pt
   \textbf{Propriétés clés pour le pairs trading :}
@@ -167,7 +285,7 @@
   \begin{block}{Bloc de formation ($T_{\text{form}}$ jours)}
     \begin{enumerate}\setlength{\itemsep}{1pt}
       \item[\textbf{1.}] Normaliser les log-prix : $\tilde{P}_t^{(k)} = P_t^{(k)}/P_0^{(k)}$.
-      \item[\textbf{2.}] \textbf{Filtrer} : $\widetilde{V}_{1,t}^{(k)} \leftarrow \text{MODWT-smooth}(\tilde{P}^{(k)},\,\text{sym20})$ pour chaque actif $k$.
+      \item[\textbf{2.}] \textbf{Filtrer} : $\widetilde{V}_{1,t}^{(k)} \leftarrow \text{MODWT-smooth}(\tilde{P}^{(k)},\,\text{sym22})$ pour chaque actif $k$.
       \item[\textbf{3.}] Sélectionner les $N=20$ paires $(i,j)$ minimisant
             $d_{ij} = T^{-1}\sum_t(\widetilde{V}_{1,t}^{(i)} - \widetilde{V}_{1,t}^{(j)})^2$.
       \item[\textbf{4.}] Estimer par MCO : $(\hat\alpha_{ij},\hat\beta_{ij}) =
@@ -227,7 +345,7 @@
   \begin{itemize}
     \item Polars + numpy + statsmodels (HAC Newey--West), export PNG via matplotlib.
     \item Sélection des paires et trading : Python pur, déterministe, sans MATLAB.
-    \item 28 tests unitaires (\texttt{py -m pytest -q}) couvrant pipeline,
+    \item 41 tests unitaires (\texttt{py -m pytest -q}) couvrant pipeline,
           tables et seuils de validation.
   \end{itemize}
 \end{frame}
