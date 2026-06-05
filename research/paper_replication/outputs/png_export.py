@@ -126,6 +126,11 @@ def plotly_to_png(fig, path, width=1100, height=650, dpi=140):
     data = d.get("data", [])
     layout = d.get("layout", {})
 
+    # Honor layout-level width/height (figures.py sets them explicitly for
+    # Figures 1-3 to control aspect ratio and legend placement).
+    width = int(layout.get("width") or width)
+    height = int(layout.get("height") or height)
+
     # Subplot layout: distinct xaxes => columns side by side.
     xaxes = []
     for t in data:
@@ -150,6 +155,22 @@ def plotly_to_png(fig, path, width=1100, height=650, dpi=140):
     if ax2 is not None:
         ax2.grid(False)
         ax2.spines["top"].set_visible(False)
+
+    # Optional paper-style plotting area (used by Figures 2 & 3).
+    plot_bg = layout.get("plot_bgcolor")
+    xaxis_layout = layout.get("xaxis") or {}
+    yaxis_layout = layout.get("yaxis") or {}
+    mirror_box = bool(xaxis_layout.get("mirror")) or bool(yaxis_layout.get("mirror"))
+    if plot_bg or mirror_box:
+        for axb in axmap.values():
+            if plot_bg:
+                axb.set_facecolor(plot_bg)
+            if mirror_box:
+                axb.grid(False)
+                for spine in axb.spines.values():
+                    spine.set_visible(True)
+                    spine.set_color("#222222")
+                    spine.set_linewidth(0.8)
 
     # Grouped bars, per axes.
     bars_by_ax = {}
@@ -203,22 +224,81 @@ def plotly_to_png(fig, path, width=1100, height=650, dpi=140):
 
     # Annotations (used by the pyramid schematic and a few labels).
     has_traces = bool(data)
+    has_shape_only = not has_traces and not bool(layout.get("shapes", []))
+    # Detect when annotations carry coordinates in axis-data space (fig1 sets
+    # explicit numeric x/y ranges with visible=False) versus pure axes-fraction
+    # positions (very old schematics).
+    pyramid_mode = (not has_traces) and any(
+        an.get("xref") == "x" for an in (layout.get("annotations", []) or [])
+    )
+    coords = "data" if (has_traces or pyramid_mode) else "axes fraction"
     for an in layout.get("annotations", []) or []:
         txt = an.get("text", "")
-        if not txt:
-            continue
         axb = list(axmap.values())[0]
         bg = an.get("bgcolor")
+        border = an.get("bordercolor")
+        font_color = (an.get("font") or {}).get("color")
+        font_size = (an.get("font") or {}).get("size", 9)
+        if font_color:
+            text_color = font_color
+        elif bg and str(bg).lower() not in ("white", "#ffffff", "#fff"):
+            text_color = "white"
+        else:
+            text_color = "#222222"
+        # Arrow annotation: draw arrow from (ax,ay) to (x,y).
+        if an.get("showarrow"):
+            arrow_color = an.get("arrowcolor", "#444")
+            ax_x = an.get("ax", an.get("x", 0))
+            ax_y = an.get("ay", an.get("y", 0))
+            axb.annotate(
+                "",
+                xy=(an.get("x", 0.5), an.get("y", 0.5)),
+                xytext=(ax_x, ax_y),
+                xycoords=coords, textcoords=coords,
+                arrowprops=dict(arrowstyle="-|>", color=arrow_color,
+                                lw=an.get("arrowwidth", 1.2),
+                                mutation_scale=12),
+            )
+            if not txt:
+                continue
+        if not txt:
+            continue
+        # Strip simple HTML tags that plotly accepts but matplotlib doesn't.
+        clean = (txt.replace("<br>", "\n").replace("<b>", "")
+                   .replace("</b>", "").replace("<i>", "").replace("</i>", "")
+                   .replace("&hellip;", "\u2026").replace("&#771;", "\u0303"))
+        # Crude <sub>...</sub> support via mathtext when the inner text is short.
+        while "<sub>" in clean and "</sub>" in clean:
+            i0 = clean.find("<sub>")
+            i1 = clean.find("</sub>")
+            if i1 <= i0:
+                break
+            inner = clean[i0 + 5:i1].replace(" ", r"\,")
+            clean = clean[:i0] + r"$_{" + inner + r"}$" + clean[i1 + 6:]
+        box_kwargs = None
+        if bg:
+            box_kwargs = dict(boxstyle="round,pad=0.35", fc=bg,
+                              ec=border or "none",
+                              lw=0.9 if border else 0.0)
         axb.annotate(
-            txt.replace("<br>", "\n"),
+            clean,
             xy=(an.get("x", 0.5), an.get("y", 0.5)),
-            xycoords="data" if has_traces else "axes fraction",
-            ha="center", va="center", fontsize=8,
-            color="white" if bg else "#222222",
-            bbox=dict(boxstyle="round,pad=0.3", fc=bg, ec="none") if bg else None,
+            xycoords=coords,
+            ha="center", va="center", fontsize=font_size,
+            color=text_color,
+            bbox=box_kwargs,
         )
     if not has_traces and not bars_by_ax:
-        list(axmap.values())[0].axis("off")
+        # Schematic-only figure: hide axis frame but keep annotations visible.
+        only_ax = list(axmap.values())[0]
+        only_ax.axis("off")
+        if pyramid_mode:
+            xlim = (layout.get("xaxis") or {}).get("range")
+            ylim = (layout.get("yaxis") or {}).get("range")
+            if xlim:
+                only_ax.set_xlim(xlim)
+            if ylim:
+                only_ax.set_ylim(ylim)
 
     # Titles, labels, legends.
     title = (layout.get("title") or {})
@@ -236,7 +316,28 @@ def plotly_to_png(fig, path, width=1100, height=650, dpi=140):
         axb.set_axisbelow(True)
         h, l = axb.get_legend_handles_labels()
         if l:
-            axb.legend(loc="best", framealpha=0.0)
+            # Map plotly legend placement to matplotlib loc/bbox.
+            legend_cfg = layout.get("legend") or {}
+            orientation = legend_cfg.get("orientation")
+            ly = legend_cfg.get("y")
+            if orientation == "h" or (ly is not None and ly < 0):
+                # Horizontal legend below the axes (paper-style fig 2/3).
+                ncol = min(len(l), 4)
+                axb.legend(
+                    loc="upper center",
+                    bbox_to_anchor=(0.5, -0.18),
+                    ncol=ncol,
+                    framealpha=0.95,
+                    facecolor="#ececec",
+                    edgecolor="#333333",
+                    fontsize=8.5,
+                )
+            elif plot_bg:
+                axb.legend(loc="upper left", framealpha=0.92,
+                           facecolor="#ececec", edgecolor="#333333",
+                           fontsize=8)
+            else:
+                axb.legend(loc="best", framealpha=0.0)
     if ax2 is not None:
         ax2.set_ylabel(_axis_title(layout, "yaxis2"))
         h2, l2 = ax2.get_legend_handles_labels()

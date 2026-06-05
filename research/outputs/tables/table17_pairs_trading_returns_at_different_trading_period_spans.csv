@@ -1,9 +1,2 @@
-horizon_days,standard,wavelet,method
-63,0.884278,0.248333,distance
-126,0.120850,-0.701897,distance
-189,-0.505400,-1.244469,distance
-252,0.329478,-0.113019,distance
-63,-0.009848,-0.326389,cointegration
-126,-0.217192,-0.916102,cointegration
-189,-0.754222,-1.197103,cointegration
-252,0.033950,-0.170544,cointegration
+status,reason
+not_reproduced,Run  py research/main.py --full  (sweeps default on) to populate the horizon sweep.

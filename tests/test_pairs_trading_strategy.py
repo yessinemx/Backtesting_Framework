@@ -3,7 +3,7 @@ import unittest
 
 import pandas as pd
 
-from signals.pairs_trading import PairsTradingWavelet
+from signals.pairs_trading_wavelet import PairsTradingWavelet
 
 
 class PairsTradingStrategyTests(unittest.TestCase):
@@ -40,7 +40,7 @@ class PairsTradingStrategyTests(unittest.TestCase):
             index=pd.date_range("2024-01-01", periods=6, freq="B"),
         )
 
-        with patch("signals.pairs_trading._wavelet_denoise", side_effect=lambda series, wavelet="db4", level=2: series):
+        with patch("signals.pairs_trading_wavelet._wavelet_denoise", side_effect=lambda series, wavelet="db4", level=2: series):
             signals = strategy.generate_signals(prices, prices.index[-1], ["AAA", "BBB"])
 
         self.assertEqual(signals["AAA"], -1)

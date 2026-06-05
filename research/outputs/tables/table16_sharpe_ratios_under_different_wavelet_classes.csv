@@ -1,23 +1,2 @@
-wavelet,mean_return,sharpe,method
-haar,0.196274,0.077314,distance
-db4,-0.300260,-0.118601,distance
-db8,-0.344353,-0.137144,distance
-db16,0.003725,0.001466,distance
-sym4,-0.110058,-0.043694,distance
-sym8,-0.333200,-0.131760,distance
-sym12,-0.451006,-0.178180,distance
-sym16,-0.357606,-0.141678,distance
-sym20,-0.300821,-0.119652,distance
-coif2,-0.368839,-0.145511,distance
-coif4,-0.422624,-0.166867,distance
-haar,-0.275529,-0.088134,cointegration
-db4,-0.336642,-0.109725,cointegration
-db8,-0.367768,-0.123988,cointegration
-db16,-0.299239,-0.104357,cointegration
-sym4,-0.477431,-0.154149,cointegration
-sym8,-0.449312,-0.146892,cointegration
-sym12,-0.706302,-0.235531,cointegration
-sym16,-0.644331,-0.215112,cointegration
-sym20,-0.440012,-0.150435,cointegration
-coif2,-0.637232,-0.206712,cointegration
-coif4,-0.733917,-0.243371,cointegration
+status,reason
+not_reproduced,Run  py research/main.py --full  (sweeps default on) to populate the wavelet-class sweep.

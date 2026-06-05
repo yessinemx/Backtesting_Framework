@@ -43,6 +43,18 @@ _WAV_COLOR = "#2ca02c"
 _TEMPLATE = "plotly_white"
 TRADING_DAYS = research_config.TRADING_DAYS_PER_YEAR
 
+# Paper-style palette (Eroglu, Yener & Yigit 2023, Figures 2-3).
+_PAPER_BG = "#cfe1f0"            # light blue plotting area
+_PAPER_STD = "#e08a1e"           # orange dashed for the standard series
+_PAPER_WAV = "#1f7a1f"           # solid green for the sym22 series
+_PAPER_ZERO = "#1f4e9c"          # blue 0-line
+_PAPER_STD_UP = "#e08a1e"        # standard upper threshold (orange solid)
+_PAPER_STD_LO = "#e08a1e"        # standard lower threshold (orange dashed)
+_PAPER_WAV_UP = "#1ec8e0"        # sym22 upper threshold (cyan)
+_PAPER_WAV_LO = "#b070b0"        # sym22 lower threshold (magenta)
+_PAPER_RET_STD = "#e8593a"       # orange-red dashed for cumulative std return
+_PAPER_RET_WAV = "#1f7ad6"       # solid blue for cumulative sym22 return
+
 
 # --------------------------------------------------------------------------- #
 # Data collection
@@ -353,78 +365,230 @@ def collect_run(method, prices, periods, params, selections=None, tc_scenarios=N
 # Figure builders
 # --------------------------------------------------------------------------- #
 def fig1_pyramid():
-    """Schematic of the Mallat pyramid algorithm (level-1 MODWT)."""
-    fig = go.Figure()
-    boxes = [
-        (0.5, 1.0, "Z_t  (price)", "#334155"),
-        (0.2, 0.6, "W_1  (detail / noise)", "#ef4444"),
-        (0.8, 0.6, "V_1  (smooth / trend)", "#2ca02c"),
-        (0.65, 0.2, "W_2", "#ef4444"),
-        (0.95, 0.2, "V_2 ... V_J*", "#2ca02c"),
+    """Schematic of the Mallat pyramid algorithm (3-level MODWT decomposition).
+
+    Rewritten to mirror the paper's Figure 1 layout: a single input node at the
+    top, then a left/right bifurcation at each level (high-pass W_k vs low-pass
+    V_k), with arrows labelled h~ / g~ and a LEVEL k tag on the right.
+    """
+    # Geometry in user (x,y) coordinates, x in [0,1], y in [0,1] (top to bottom).
+    # Each level has a smooth node V_{k-1} that splits into W_k (left, kept aside)
+    # and V_k (right, fed into the next level).
+    nodes = {
+        # name -> (x, y, label, fill, font_color)
+        "input":  (0.50, 0.92, "{Z<sub>t-N+1</sub>, &hellip;, Z<sub>t</sub>}", "#1f3b73", "white"),
+        "W1":     (0.18, 0.66, "W&#771;<sub>1,t</sub>", "#a83232", "white"),
+        "V1":     (0.58, 0.66, "V&#771;<sub>1,t</sub>", "#2f6f3e", "white"),
+        "W2":     (0.36, 0.40, "W&#771;<sub>2,t</sub>", "#a83232", "white"),
+        "V2":     (0.78, 0.40, "V&#771;<sub>2,t</sub>", "#2f6f3e", "white"),
+        "Wj":     (0.60, 0.14, "W&#771;<sub>J*,t</sub>", "#a83232", "white"),
+        "Vj":     (0.92, 0.14, "V&#771;<sub>J*,t</sub>", "#2f6f3e", "white"),
+    }
+    # (parent, child, kind) where kind in {"h", "g"}.
+    edges = [
+        ("input", "W1", "h"), ("input", "V1", "g"),
+        ("V1", "W2", "h"),    ("V1", "V2", "g"),
+        ("V2", "Wj", "h"),    ("V2", "Vj", "g"),
     ]
-    for x, y, txt, color in boxes:
-        fig.add_annotation(x=x, y=y, text=txt, showarrow=False,
-                           font=dict(color="white", size=12),
-                           bgcolor=color, borderpad=8, opacity=0.95)
-    arrows = [((0.5, 0.97), (0.22, 0.66)), ((0.5, 0.97), (0.78, 0.66)),
-              ((0.8, 0.57), (0.66, 0.26)), ((0.8, 0.57), (0.93, 0.26))]
-    for (x0, y0), (x1, y1) in arrows:
-        fig.add_annotation(x=x1, y=y1, ax=x0, ay=y0, xref="x", yref="y",
-                           axref="x", ayref="y", showarrow=True, arrowhead=2,
-                           arrowsize=1, arrowwidth=1.5, arrowcolor="#94a3b8")
-    fig.add_annotation(x=0.2, y=0.74, text="h~ (high-pass)", showarrow=False, font=dict(size=10, color="#ef4444"))
-    fig.add_annotation(x=0.8, y=0.74, text="g~ (low-pass)", showarrow=False, font=dict(size=10, color="#2ca02c"))
-    fig.update_layout(title="Figure 1 - Mallat pyramid algorithm (level-1 MODWT)",
-                      template=_TEMPLATE, height=420,
-                      xaxis=dict(visible=False, range=[0, 1.1]),
-                      yaxis=dict(visible=False, range=[0, 1.15]))
+    level_labels = [
+        (1.12, 0.66, "LEVEL 1"),
+        (1.12, 0.40, "LEVEL 2"),
+        (1.12, 0.14, "LEVEL J*"),
+    ]
+
+    fig = go.Figure()
+
+    # Arrows + edge labels (h~ for high-pass / left children, g~ for low-pass / right).
+    for parent, child, kind in edges:
+        x0, y0, *_ = nodes[parent]
+        x1, y1, *_ = nodes[child]
+        fig.add_annotation(
+            x=x1, y=y1 + 0.05, ax=x0, ay=y0 - 0.05,
+            xref="x", yref="y", axref="x", ayref="y",
+            showarrow=True, arrowhead=2, arrowsize=1.1, arrowwidth=1.6,
+            arrowcolor="#444",
+        )
+        # Edge label (h~ or g~) placed near the midpoint, offset perpendicular.
+        midx, midy = (x0 + x1) / 2, (y0 + y1) / 2
+        if kind == "h":
+            label, lcolor, dx = "h&#771;", "#a83232", -0.04
+        else:
+            label, lcolor, dx = "g&#771;", "#2f6f3e", 0.04
+        fig.add_annotation(
+            x=midx + dx, y=midy, text=label, showarrow=False,
+            font=dict(size=13, color=lcolor, family="serif"),
+            bgcolor="white", borderpad=2, opacity=1.0,
+        )
+
+    # Boxed nodes.
+    for name, (x, y, text, fill, fc) in nodes.items():
+        fig.add_annotation(
+            x=x, y=y, text=text, showarrow=False,
+            font=dict(size=12, color=fc, family="serif"),
+            bgcolor=fill, bordercolor="#222", borderwidth=1, borderpad=8,
+            opacity=1.0,
+        )
+
+    # Level tags on the right margin.
+    for x, y, txt in level_labels:
+        fig.add_annotation(
+            x=x, y=y, text=f"<b>{txt}</b>", showarrow=False,
+            font=dict(size=11, color="#222", family="serif"),
+            bgcolor="white", borderpad=2,
+        )
+
+    fig.update_layout(
+        title="Figure 1. Pyramid algorithm of Mallat (3-level MODWT decomposition).",
+        template="plotly_white",
+        height=620, width=900,
+        paper_bgcolor="white", plot_bgcolor="white",
+        showlegend=False,
+        margin=dict(l=40, r=160, t=70, b=40),
+        xaxis=dict(visible=False, range=[-0.05, 1.25]),
+        yaxis=dict(visible=False, range=[0.0, 1.05]),
+    )
     return fig
 
 
-def _trade_markers(fig, dates, spread, trades, row=None, col=None):
-    for tr in trades:
-        for idx, sym, name, color in ((tr.open_idx, "triangle-up", "open", "#16a34a"),
-                                      (tr.close_idx, "x", "close", "#dc2626")):
-            if 0 <= idx < len(dates):
-                fig.add_trace(go.Scatter(
-                    x=[dates[idx]], y=[spread[idx]], mode="markers",
-                    marker=dict(symbol=sym, size=9, color=color),
-                    showlegend=False, hovertext=name), row=row, col=col)
+def _paper_layout(fig, *, xaxis_title="Year", yaxis_title="", height=560, title=None,
+                  legend_below=True):
+    """Apply the paper's light-blue plotting style (Figs 2-3).
+
+    ``legend_below`` places the legend underneath the plotting area so it never
+    overlaps the time-series traces (the paper's own Figure 2 also keeps the
+    legend out of the data region).
+    """
+    if legend_below:
+        legend = dict(orientation="h", x=0.5, y=-0.22, xanchor="center", yanchor="top",
+                      bgcolor="rgba(236,236,236,0.95)", bordercolor="#333",
+                      borderwidth=1, font=dict(size=10))
+        bottom_margin = 130
+    else:
+        legend = dict(x=0.01, y=0.99, xanchor="left", yanchor="top",
+                      bgcolor="rgba(236,236,236,0.95)", bordercolor="#333",
+                      borderwidth=1, font=dict(size=10))
+        bottom_margin = 70
+    fig.update_layout(
+        title=title,
+        template="plotly_white",
+        height=height,
+        paper_bgcolor="white",
+        plot_bgcolor="white",
+        xaxis=dict(title=xaxis_title, showgrid=True, gridcolor="#e5e5e5",
+                   zeroline=False, linecolor="#333", mirror=True, ticks="outside"),
+        yaxis=dict(title=yaxis_title, showgrid=True, gridcolor="#e5e5e5",
+                   zeroline=False, linecolor="#333", mirror=True, ticks="outside"),
+        legend=legend,
+        margin=dict(l=70, r=30, t=70, b=bottom_margin),
+    )
+    return fig
+
+
+def _paper_trade_boxes(fig, dates, spread, trades):
+    """Annotate each trade with O_k (open) and C_k (close) labelled boxes,
+    plus a thin vertical drop-line to the spread value, mimicking the paper.
+    """
+    if not trades:
+        return
+    arr = np.asarray(spread, dtype=float)
+    if arr.size == 0:
+        return
+    y_top = float(np.nanmax(arr))
+    y_bot = float(np.nanmin(arr))
+    span = y_top - y_bot if y_top > y_bot else 1.0
+    label_top = y_top + 0.18 * span
+    label_bot = y_bot - 0.18 * span
+    # Color cycle similar to the paper (boxes alternate hue to keep pairs visible).
+    open_colors = ["#1f7a1f", "#1f4e9c", "#7a1f7a", "#b07a1f", "#1f7a7a", "#7a1f1f"]
+    close_colors = ["#e08a1e", "#1ec8e0", "#b070b0", "#1f7a1f", "#1f4e9c", "#7a1f1f"]
+    for k, tr in enumerate(trades, start=1):
+        o_color = open_colors[(k - 1) % len(open_colors)]
+        c_color = close_colors[(k - 1) % len(close_colors)]
+        if 0 <= tr.open_idx < len(dates):
+            fig.add_trace(go.Scatter(
+                x=[dates[tr.open_idx], dates[tr.open_idx]],
+                y=[arr[tr.open_idx], label_top],
+                mode="lines", line=dict(color=o_color, width=1),
+                showlegend=False, hoverinfo="skip",
+            ))
+            fig.add_annotation(
+                x=dates[tr.open_idx], y=label_top, text=f"O{k}",
+                showarrow=False, font=dict(size=9, color=o_color),
+                bgcolor="white", bordercolor=o_color, borderwidth=1, borderpad=2,
+            )
+        if 0 <= tr.close_idx < len(dates):
+            fig.add_trace(go.Scatter(
+                x=[dates[tr.close_idx], dates[tr.close_idx]],
+                y=[arr[tr.close_idx], label_bot],
+                mode="lines", line=dict(color=c_color, width=1),
+                showlegend=False, hoverinfo="skip",
+            ))
+            fig.add_annotation(
+                x=dates[tr.close_idx], y=label_bot, text=f"C{k}",
+                showarrow=False, font=dict(size=9, color=c_color),
+                bgcolor="white", bordercolor=c_color, borderwidth=1, borderpad=2,
+            )
 
 
 def fig2_example_spread(example):
     fig = go.Figure()
     if not example:
-        return fig.update_layout(title="Figure 2 - (no example pair available)", template=_TEMPLATE)
+        return _paper_layout(fig, title="Figure 2 - (no example pair available)",
+                             yaxis_title="Spread")
     d = example["dates"]
-    fig.add_trace(go.Scatter(x=d, y=example["std_spread"], name="standard spread",
-                             line=dict(color=_STD_COLOR, dash="dot")))
-    fig.add_trace(go.Scatter(x=d, y=example["wav_spread"], name="sym wavelet spread",
-                             line=dict(color=_WAV_COLOR)))
-    for thr, color in ((example["std_thr"], _STD_COLOR), (example["wav_thr"], _WAV_COLOR)):
-        for s in (thr, -thr):
-            fig.add_hline(y=s, line=dict(color=color, width=1, dash="dash"), opacity=0.4)
-    fig.add_hline(y=0, line=dict(color="#94a3b8", width=1))
-    _trade_markers(fig, d, example["wav_spread"], example["wav_trades"])
-    fig.update_layout(title=f"Figure 2 - Example pair spreads & trades ({example['pair']})",
-                      xaxis_title="Date", yaxis_title="Spread",
-                      template=_TEMPLATE, height=480)
+    std_spread = np.asarray(example["std_spread"], dtype=float)
+    wav_spread = np.asarray(example["wav_spread"], dtype=float)
+    std_thr = float(example["std_thr"])
+    wav_thr = float(example["wav_thr"])
+
+    # 0 line first so series overlay it.
+    fig.add_trace(go.Scatter(x=d, y=np.zeros(len(d)), name="0 Line",
+                             line=dict(color=_PAPER_ZERO, width=1.2)))
+    fig.add_trace(go.Scatter(x=d, y=std_spread, name="Standard Spread",
+                             line=dict(color=_PAPER_STD, width=1.4, dash="dash")))
+    # Threshold lines as full-length series so they show in the legend like in the paper.
+    n = len(d)
+    fig.add_trace(go.Scatter(x=d, y=np.full(n, std_thr), name="Upper Threshold (standard)",
+                             line=dict(color=_PAPER_STD_UP, width=1.2)))
+    fig.add_trace(go.Scatter(x=d, y=np.full(n, -std_thr), name="Lower Threshold (standard)",
+                             line=dict(color=_PAPER_STD_LO, width=1.2, dash="dash")))
+    fig.add_trace(go.Scatter(x=d, y=wav_spread, name="Sym22 Spread",
+                             line=dict(color=_PAPER_WAV, width=1.6)))
+    fig.add_trace(go.Scatter(x=d, y=np.full(n, wav_thr), name="Upper Threshold (Sym22)",
+                             line=dict(color=_PAPER_WAV_UP, width=1.2)))
+    fig.add_trace(go.Scatter(x=d, y=np.full(n, -wav_thr), name="Lower Threshold (Sym22)",
+                             line=dict(color=_PAPER_WAV_LO, width=1.2)))
+
+    _paper_trade_boxes(fig, d, wav_spread, example["wav_trades"])
+
+    title = (f"Figure 2. {example['pair']} stocks: standard vs. sym22 "
+             f"spread series and trades.")
+    _paper_layout(fig, title=title, xaxis_title="Year",
+                  yaxis_title="Spread", height=720, legend_below=True)
     return fig
 
 
 def fig3_example_returns(example):
     fig = go.Figure()
     if not example:
-        return fig.update_layout(title="Figure 3 - (no example pair available)", template=_TEMPLATE)
+        return _paper_layout(fig, title="Figure 3 - (no example pair available)",
+                             yaxis_title="Cumulative Return")
     d = example["dates"]
-    fig.add_trace(go.Scatter(x=d, y=np.cumsum(example["std_daily"]) * 100,
-                             name="standard", line=dict(color=_STD_COLOR)))
-    fig.add_trace(go.Scatter(x=d, y=np.cumsum(example["wav_daily"]) * 100,
-                             name="sym wavelet", line=dict(color=_WAV_COLOR, dash="dash")))
-    fig.add_hline(y=0, line=dict(color="#94a3b8", width=1))
-    fig.update_layout(title=f"Figure 3 - Example pair cumulative returns ({example['pair']})",
-                      xaxis_title="Date", yaxis_title="Cumulative return (%)",
-                      template=_TEMPLATE, height=420)
+    # Paper uses cumulative (compounded) returns, not annualized.
+    std_cum = np.cumsum(np.asarray(example["std_daily"], dtype=float))
+    wav_cum = np.cumsum(np.asarray(example["wav_daily"], dtype=float))
+
+    fig.add_trace(go.Scatter(x=d, y=std_cum, name="Standard Return",
+                             line=dict(color=_PAPER_RET_STD, width=1.4, dash="dash")))
+    fig.add_trace(go.Scatter(x=d, y=wav_cum, name="Sym22 Return",
+                             line=dict(color=_PAPER_RET_WAV, width=1.6)))
+    fig.add_trace(go.Scatter(x=d, y=np.zeros(len(d)), name="0",
+                             line=dict(color="#7a1f1f", width=1)))
+
+    title = (f"Figure 3. {example['pair']} stocks: standard vs. sym22 "
+             f"return series.")
+    _paper_layout(fig, title=title, xaxis_title="Year",
+                  yaxis_title="Cumulative Return", height=560, legend_below=True)
     return fig
 
 

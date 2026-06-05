@@ -4,6 +4,84 @@ import plotly.express as px
 import pandas as pd
 import numpy as np
 
+# ---------------------------------------------------------------------------
+# Pairs Trading — side-by-side equity comparison
+# ---------------------------------------------------------------------------
+_PAIRS_COLORS = {
+    "Wavelet (Paper)": "royalblue",
+    "Cointegration": "darkorange",
+    "Partial Cointegration": "seagreen",
+}
+_PAIRS_DASH = {
+    "Wavelet (Paper)": "solid",
+    "Cointegration": "dash",
+    "Partial Cointegration": "dot",
+}
+
+
+def plot_pairs_comparison(results_dict: dict, title: str = "Pairs Trading — Strategy Comparison"):
+    """Overlay equity curves for all pairs trading variants.
+
+    Parameters
+    ----------
+    results_dict : dict[str, BacktestResult]
+        Keys are display labels (e.g. "Wavelet (Paper)", "Cointegration",
+        "Partial Cointegration"); values are BacktestResult objects.
+    title : str
+        Figure title.
+    """
+    fig = go.Figure()
+    for label, result in results_dict.items():
+        eq = result.get_equity_curve()
+        color = _PAIRS_COLORS.get(label, None)
+        dash = _PAIRS_DASH.get(label, "solid")
+        line_kwargs = dict(width=2, dash=dash)
+        if color:
+            line_kwargs["color"] = color
+        fig.add_trace(go.Scatter(
+            x=eq.index, y=eq.values,
+            mode="lines", name=label,
+            line=line_kwargs,
+        ))
+    fig.update_layout(
+        title=title,
+        xaxis_title="Date",
+        yaxis_title="Portfolio Value",
+        hovermode="x unified",
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+    )
+    return fig
+
+
+def plot_pairs_comparison_drawdown(results_dict: dict):
+    """Overlay drawdown curves for all pairs trading variants."""
+    fig = go.Figure()
+    for label, result in results_dict.items():
+        rets = result.get_returns()
+        cum = (1 + rets).cumprod()
+        dd = (cum - cum.expanding().max()) / cum.expanding().max() * 100
+        color = _PAIRS_COLORS.get(label, None)
+        dash = _PAIRS_DASH.get(label, "solid")
+        line_kwargs = dict(width=2, dash=dash)
+        if color:
+            line_kwargs["color"] = color
+        fig.add_trace(go.Scatter(
+            x=dd.index, y=dd.values,
+            mode="lines", name=label,
+            line=line_kwargs,
+        ))
+    fig.update_layout(
+        title="Pairs Trading — Drawdown Comparison (%)",
+        xaxis_title="Date",
+        yaxis_title="Drawdown %",
+        hovermode="x unified",
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+    )
+    return fig
+
+
+# ---------------------------------------------------------------------------
+
 # Equity curve
 def plot_equity_curve(result, title: str = "Equity Curve"):
     eq = result.get_equity_curve()

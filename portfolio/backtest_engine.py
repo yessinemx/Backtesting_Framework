@@ -81,6 +81,14 @@ class BacktestEngine:
     def run(self, prices, returns, membership, riskfree_daily=None,
             progress_callback=None, params_schedule=None):
 
+        # Stateful strategies (pair trackers, etc.) need a clean slate so that
+        # consecutive backtests do not inherit positions from a previous run.
+        if self.strategy is not None and hasattr(self.strategy, "reset_state"):
+            try:
+                self.strategy.reset_state()
+            except Exception:
+                pass
+
         prices_oos = prices.loc[self.start:self.end]
         returns_oos = returns.loc[self.start:self.end]
         mem = membership[membership["index_id"] == self.index_id].copy()

@@ -176,7 +176,7 @@ class PaperValidationTests(unittest.TestCase):
         table = build_paper_validation(report).to_pandas()
         factor_row = table[table["metric"] == "factor_regressions_available"].iloc[0]
         self.assertEqual(factor_row["status"], "FAIL")
-        self.assertIn("FMdata.mat", factor_row["comment"])
+        self.assertIn("factors.csv", factor_row["comment"])
 
     def test_validation_integrated_in_build_paper_tables(self):
         report = {

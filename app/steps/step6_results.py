@@ -14,6 +14,7 @@ from visualisation.plots import (
     plot_equity_curve, plot_drawdown, plot_monthly_returns,
     plot_rolling_sharpe, plot_rolling_beta, plot_weights_over_time,
     plot_num_positions, plot_sub_period_bars,
+    plot_pairs_comparison, plot_pairs_comparison_drawdown,
 )
 from app.data import load_returns, load_membership
 
@@ -99,6 +100,37 @@ def render() -> None:
             """, unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
+
+    # ── Pairs Trading composite comparison (shown only in pairs mode) ────────
+    pairs_results: dict | None = st.session_state.get("pairs_results")
+    if pairs_results and len(pairs_results) > 1:
+        st.markdown('<p class="section-hdr">Strategy Comparison — Pairs Trading</p>', unsafe_allow_html=True)
+        st.plotly_chart(plot_pairs_comparison(pairs_results),
+                        use_container_width=True, key="chart_pairs_cmp")
+        st.plotly_chart(plot_pairs_comparison_drawdown(pairs_results),
+                        use_container_width=True, key="chart_pairs_dd_cmp")
+
+        # KPI table across all 3 strategies
+        rows = []
+        for label, res in pairs_results.items():
+            r_rets = res.get_returns()
+            cum = (1 + r_rets).prod()
+            ann = cum ** (252 / max(len(r_rets), 1)) - 1
+            vol = r_rets.std() * (252 ** 0.5)
+            sr = (r_rets.mean() / r_rets.std() * (252 ** 0.5)) if r_rets.std() > 0 else 0.0
+            c = (1 + r_rets).cumprod()
+            dd = ((c - c.expanding().max()) / c.expanding().max()).min() * 100
+            rows.append({
+                "Strategy": label,
+                "Total Return %": f"{(cum - 1) * 100:+.1f}",
+                "CAGR %": f"{ann * 100:+.1f}",
+                "Vol % (ann.)": f"{vol * 100:.1f}",
+                "Sharpe": f"{sr:.2f}",
+                "Max DD %": f"{dd:.1f}",
+            })
+        import pandas as _pd
+        st.dataframe(_pd.DataFrame(rows).set_index("Strategy"), use_container_width=True)
+        st.divider()
 
     tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
         "📈 Performance", "📉 Risk", "🔢 Indicators",
@@ -258,5 +290,6 @@ def render() -> None:
     if st.button("🔄 New Backtest", use_container_width=True):
         st.session_state.step = 1
         st.session_state.result = None
+        st.session_state.pairs_results = None
         st.session_state["wf_schedule"] = None
         st.rerun()

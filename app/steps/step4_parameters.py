@@ -8,8 +8,10 @@ from config import (
     DATA_START, OOS_START, OOS_END,
 )
 from optimization.grid_search import GridSearch
-from app.registry import STRATEGIES, ALLOCATORS
+from app.registry import STRATEGIES, ALLOCATORS, PAIRS_BENCHMARKS
 from app.data import load_prices, load_returns, load_membership, load_riskfree
+
+_IS_PAIRS = "Pairs Trading"
 
 
 def render() -> None:
@@ -43,12 +45,17 @@ def render() -> None:
     def _reset_optim():
         st.session_state["wf_schedule"] = None
 
-    optim_mode = st.radio(
-        "Optimization mode",
-        options=["Manual", "Walk-Forward"],
-        index=0, horizontal=True, key="optim_mode_radio",
-        on_change=_reset_optim,
-    )
+    # Walk-Forward optimization is only available for MA and Momentum.
+    if strategy_name == _IS_PAIRS:
+        optim_mode = "Manual"
+        st.info("ℹ️ Walk-Forward optimization is not available for Pairs Trading. Parameters are set manually below.", icon="ℹ️")
+    else:
+        optim_mode = st.radio(
+            "Optimization mode",
+            options=["Manual", "Walk-Forward"],
+            index=0, horizontal=True, key="optim_mode_radio",
+            on_change=_reset_optim,
+        )
 
     is_best: dict = {}
 
@@ -141,6 +148,43 @@ def render() -> None:
             strategy_params[pname] = st.selectbox(
                 pcfg["label"], opts, index=idx0, key=f"sp_{pname}")
 
+    # ── Benchmark strategies (only for Pairs Trading composite mode) ──
+    benchmark_configs: dict = {}
+    if strategy_name == _IS_PAIRS:
+        st.markdown('<p class="section-hdr">Benchmark Strategies</p>', unsafe_allow_html=True)
+        st.caption(
+            "Choose which benchmark(s) to run alongside the Wavelet strategy. "
+            "Results will be compared side-by-side in Step 6."
+        )
+        for bench_label, bench_class in PAIRS_BENCHMARKS.items():
+            enabled = st.checkbox(f"Include **{bench_label}**", value=True,
+                                  key=f"bench_enable_{bench_label}")
+            if enabled:
+                with st.expander(f"{bench_label} parameters", expanded=False):
+                    bschema = bench_class.get_parameters_schema()
+                    bparams: dict = {}
+                    for pname, pcfg in bschema.items():
+                        default_val = pcfg["default"]
+                        if pcfg["type"] == "int":
+                            bparams[pname] = st.slider(
+                                pcfg["label"], pcfg["min"], pcfg["max"],
+                                int(default_val), key=f"bp_{bench_label}_{pname}")
+                        elif pcfg["type"] == "float":
+                            bparams[pname] = st.slider(
+                                pcfg["label"], pcfg["min"], pcfg["max"],
+                                float(default_val), step=0.01, key=f"bp_{bench_label}_{pname}")
+                        elif pcfg["type"] == "bool":
+                            bparams[pname] = st.checkbox(
+                                pcfg["label"], value=bool(default_val),
+                                key=f"bp_{bench_label}_{pname}")
+                        elif pcfg["type"] == "str" and "options" in pcfg:
+                            opts = list(pcfg["options"])
+                            idx0 = opts.index(default_val) if default_val in opts else 0
+                            bparams[pname] = st.selectbox(
+                                pcfg["label"], opts, index=idx0,
+                                key=f"bp_{bench_label}_{pname}")
+                    benchmark_configs[bench_label] = bparams
+
     # ── Allocator parameters ──
     st.markdown('<p class="section-hdr">Allocation Parameters</p>', unsafe_allow_html=True)
     allocator_class = ALLOCATORS[allocator_name]
@@ -184,6 +228,7 @@ def render() -> None:
         if st.button("Launch Backtest OOS", type="primary", use_container_width=True):
             st.session_state.strategy_params = strategy_params
             st.session_state.allocator_params = allocator_params
+            st.session_state.benchmark_configs = benchmark_configs
             st.session_state.oos_start = str(oos_start)
             st.session_state.oos_end = str(oos_end)
             st.session_state.step = 5
