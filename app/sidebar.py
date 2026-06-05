@@ -3,13 +3,13 @@ import streamlit as st
 
 
 _STEPS = {
-    1: ("📂", "Data Status"),
-    2: ("🔍", "Index Selection"),
-    3: ("⚙️", "Strategy & Alloc"),
-    4: ("🔧", "Parameters"),
-    5: ("🚀", "Execution"),
-    6: ("📊", "Results"),
-    7: ("📚", "Paper Replication"),
+    1: ("Data Status"),
+    2: ("Index Selection"),
+    3: ("Strategy & Alloc"),
+    4: ("Parameters"),
+    5: ("Execution"),
+    6: ("Results"),
+    7: ("Paper Replication"),
 }
 
 

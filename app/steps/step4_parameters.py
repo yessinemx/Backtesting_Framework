@@ -132,9 +132,14 @@ def render() -> None:
     for pname, pcfg in schema.items():
         default_val = is_best.get(pname, pcfg["default"])
         if pcfg["type"] == "int":
-            strategy_params[pname] = st.slider(
-                pcfg["label"], pcfg["min"], pcfg["max"],
-                int(default_val), key=f"sp_{pname}")
+            if pcfg["min"] == pcfg["max"]:
+                # Fixed value — slider would crash (min==max); show as read-only.
+                strategy_params[pname] = int(pcfg["default"])
+                st.caption(f"{pcfg['label']}: **{pcfg['default']}** (fixed)")
+            else:
+                strategy_params[pname] = st.slider(
+                    pcfg["label"], pcfg["min"], pcfg["max"],
+                    int(default_val), key=f"sp_{pname}")
         elif pcfg["type"] == "float":
             strategy_params[pname] = st.slider(
                 pcfg["label"], pcfg["min"], pcfg["max"],
@@ -166,9 +171,13 @@ def render() -> None:
                     for pname, pcfg in bschema.items():
                         default_val = pcfg["default"]
                         if pcfg["type"] == "int":
-                            bparams[pname] = st.slider(
-                                pcfg["label"], pcfg["min"], pcfg["max"],
-                                int(default_val), key=f"bp_{bench_label}_{pname}")
+                            if pcfg["min"] == pcfg["max"]:
+                                bparams[pname] = int(pcfg["default"])
+                                st.caption(f"{pcfg['label']}: **{pcfg['default']}** (fixed)")
+                            else:
+                                bparams[pname] = st.slider(
+                                    pcfg["label"], pcfg["min"], pcfg["max"],
+                                    int(default_val), key=f"bp_{bench_label}_{pname}")
                         elif pcfg["type"] == "float":
                             bparams[pname] = st.slider(
                                 pcfg["label"], pcfg["min"], pcfg["max"],

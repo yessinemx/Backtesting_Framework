@@ -21,11 +21,11 @@ build/
 # --- Logs ---
 *.log
 
-# --- Research raw data sinks (regenerated via Bloomberg loaders) ---
+# --- Research raw data sinks ---
 research/data/*.mat
 !research/data/.gitkeep
 
-# --- LaTeX build artifacts (slides) ---
+# --- LaTeX build artifacts  ---
 research/slides/*.aux
 research/slides/*.log
 research/slides/*.out
@@ -37,5 +37,3 @@ research/slides/*.synctex.gz
 research/slides/*.fls
 research/slides/*.fdb_latexmk
 
-# --- Archive (kept locally, never pushed) ---
-archive/
