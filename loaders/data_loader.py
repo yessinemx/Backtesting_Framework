@@ -1,4 +1,4 @@
-"""Multi-source data loader: Polars frames from local parquet or Bloomberg."""
+"""Multi-source data loader: Polars frames from local parquet or Bloomberg"""
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -22,7 +22,7 @@ def _as_list(index_id):
 
 
 def load_membership(source="data", index_id=None) -> pl.DataFrame:
-    """Index membership in long format [date, index_id, ticker]."""
+    """Index membership in long format [date, index_id, ticker]"""
     if source == "bloomberg":
         from loaders.bloomberg_loader import BloombergLoader
         mem = BloombergLoader().load_membership(index_id=index_id)
@@ -41,7 +41,7 @@ def load_membership(source="data", index_id=None) -> pl.DataFrame:
 
 
 def _universe_tickers(source, index_id):
-    """Universe tickers across all dates, used to restrict price data."""
+    """Universe tickers across all dates, used to restrict price data"""
     if index_id is None:
         return None
     mem = load_membership(source=source, index_id=index_id)
@@ -52,16 +52,14 @@ def members_asof(asof, index_id, source="data") -> list[str]:
     """Point-in-time index constituents as of a given date.
 
     Returns the tickers belonging to `index_id` at the most recent membership
-    snapshot on or before `asof`. Use this to avoid look-ahead / survivorship
-    bias: a 2012 universe must not contain a stock that only joined the index
-    years later (e.g. it would wrongly pair pre-index trending names).
+    snapshot on or before `asof`
 
     Parameters
     ----------
     asof : str | datetime
-        Reference date (typically a formation-period start).
+        Reference date (typically a formation-period start)
     index_id : str
-        Single index id, e.g. "SPX".
+        Single index id, e.g. "SPX"
     """
     mem = load_membership(source=source, index_id=index_id)
     asof_dt = pl.lit(asof).str.to_datetime() if isinstance(asof, str) else asof
@@ -69,8 +67,7 @@ def members_asof(asof, index_id, source="data") -> list[str]:
     if snap.height == 0:
         snap = mem.filter(pl.col("date") == mem.get_column("date").min())
     last = snap.get_column("date").max()
-    # Sorted for determinism: downstream pair selection is order-sensitive, so a
-    # set / unordered unique would make results vary run to run.
+    # Sorted for determinism: downstream pair selection is order-sensitive
     return sorted(
         mem.filter(pl.col("date") == last)
         .get_column("ticker")
@@ -87,14 +84,14 @@ def load_prices(source="data", index_id=None, start=None, end=None,
     ----------
     source : "data" | "bloomberg"
     index_id : str | list[str] | None
-        Restreint l'univers aux membres de ce(s) indice(s).
+        Restreint l'univers aux membres de ce(s) indice(s)
     start, end : str | datetime | None
-        Plage de dates inclusive.
+        Plage de dates inclusive
     tickers : list[str] | None
-        Sous-ensemble explicite de tickers (prioritaire sur index_id).
+        Sous-ensemble explicite de tickers (prioritaire sur index_id)
     prices_path : str | Path | None
         Override the local parquet file (e.g. config.RAW_PRICES_PATH for raw
-        unadjusted closes). Only used when source == "data".
+        unadjusted closes). Only used when source == "data"
     """
     if source == "bloomberg":
         from loaders.bloomberg_loader import BloombergLoader
@@ -103,7 +100,7 @@ def load_prices(source="data", index_id=None, start=None, end=None,
         prices = BloombergLoader().load_prices(tickers, start=start, end=end)
     elif source == "paper_data":
         from config import config_paper as _paper_cfg
-        # Use raw 415-ticker parquet (raw_prices=True is the paper default).
+        # Use raw 415-ticker parquet 
         _paper_path = prices_path or _paper_cfg.PAPER_PRICES_RAW_415_PATH
         prices = pl.read_parquet(_paper_path)
         prices = normalize_wide(prices)
@@ -149,18 +146,18 @@ def load_returns(source="data", index_id=None, start=None, end=None,
 
 
 def prices_to_returns(prices: pl.DataFrame) -> pl.DataFrame:
-    """Simple daily returns computed from a wide price frame."""
+    """Simple daily returns computed from a wide price frame"""
     value_cols = [c for c in prices.columns if c != DATE_COL]
     rets = prices.with_columns([
         (pl.col(c) / pl.col(c).shift(1) - 1.0).alias(c) for c in value_cols
     ])
-    # The first line has no prior observation, so fill with 0.
+    # The first line has no prior observation, so fill with 0
     rets = rets.with_columns([pl.col(c).fill_null(0.0) for c in value_cols])
     return rets
 
 
 def load_riskfree(source="data", currency=None) -> pl.DataFrame:
-    """Daily risk-free rates in wide Polars format [date, <currencies...>]."""
+    """Daily risk-free rates in wide Polars format [date, <currencies...>]"""
     if source == "bloomberg":
         from loaders.bloomberg_loader import BloombergLoader
         rf = BloombergLoader().load_riskfree()

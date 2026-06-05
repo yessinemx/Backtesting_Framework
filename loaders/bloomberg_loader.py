@@ -1,4 +1,4 @@
-"""Bloomberg-to-Polars adapter; returns empty frames in offline mode."""
+"""Bloomberg-to-Polars adapter; returns empty frames in offline mode"""
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -18,7 +18,7 @@ def _to_dt(d, default):
 
 
 class BloombergLoader:
-    """Polars adapter around BloombergConnector."""
+    """Polars adapter around BloombergConnector"""
 
     def __init__(self, connector=None):
         self._connector = connector
@@ -32,7 +32,7 @@ class BloombergLoader:
         return self._connector
 
     def load_membership(self, index_id=None) -> pl.DataFrame:
-        """Membership [date, index_id, ticker] via monthly INDX_MWEIGHT."""
+        """Membership [date, index_id, ticker] via monthly INDX_MWEIGHT"""
         bbg = self._connect()
         indices = config.INDEX_CONFIG
         if index_id is not None:
@@ -71,7 +71,7 @@ class BloombergLoader:
     # ------------------------------------------------------------------
     def load_prices(self, tickers, start=None, end=None,
                     batch_size=40) -> pl.DataFrame:
-        """Prix PX_LAST en wide Polars [date, <tickers...>]."""
+        """Prix PX_LAST en wide Polars [date, <tickers...>]"""
         bbg = self._connect()
         if not tickers:
             return pl.DataFrame(schema={DATE_COL: pl.Datetime})
@@ -111,7 +111,7 @@ class BloombergLoader:
 
     # ------------------------------------------------------------------
     def load_riskfree(self) -> pl.DataFrame:
-        """Daily risk-free rates in wide Polars format [date, <currencies...>]."""
+        """Daily risk-free rates in wide Polars format [date, <currencies...>]"""
         bbg = self._connect()
         dt_start = _to_dt(None, config.DATA_START)
         dt_end = _to_dt(None, config.DATA_END)

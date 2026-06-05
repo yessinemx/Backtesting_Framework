@@ -1,4 +1,4 @@
-"""Polars utilities: normalize wide/long frames, handle pandas index materialization."""
+"""Polars utilities: normalize wide/long frames, handle pandas index materialization"""
 import polars as pl
 
 DATE_COL = "date"
@@ -6,7 +6,7 @@ _PANDAS_INDEX = "__index_level_0__"
 
 
 def normalize_wide(df: pl.DataFrame) -> pl.DataFrame:
-    """Normalize a wide parquet frame: materialize date column, cast to Datetime, sort."""
+    """Normalize a wide parquet frame: materialize date column, cast to Datetime, sort"""
     cols = df.columns
     if _PANDAS_INDEX in cols:
         df = df.rename({_PANDAS_INDEX: DATE_COL})
@@ -21,7 +21,7 @@ def normalize_wide(df: pl.DataFrame) -> pl.DataFrame:
 
 
 def filter_date_range(df: pl.DataFrame, start=None, end=None) -> pl.DataFrame:
-    """Restrict a wide frame to an inclusive date range."""
+    """Restrict a wide frame to an inclusive date range"""
     if start is not None:
         df = df.filter(pl.col(DATE_COL) >= pl.lit(start).str.to_datetime()
                        if isinstance(start, str) else pl.col(DATE_COL) >= start)
@@ -32,7 +32,7 @@ def filter_date_range(df: pl.DataFrame, start=None, end=None) -> pl.DataFrame:
 
 
 def restrict_universe(prices: pl.DataFrame, tickers) -> pl.DataFrame:
-    """Keep only the date column plus the requested tickers that are present."""
+    """Keep only the date column plus the requested tickers that are present"""
     keep = [DATE_COL] + [t for t in tickers if t in prices.columns]
     return prices.select(keep)
 
@@ -41,7 +41,7 @@ def to_pandas_wide(df: pl.DataFrame):
     """Convert a wide Polars frame to a pandas DataFrame indexed by date.
 
     Compatibility bridge for computation modules that still rely on pandas
-    index alignment, such as the backtest engine and indicators.
+    index alignment, such as the backtest engine and indicators
     """
     pdf = df.to_pandas()
     if DATE_COL in pdf.columns:
@@ -51,7 +51,7 @@ def to_pandas_wide(df: pl.DataFrame):
 
 
 def wide_from_pandas(pdf) -> pl.DataFrame:
-    """Convert a pandas DataFrame with a date index into a wide Polars frame."""
+    """Convert a pandas DataFrame with a date index into a wide Polars frame"""
     tmp = pdf.copy()
     tmp.index.name = DATE_COL
     return pl.from_pandas(tmp.reset_index())

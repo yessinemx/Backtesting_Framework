@@ -1,4 +1,4 @@
-"""Returns-based backtest engine with transaction costs."""
+"""Returns-based backtest engine with transaction costs"""
 import pandas as pd
 import numpy as np
 from dataclasses import dataclass, field
@@ -80,11 +80,11 @@ class BacktestEngine:
     def run(self, prices, returns, membership, riskfree_daily=None,
             progress_callback=None, params_schedule=None):
 
-        # Reset state to isolate consecutive backtests.
+        # Reset state to isolate consecutive backtests
         if self.strategy is not None and hasattr(self.strategy, "reset_state"):
             self.strategy.reset_state()
 
-        # Walk-forward incompatible with pairs trading (stateful pair selection).
+        # Walk-forward incompatible with pairs trading (stateful pair selection)
         if params_schedule is not None and getattr(self.strategy, "IS_PAIRS_STRATEGY", False):
             raise ValueError(
                 "Walk-forward optimization is not supported for pairs trading strategies. "
@@ -97,7 +97,7 @@ class BacktestEngine:
 
         trading_dates = prices_oos.index
 
-        # Rebalance calendar: last business day of each N-month bucket.
+        # Rebalance calendar: last business day of each N-month bucket
         month_ends = trading_dates.to_series().groupby(
             trading_dates.to_period("M")
         ).last()
@@ -120,7 +120,7 @@ class BacktestEngine:
         total = len(trading_dates)
 
         for i, date in enumerate(trading_dates):
-            # Daily P&L using the current weights.
+            # Daily P&L using the current weights
             daily_ret = 0.0
             for t, wt in w.items():
                 if t in returns_oos.columns:
@@ -131,7 +131,7 @@ class BacktestEngine:
 
             cum_value *= (1 + daily_ret)
 
-            # Daily borrow cost on short positions.
+            # Daily borrow cost on short position
             if self.borrow_bps > 0 and w:
                 short_notional = sum(-wt for wt in w.values() if wt < 0)
                 borrow_cost = short_notional * (self.borrow_bps / 10_000.0) / 252
@@ -156,7 +156,7 @@ class BacktestEngine:
                         signals, returns.loc[:date], date
                     )
 
-                    # Transaction cost = tc_rate × turnover.
+                    # Transaction cost = tc_rate × turnover
                     turnover = sum(
                         abs(new_w.get(t, 0) - w.get(t, 0))
                         for t in set(list(new_w.keys()) + list(w.keys()))
@@ -173,7 +173,7 @@ class BacktestEngine:
             if progress_callback:
                 progress_callback((i + 1) / total, str(date.date()))
 
-        # Build the cumulative risk-free curve.
+        # Build the cumulative risk-free curve
         if riskfree_daily is not None:
             rf_oos = riskfree_daily.reindex(trading_dates).fillna(0)
             result.riskfree_daily = rf_oos

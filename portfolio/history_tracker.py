@@ -1,4 +1,4 @@
-"""Records daily equity, returns, weights, signals, and transaction costs during a backtest."""
+"""Records daily equity, returns, weights, signals, and transaction costs during a backtest"""
 import pandas as pd
 import numpy as np
 
