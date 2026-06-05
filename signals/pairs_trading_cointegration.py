@@ -1,22 +1,4 @@
-"""
-Pairs Trading with Engle-Granger cointegration (benchmark).
-
-Methodology (adapted from notebook Part 1 - Cointegration.ipynb):
-- Formation window: pre-filter pairs by absolute Pearson correlation on log-
-  returns (top ``correlation_top_k`` candidates) to keep the per-rebalance cost
-  manageable on a large universe (S&P 500-sized).
-- For each candidate pair run the Engle-Granger test on price levels; keep
-  pairs with p-value <= ``coint_pvalue_max``.
-- Select the ``top_n_pairs`` strongest pairs (smallest p-value).
-- Estimate the cointegrating coefficient beta by OLS (Y on X with intercept).
-- Spread: s_t = Y_t - alpha - beta * X_t, normalised on the formation window.
-- Trading signal at ``date``: z_t = (s_t - mu) / sigma using the formation
-  window's mean/std.  |z| > entry triggers a position; |z| < exit flattens.
-
-The selected pairs are cached and only re-estimated every
-``reselect_every`` rebalances (default = every call) to keep performance
-acceptable when the strategy is wired into the daily backtester loop.
-"""
+"""Pairs trading with Engle-Granger cointegration (benchmark strategy)."""
 from __future__ import annotations
 
 import numpy as np
@@ -24,7 +6,7 @@ import pandas as pd
 
 from statsmodels.tsa.stattools import coint
 
-from signals import PairsTradingBase
+from signals.pairs_trading_base import PairsTradingBase
 
 
 def _ols_beta(x, y):
@@ -42,11 +24,7 @@ def _ols_beta(x, y):
 
 
 def _half_life_from_spread(spread):
-    """Half-life from AR(1) on the spread: s_t = phi * s_{t-1} + eps.
-
-    Returns a clipped half-life in [2, 252] (days) so that the holding-period
-    cap stays sensible even when the spread is barely mean-reverting.
-    """
+    """Estimate half-life from AR(1) on the spread, clipped to [2, 252] days."""
     s = np.asarray(spread, dtype=float)
     if s.size < 5:
         return 21.0
@@ -70,7 +48,7 @@ class PairsTradingCointegration(PairsTradingBase):
             "correlation_top_k": 200,
             "coint_pvalue_max": 0.05,
             "max_holding_mult": 2.0,
-            "reselect_every": 1,
+            "reselect_every": 5,
         }
         super().__init__("Pairs Trading (Cointegration)", extra_defaults=extra, parameters=parameters)
         # list[(ticker_x, ticker_y, alpha, beta, mu, sigma, half_life)]
@@ -233,6 +211,6 @@ class PairsTradingCointegration(PairsTradingBase):
         }
         schema["reselect_every"] = {
             "type": "int", "min": 1, "max": 24,
-            "default": 1, "label": "Re-select Pairs Every N Rebalances",
+            "default": 5, "label": "Re-select Pairs Every N Rebalances",
         }
         return schema

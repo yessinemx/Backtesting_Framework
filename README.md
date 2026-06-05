@@ -1,64 +1,56 @@
-# Backtesting Framework
+# StratArb X ⚡
 
-Quantitative returns-based backtesting framework with Bloomberg extraction, a Streamlit interface, and a separate research area for the wavelet pairs-trading paper replication.
+Quantitative returns-based backtesting framework with Bloomberg extraction, a Streamlit interface, and a dedicated research area for the wavelet pairs-trading paper replication (Eroglu, Yener & Yigit, 2023).
 
 ## Overview
 
-The repository is organized around two distinct scopes:
+The repository has two scopes that share loaders and data but keep separate parameters and outputs:
 
-- `config/config_backtester.py`: global configuration for the generic backtester
-- `config/config_paper.py`: fixed configuration for the paper replication workflow
+- **Backtester** — generic multi-strategy engine accessible through the Streamlit app
+- **Paper replication** — full reproduction of the wavelet pairs-trading paper, driven by `research/main.py`
 
-The standard backtester and the paper replication share loaders and data, but keep separate parameters and outputs.
+Configuration is split accordingly:
+- `config/config_backtester.py` — generic backtester settings
+- `config/config_paper.py` — fixed paper replication parameters
 
 ## Structure
 
 ```
 Backtesting_Framework/
-├── config/                           # Centralized configuration package
-│   ├── __init__.py                   # Public generic config entrypoint (`import config`)
-│   ├── config_backtester.py          # Generic backtester settings
-│   └── config_paper.py               # Fixed paper replication settings
-├── app/                              # Streamlit application
-│   ├── main.py                       # Entry point : py -m streamlit run app/main.py
-│   ├── sidebar.py                    # Sidebar navigation
-│   ├── registry.py                   # Strategy / allocator registry
-│   ├── data.py                       # Cached loaders for the app
-│   ├── styles.py                     # CSS
-│   └── steps/                        # Wizard: data -> backtest -> paper replication
-├── allocation/                       # Allocation methods
-├── extraction/                       # Bloomberg extraction + API wrapper
-│   ├── bloomberg_api.py
-│   ├── bbg_members.py
-│   ├── bbg_returns.py
-│   └── bbg_riskfree.py
-├── indicators/                       # Performance / risk indicators
-├── loaders/                          # Polars / Bloomberg / parquet loading
-├── optimization/                     # Walk-forward grid search
-├── portfolio/                        # Backtest engine
-├── signals/                          # Framework strategies
+├── config/                   # Centralized configuration package
+├── app/                      # Streamlit application (StratArb X)
+│   ├── main.py               # Entry point: py -m streamlit run app/main.py
+│   ├── sidebar.py            # Step navigation
+│   ├── registry.py           # Strategy / allocator registry
+│   └── steps/                # 7-step wizard
+├── allocation/               # Equal-weight and risk-parity allocators
+├── extraction/               # Bloomberg extraction scripts + API wrapper
+├── indicators/               # Performance and risk metrics
+├── loaders/                  # Polars / parquet data loaders
+├── optimization/             # Walk-forward grid search
+├── portfolio/                # Returns-based backtest engine
+├── signals/                  # Strategy implementations
+│   ├── pairs_trading_base.py          # Abstract base (common params + interface)
+│   ├── pairs_trading_wavelet.py       # MODWT level-1 (paper-aligned, main strategy)
+│   ├── pairs_trading_cointegration.py # Engle-Granger benchmark
+│   ├── pairs_trading_partial_cointegration.py  # Clegg/Kalman SSM benchmark
 │   ├── moving_average.py
-│   ├── momentum.py
-│   └── pairs_trading.py
-├── visualisation/                    # Backtester figures
-├── research/                         # Research and paper replication
-│   ├── README.md                     # Workflow guide for the paper replication
-│   ├── main.py                       # Unified CLI (single-method + --full replication)
-│   ├── paper_replication/            # Library package (core/, analytics/, outputs/, bootstrap/)
-│   ├── data/                         # Paper-specific data slice (gitignored)
-│   ├── docs/                         # Source documentation / paper
-│   ├── notebooks/                    # Research notebooks
-│   ├── outputs/                      # Generated tables and figures (gitignored)
-│   └── source/                       # Original MATLAB sources (paper authors)
-├── data/                             # Shared parquet data
-├── archive/                          # Legacy / orphaned scripts (gitignored)
+│   └── momentum.py
+├── visualisation/            # Plotly charts for the backtester UI
+├── research/                 # Paper replication
+│   ├── main.py               # CLI (single-method or --full replication)
+│   ├── paper_replication/    # Library: core/, analytics/, outputs/
+│   ├── slides/               # Beamer presentation (Université Paris-Dauphine M272)
+│   ├── data/                 # Paper data slice (gitignored)
+│   ├── docs/                 # Source paper PDF
+│   └── outputs/              # Generated tables + figures (gitignored)
+├── tests/                    # 31 unit tests
+├── data/                     # Shared parquet data
 ├── requirements.txt
 └── README.md
 ```
 
 ## Installation
-
-On Windows:
 
 ```bash
 py -m pip install -r requirements.txt
@@ -70,97 +62,74 @@ Optional Bloomberg API:
 py -m pip install --index-url=https://blpapi.bloomberg.com/repository/releases/python/simple/ blpapi
 ```
 
-## Lancement
+## Usage
 
-Streamlit application:
+**Streamlit app:**
 
 ```bash
 py -m streamlit run app/main.py
 ```
 
-Paper replication (full):
+**Paper replication — full run:**
 
 ```bash
 py research/main.py --full
 ```
 
-Paper replication smoke test:
+**Paper replication — smoke test:**
 
 ```bash
-py research/main.py --index-id SPX --max-periods 1 --no-write-outputs --quiet
+py research/main.py --max-periods 1 --no-write-outputs --quiet
 ```
 
-## Tests et CI
-
-Run the full test suite locally:
+## Tests
 
 ```bash
 py -m unittest discover -s tests
 ```
 
-GitHub Actions CI:
+31 tests covering the backtest engine, strategy logic, paper pipeline, and output writer.
 
-- workflow in [.github/workflows/tests.yml](.github/workflows/tests.yml)
-- runs on `push` and `pull_request` to `main`
-- validates the `unittest` suite and the `research/main.py --help` CLI startup
+## Streamlit Workflow
 
-## Workflow Streamlit
+The app follows a 7-step wizard:
 
-The application follows a 7-step workflow:
+| Step | Name              | Description                                   |
+| ---- | ----------------- | --------------------------------------------- |
+| 1    | Data Status       | Dataset checks and Bloomberg extraction       |
+| 2    | Index Selection   | Universe and date range                       |
+| 3    | Strategy & Alloc  | Strategy and allocator selection              |
+| 4    | Parameters        | Parameter tuning and walk-forward grid search |
+| 5    | Execution         | Backtest run                                  |
+| 6    | Results           | Metrics and charts                            |
+| 7    | Paper Replication | Dedicated path for paper outputs              |
 
-1. `Data Status`: dataset checks and conditional Bloomberg extraction
-2. `Index Selection`: universe selection
-3. `Strategy & Alloc`: strategy / allocator selection
-4. `Parameters`: parameter setup and optional grid search
-5. `Execution`: backtest execution
-6. `Results`: metrics and visualizations
-7. `Paper Replication`: separate execution path for the paper replication
+**Pairs Trading mode** (Step 3): selecting "Pairs Trading" activates composite mode — the wavelet strategy (main) and the two cointegration benchmarks run simultaneously, with a comparison chart in Step 6.
 
-## Configurations
+## Strategies
 
-Global backtester configuration in [config/config_backtester.py](config/config_backtester.py):
+| Strategy                              | Class                              | Description                               |
+| ------------------------------------- | ---------------------------------- | ----------------------------------------- |
+| Moving Average Crossover              | `MovingAverageCrossover`           | SMA short/long crossover                  |
+| Momentum                              | `MomentumStrategy`                 | Cross-sectional momentum signal           |
+| Pairs Trading (Wavelet)               | `PairsTradingWavelet`              | MODWT sym20 level-1 spread (paper method) |
+| Pairs Trading (Cointegration)         | `PairsTradingCointegration`        | Engle-Granger benchmark                   |
+| Pairs Trading (Partial Cointegration) | `PairsTradingPartialCointegration` | Clegg/Kalman SSM benchmark                |
 
-- shared data paths
-- index universes and currencies
-- risk-free rates
-- rebalance frequencies
-- standard backtester parameter grids
-
-Local research configuration in [config/config_paper.py](config/config_paper.py):
-
-- `research/data` paths for the paper-specific dataset slice
-- `research/docs` and `research/outputs` paths
-- fixed paper replication parameters
-- table / figure output settings
-- notebook path for table review
-
-## Data And Artifacts
-
-The files in [data](data) and the PDF in [research/docs](research/docs) remain versioned so the repository stays reproducible without an external bootstrap step. Generated run artifacts should not be committed:
-
-- [research/data](research/data) isolates the 2010-03-05 to 2018-03-15 SPX paper slice and paper reference tables
-- [research/outputs](research/outputs) is reserved for generated outputs
-- `research/outputs/tables` contains CSV only
-- `research/outputs/tables` and `research/outputs/figures` are ignored by git
-- data can be regenerated through the app `Data Status` step or via the Bloomberg extraction scripts
-
-To rebuild the paper-specific data folder from the shared parquet files, run [research/prepare_paper_data.py](research/prepare_paper_data.py).
-
-To review generated tables quickly, open [research/notebooks/table_viewer.ipynb](research/notebooks/table_viewer.ipynb).
-
-## Available Strategies
-
-- `Moving Average Crossover`
-- `Momentum`
-- `Pairs Trading (Wavelet)` in the framework
-
-The full paper replication remains isolated in [research/paper_replication](research/paper_replication) to avoid mixing research logic with the generic backtest engine.
+All pairs trading classes inherit from `PairsTradingBase` which holds the five shared parameters: `formation_period`, `top_n_pairs`, `entry_threshold`, `exit_threshold`, `min_history`.
 
 ## Backtester Principles
 
-- P&L is computed from daily returns
-- weights drift between rebalances
-- the day's return is applied before rebalancing
-- point-in-time membership limits survivorship bias
-- real daily risk-free rates are used by currency
-- signals are computed on an expanding window
+- P&L computed from daily returns
+- weights drift between rebalances; the day's return is applied before rebalancing
+- point-in-time membership to limit survivorship bias
+- real daily risk-free rates by currency
+- stateful strategies (cointegration) are reset at the start of each `run()`
+
+## Data and Artifacts
+
+- `data/` — shared parquet files (versioned)
+- `research/data/` — SPX paper slice 2010-03-05 to 2018-03-15 (gitignored)
+- `research/outputs/` — generated tables (CSV) and figures (gitignored)
+
+To regenerate the paper data from shared parquets: `research/prepare_paper_data.py`.

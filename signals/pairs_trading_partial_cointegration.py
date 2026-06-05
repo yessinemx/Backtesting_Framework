@@ -1,28 +1,4 @@
-"""
-Pairs Trading with Partial Cointegration (Clegg / Kalman, benchmark).
-
-Methodology (adapted from notebook Part 2 - Cointegration Partielle.ipynb):
-- State-space model on log-prices :
-    X2_t = beta * X1_t + M_t + R_t,                       (observation)
-    M_t  = rho * M_{t-1} + eta_t,    eta ~ N(0, sigma_m2) (mean-reverting)
-    R_t  = R_{t-1}        + nu_t,    nu  ~ N(0, sigma_r2) (random walk)
-    X1_t = X1_{t-1}       + xi_t,    xi  ~ N(0, sigma_x2) (random walk, observed)
-- Parameters theta = (beta, rho, sigma_m2, sigma_r2) estimated by MLE on the
-  formation window using a steady-state Kalman recursion.
-- Mean-reversion quality measured by
-    R2_MR = sigma_m2 / (2*sigma_m2 + (1 + rho) * sigma_r2).
-- Selection: pre-filter by absolute correlation on log-returns + Engle-Granger
-  cointegration, then MLE-fit Clegg's SSM on the survivors and keep the
-  ``top_n_pairs`` with the highest R2_MR (>= ``r2_mr_min``).
-- Trading signal: the filtered mean-reverting component M_hat acts as the
-  spread; z-score on the formation window's M_hat triggers entries when
-  |z| > entry and flattens when |z| < exit.
-
-Pair selection is heavy; the strategy caches the chosen pairs and the
-filter state and only re-estimates the SSM every ``reselect_every``
-rebalances (Kalman filter itself is run on the fresh window each call to
-recover the latest M_hat for the signal).
-"""
+"""Pairs trading with partial cointegration — Clegg/Kalman state-space model."""
 from __future__ import annotations
 
 import numpy as np
@@ -31,12 +7,8 @@ import pandas as pd
 from scipy.optimize import minimize
 from statsmodels.tsa.stattools import coint
 
-from signals import PairsTradingBase
+from signals.pairs_trading_base import PairsTradingBase
 
-
-# ---------------------------------------------------------------------------
-# Clegg state-space helpers (vectorised + steady-state for the MLE).
-# ---------------------------------------------------------------------------
 def _build_matrices(theta, sigma_x2):
     beta, rho, sigma_m2, sigma_r2 = theta
     H = np.array([[beta, 1.0, 1.0], [1.0, 0.0, 0.0]])

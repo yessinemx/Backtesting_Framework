@@ -1,26 +1,4 @@
-"""
-Paper figure reproduction for "Pairs trading with wavelet transform".
-
-Builds Plotly versions of the paper's charts from the (point-in-time SPX)
-replication run:
-
-    Figure 1  : Mallat pyramid algorithm (schematic)
-    Figure 2  : example pair - standard vs wavelet spread & trades
-    Figure 3  : example pair - cumulative returns
-    Figure 4  : cumulative returns - standard / wavelet / index / buy & hold
-    Figure 5  : daily Sharpe-ratio evolution (expanding)
-    Figure 6  : cointegration - yearly proportions & returns per category
-    Figure 7  : minimum distance - yearly proportions & returns per category
-    Figure 8  : filtered-noise variance vs unfiltered return (correlation)
-    Figure 10 : returns / Sharpe across wavelet classes
-    Figure 11 : profits at 3/6/9/12-month trading horizons
-
-Figure 9 and Tables 13/14/21 use Fama-French / q-factor / Petkova factor data
-when a readable local factor file is available.
-
-Public entry point: ``generate_all(prices, periods, params, methods, save=True)``
-returns ``{figure_name: plotly.graph_objects.Figure}``.
-"""
+"""Generate Plotly figures for the wavelet pairs-trading paper replication."""
 from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Optional

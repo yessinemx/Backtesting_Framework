@@ -3,7 +3,7 @@ Moving Average Crossover strategy
 LONG when fast MA > slow MA , SHORT when below, else NEUTRAL
 """
 import pandas as pd
-from signals import BaseStrategy
+from signals.base import BaseStrategy
 
 
 class MovingAverageCrossover(BaseStrategy):

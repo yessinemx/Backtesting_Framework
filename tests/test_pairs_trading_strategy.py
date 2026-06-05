@@ -2,8 +2,11 @@ from unittest.mock import patch
 import unittest
 
 import pandas as pd
+import numpy as np
 
 from signals.pairs_trading_wavelet import PairsTradingWavelet
+from signals.pairs_trading_cointegration import PairsTradingCointegration
+from signals.pairs_trading_partial_cointegration import PairsTradingPartialCointegration
 
 
 class PairsTradingStrategyTests(unittest.TestCase):
@@ -46,6 +49,78 @@ class PairsTradingStrategyTests(unittest.TestCase):
         self.assertEqual(signals["AAA"], -1)
         self.assertEqual(signals["BBB"], 1)
         self.assertTrue(set(signals.values()).issubset({-1, 0, 1}))
+
+
+class CointegrationStrategyTests(unittest.TestCase):
+    """Minimal smoke tests for the Engle-Granger cointegration benchmark."""
+
+    def _make_prices(self, n=80):
+        rng = np.random.default_rng(0)
+        base = np.cumsum(rng.normal(0, 0.01, n)) + 5.0
+        prices = pd.DataFrame(
+            {"AAA": np.exp(base), "BBB": np.exp(base + rng.normal(0, 0.005, n))},
+            index=pd.date_range("2020-01-01", periods=n, freq="B"),
+        )
+        return prices
+
+    def test_returns_empty_without_enough_history(self):
+        strategy = PairsTradingCointegration({"formation_period": 60, "min_history": 60})
+        prices = self._make_prices(n=10)
+        signals = strategy.generate_signals(prices, prices.index[-1], list(prices.columns))
+        self.assertEqual(signals, {})
+
+    def test_returns_valid_signal_values(self):
+        strategy = PairsTradingCointegration(
+            {"formation_period": 60, "min_history": 60, "top_n_pairs": 1,
+             "entry_threshold": 0.5, "reselect_every": 1}
+        )
+        prices = self._make_prices(n=80)
+        signals = strategy.generate_signals(prices, prices.index[-1], list(prices.columns))
+        self.assertTrue(set(signals.values()).issubset({-1, 0, 1}))
+
+    def test_reset_state_clears_cache(self):
+        strategy = PairsTradingCointegration({"formation_period": 60, "min_history": 60})
+        prices = self._make_prices(n=80)
+        strategy.generate_signals(prices, prices.index[-1], list(prices.columns))
+        strategy.reset_state()
+        self.assertIsNone(strategy._pairs_cache)
+        self.assertEqual(strategy._pair_states, {})
+
+
+class PartialCointegrationStrategyTests(unittest.TestCase):
+    """Minimal smoke tests for the Clegg/Kalman partial cointegration benchmark."""
+
+    def _make_prices(self, n=80):
+        rng = np.random.default_rng(1)
+        base = np.cumsum(rng.normal(0, 0.01, n)) + 5.0
+        prices = pd.DataFrame(
+            {"AAA": np.exp(base), "BBB": np.exp(base + rng.normal(0, 0.005, n))},
+            index=pd.date_range("2020-01-01", periods=n, freq="B"),
+        )
+        return prices
+
+    def test_returns_empty_without_enough_history(self):
+        strategy = PairsTradingPartialCointegration({"formation_period": 60, "min_history": 60})
+        prices = self._make_prices(n=10)
+        signals = strategy.generate_signals(prices, prices.index[-1], list(prices.columns))
+        self.assertEqual(signals, {})
+
+    def test_returns_valid_signal_values(self):
+        strategy = PairsTradingPartialCointegration(
+            {"formation_period": 60, "min_history": 60, "top_n_pairs": 1,
+             "entry_threshold": 0.5, "reselect_every": 1}
+        )
+        prices = self._make_prices(n=80)
+        signals = strategy.generate_signals(prices, prices.index[-1], list(prices.columns))
+        self.assertTrue(set(signals.values()).issubset({-1, 0, 1}))
+
+    def test_reset_state_clears_cache(self):
+        strategy = PairsTradingPartialCointegration({"formation_period": 60, "min_history": 60})
+        prices = self._make_prices(n=80)
+        strategy.generate_signals(prices, prices.index[-1], list(prices.columns))
+        strategy.reset_state()
+        self.assertIsNone(strategy._pairs_cache)
+        self.assertEqual(strategy._pair_states, {})
 
 
 if __name__ == "__main__":

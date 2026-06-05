@@ -190,7 +190,8 @@ def run_period(period, prices, params, universe=None, membership=None,
     )
 
 
-def run_pipeline(params=None, source="data", verbose=True, write_outputs=True):
+def run_pipeline(params=None, source="data", verbose=True, write_outputs=True,
+                 random_state=42):
     """Run the full pipeline across all periods.
 
     Parameters
@@ -201,11 +202,12 @@ def run_pipeline(params=None, source="data", verbose=True, write_outputs=True):
         Price source loaded via the loaders package.
     write_outputs : bool
         If True, write tables and figures to research/outputs/.
-
-    Returns
-    -------
-    dict : {"periods", "summary", "by_period", "params"}
+    random_state : int | None
+        Seed for NumPy RNG. Set to None to disable seeding (non-reproducible).
     """
+    import numpy as _np
+    if random_state is not None:
+        _np.random.seed(random_state)
     if params is None:
         params = dict(research_config.PAIRS_CONFIG)
 

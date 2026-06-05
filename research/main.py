@@ -1,25 +1,13 @@
-"""Unified entry point for the wavelet pairs-trading paper replication.
+"""Entry point for the wavelet pairs-trading paper replication.
 
-Two run modes share the same module:
+Run modes:
+  default : single method/wavelet, used by Streamlit Step 7 and tests.
+  --full  : full replication (both methods, all variants, sweeps, regressions).
 
-* **Default (lightweight)** — backwards-compatible CLI used by the Streamlit app
-  (Step 7) and the GitHub Actions smoke test. It runs `run_pipeline` for one
-  method/wavelet combination and prints a one-line summary. CLI flags let the
-  caller override every parameter from `config.config_paper.PAIRS_CONFIG`.
-
-* **Full replication** (``--full``) — reproduces every paper-numbered table and
-  figure end-to-end via `build_report` + `save_paper_outputs`. This is the
-  long-running path that exercises both methods, both wavelet variants, the
-  sweeps, and the asset-pricing regressions. Outputs land in
-  `research/outputs/{tables,figures}/`.
-
-Examples
---------
-
-    py research/main.py --max-periods 1 --no-write-outputs --quiet   # smoke
-    py research/main.py --full                                       # full run
-    py research/main.py --full --no-sweeps                           # faster
-    py research/main.py --full --tc-sweep 0.0 0.001 0.005            # Tables 18-21
+Examples:
+    py research/main.py --max-periods 1 --no-write-outputs --quiet
+    py research/main.py --full
+    py research/main.py --full --tc-sweep 0.0 0.001 0.005
 """
 from __future__ import annotations
 

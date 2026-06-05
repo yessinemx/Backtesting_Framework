@@ -1,7 +1,4 @@
-"""
-Allocation module
-Base interface and implementations for portfolio allocation methods
-"""
+"""Allocation methods for portfolio construction."""
 from abc import ABC, abstractmethod
 import pandas as pd
 

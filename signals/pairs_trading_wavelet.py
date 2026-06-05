@@ -1,32 +1,10 @@
-"""
-Pairs Trading with Wavelet Transform (paper-aligned).
-
-This is the live-backtester wrapper around the exact MODWT level-1 smoothing
-used in the paper replication (research/paper_replication/core/wavelet.py):
-
-    V_{1,t} = sum_l (g_l / sqrt(2)) * Z_{t-l mod T}
-
-which is the paper's eq. (1) (Eroglu, Yener, Yigit 2023). The default wavelet
-family and boundary handling are read from config.config_paper.PAIRS_CONFIG so
-that the live strategy and the paper replication stay in sync.
-
-Methodology:
-- Formation window of length ``formation_period`` on the asset's log-prices.
-- Apply MODWT level-1 smoothing column-by-column to extract the long-run
-  component V_{1,t} (denoised prices).
-- Pair selection: top-N pairs with the smallest mean squared distance between
-  the normalised denoised series (Gatev et al. 2006 + the paper's wavelet
-  preprocessing).
-- Trading signal at ``date``: z-score the spread (denoised_i - denoised_j) on
-  the formation window; go LONG the underperformer / SHORT the outperformer
-  when |z| > entry, flatten when |z| < exit.
-"""
+"""Pairs trading with MODWT wavelet smoothing (Eroglu, Yener & Yigit 2023)."""
 from __future__ import annotations
 
 import numpy as np
 import pandas as pd
 
-from signals import PairsTradingBase
+from signals.pairs_trading_base import PairsTradingBase
 
 # Paper-aligned MODWT (single source of truth in research/paper_replication).
 try:
@@ -60,12 +38,7 @@ def _fallback_denoise(series, wavelet, level):
 
 
 def _wavelet_denoise(series, wavelet="sym20", level=1):
-    """Apply the paper's MODWT level-1 smoothing (V_{1,t}) when available.
-
-    The ``level`` argument is kept for API compatibility and is forced to 1
-    (the paper only uses level-1 MODWT). Falls back to the legacy multi-level
-    DWT soft-thresholding if the research package is not importable.
-    """
+    """Denoise a price series using MODWT level-1 (paper backend) or fallback DWT."""
     arr = np.asarray(series, dtype=float)
     if arr.size == 0:
         return arr

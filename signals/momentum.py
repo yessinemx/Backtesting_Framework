@@ -3,7 +3,7 @@ Momentum strategy.
 Ranks tickers by past return, selects the top N as LONG.
 """
 import pandas as pd
-from signals import BaseStrategy
+from signals.base import BaseStrategy
 
 
 class MomentumStrategy(BaseStrategy):

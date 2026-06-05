@@ -84,10 +84,15 @@ class BacktestEngine:
         # Stateful strategies (pair trackers, etc.) need a clean slate so that
         # consecutive backtests do not inherit positions from a previous run.
         if self.strategy is not None and hasattr(self.strategy, "reset_state"):
-            try:
-                self.strategy.reset_state()
-            except Exception:
-                pass
+            self.strategy.reset_state()
+
+        # Walk-forward parameter schedules are incompatible with pairs trading
+        # because pair selection is stateful across rebalances.
+        if params_schedule is not None and getattr(self.strategy, "IS_PAIRS_STRATEGY", False):
+            raise ValueError(
+                "Walk-forward optimization is not supported for pairs trading strategies. "
+                "Run a standard backtest instead."
+            )
 
         prices_oos = prices.loc[self.start:self.end]
         returns_oos = returns.loc[self.start:self.end]
