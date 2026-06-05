@@ -209,8 +209,26 @@ def render() -> None:
             allocator_params[pname] = st.checkbox(
                 pcfg["label"], value=bool(default_val), key=f"ap_{pname}")
 
-    oos_start = OOS_START
-    oos_end = OOS_END
+    st.markdown('<p class="section-hdr">Backtest Period</p>', unsafe_allow_html=True)
+    col_s, col_e = st.columns(2)
+    with col_s:
+        oos_start = st.date_input(
+            "Start date",
+            value=pd.Timestamp(OOS_START).date(),
+            min_value=pd.Timestamp(DATA_START).date(),
+            max_value=pd.Timestamp(OOS_END).date(),
+            key="oos_start_picker",
+        )
+    with col_e:
+        oos_end = st.date_input(
+            "End date",
+            value=pd.Timestamp(OOS_END).date(),
+            min_value=pd.Timestamp(OOS_START).date(),
+            max_value=pd.Timestamp(OOS_END).date(),
+            key="oos_end_picker",
+        )
+    if oos_start >= oos_end:
+        st.warning("Start date must be before end date.")
 
     st.markdown('<p class="section-hdr">Configuration Summary</p>', unsafe_allow_html=True)
     st.markdown(f"""
